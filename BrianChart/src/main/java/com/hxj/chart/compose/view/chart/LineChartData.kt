@@ -4,7 +4,7 @@ import com.hxj.chart.compose.view.chart.Axis
 
 
 data class LineChartData(
-    var lineList: MutableList<Line>? = null,
+    var lineList: List<Line>? = null,
     var xAxis: Axis = Axis(), //x
     var yLeftInsideAxis: Axis? = null,//y左内
     var yLeftAxis: Axis? = null, //y左外

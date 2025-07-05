@@ -1,23 +1,28 @@
 package com.hxj.chart.compose.view.chart
 
-import android.os.Build
+import android.R.attr.textSize
+import android.util.Log
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import java.math.BigDecimal
-import com.hxj.chart.compose.view.chart.Axis
+import java.text.DecimalFormat
 import kotlin.math.pow
 import kotlin.math.sqrt
 import kotlin.random.Random
 
+private val TAG = "ChartExt"
 
 /**
  * @author Brian
@@ -230,14 +235,14 @@ fun drawXYAxis(
 
 }
 
-fun getScaleLengSize(drawScope: DrawScope, axis: Axis?): Float {
-    drawScope.run {
-        return if (axis?.scaleInterval != null) {
-            axis.scaleLengSize.toPx()
-        } else {
-            0f
-        }//左边刻度的长度
-    }
+
+fun getScaleLengSize(axis: Axis?): Dp {
+
+    return if (axis?.scaleInterval != null) {
+        axis.scaleLengSize
+    } else {
+        0.dp
+    }//左边刻度的长度
 
 }
 
@@ -300,7 +305,6 @@ fun drawLable(
                     scale = scale,
                     yOffset = yOffset
                 )
-
             }
             if (it.isDrawLabel) {
                 it.labelInterval?.let { labelInterval ->
@@ -926,6 +930,7 @@ fun drawYAxisLeftInsideScale(
         style = Stroke(width = axisStrokeSize)
     )
 }
+
 fun drawYAxisLeftScale1(
     drawScope: DrawScope,
     point0: Point,
@@ -960,6 +965,7 @@ fun drawYAxisLeftScale1(
 
     }
 }
+
 fun drawYAxisLeftScale(
     drawScope: DrawScope,
     point0: Point,
@@ -1002,6 +1008,7 @@ fun drawYAxisLeftScale(
         style = Stroke(width = axisStrokeSize)
     )
 }
+
 fun drawYAxisRightScale(
     drawScope: DrawScope,
     point0: Point,
@@ -1061,57 +1068,41 @@ fun drawXaxisBottomLabel(
     settingLabelValue: ((value: Float) -> String)?,
     yOffset: Float,
 ) {
-    drawScope.run {
-//        val scaleInterval = 2f //刻度之间的间隔 实际数据间隔
-        val scaleNum = (defaultXAxisMax - defaultXAxisMin) / labelInterval//刻度个数
-        val scaleIntervalSize = (point1.x - point0.x) / scaleNum//刻度间隔，换算成px
-        for (i in 0..scaleNum.toInt()) {
-            val nativePaint = android.graphics.Paint().let {
-                it.apply {
-                    textSize = labelTextSizePx
-                    color = labelColor.toArgb()
-                    isAntiAlias = true//抗锯齿
-                }
-            }
-            val labelFloat =
-                BigDecimal(defaultXAxisMin.toString()).add(
-                    BigDecimal(labelInterval.toString()).multiply(
-                        BigDecimal(i)
-                    )
-                ).toFloat()
-//            var label = settingLabelValue?.let { it(labelFloat) }
-            var label = if (settingLabelValue == null) {
-                when {
-                    labelFloat.toInt().toFloat() == labelFloat -> {//为整数浮点数
-                        "${labelFloat.toInt()}"
-                    }
+    with(drawScope) {
+        val scaleNum = (defaultXAxisMax - defaultXAxisMin) / labelInterval
+        val scaleIntervalSize = (point1.x - point0.x) / scaleNum
 
-                    else -> {//为小数浮点数
-                        "${labelFloat}"
-                    }
-                }
-            } else {
-                settingLabelValue(labelFloat)
-            }
-            label.let {
-                //            val label = "${(defaultXAxisMin + labelInterval * i).toInt()}"
-                val labelWidth = it.length * labelTextSizePx
-                val offset = labelWidth / 2
-                val x = point0.x + i * scaleIntervalSize - offset / 2
-                val y = point0.y + labelTextSizePx + 4.dp.toPx() - yOffset
-                drawContext.canvas.nativeCanvas.drawText(
-                    it,
-                    x * scale,
-                    y,
-                    nativePaint
-                )
-            }
-
-
+        // Create paint once
+        val nativePaint = android.graphics.Paint().apply {
+            textSize = labelTextSizePx
+            color = labelColor.toArgb()
+            isAntiAlias = true
         }
 
+        val baseY = point0.y + labelTextSizePx + 4.dp.toPx() - yOffset
+
+        // Precompute all text positions and labels
+        val textEntries = (0..scaleNum.toInt()).map { i ->
+            val labelValue = defaultXAxisMin + labelInterval * i
+            val labelText = settingLabelValue?.invoke(labelValue) ?: run {
+                if (labelValue.isInteger()) labelValue.toInt().toString()
+                else labelValue.toString()
+            }
+            val x =
+                (point0.x + i * scaleIntervalSize - labelText.length * labelTextSizePx / 2 * 0.6f) * scale
+            Pair(labelText, x)
+        }
+
+        // Draw all texts in one operation
+        drawContext.canvas.nativeCanvas.apply {
+            textEntries.forEach { (text, x) ->
+                drawText(text, x, baseY, nativePaint)
+            }
+        }
     }
 }
+
+private fun Float.isInteger(): Boolean = this == toInt().toFloat()
 
 fun drawXaxisBottomName(
     drawScope: DrawScope,
@@ -1291,50 +1282,29 @@ fun drawYAxisLeftInsideLabel(
     settingLabelValue: ((value: Float) -> String)?,
     xOffset: Float,
 ) {
-    drawScope.run {
-//        val scaleInterval = 2f //刻度之间的间隔 实际数据间隔
-        val scaleNum = (defaultYAxisMax - defaultYAxisMin) / labelInterval//刻度个数
-        val scaleIntervalSize = (point0.y - point3.y) / scaleNum //刻度间隔，换算成px
-        for (i in scaleNum.toInt() downTo 0) {
-            val nativePaint = android.graphics.Paint().let {
-                it.apply {
-                    textSize = labelTextSizePx
-                    color = labelColor.toArgb()
-                    isAntiAlias = true//抗锯齿
+    with(drawScope) {
+        val scaleNum = (defaultYAxisMax - defaultYAxisMin) / labelInterval
+        val scaleIntervalSize = (point0.y - point3.y) / scaleNum
+
+        // 创建并配置Paint对象（只创建一次）
+        val textPaint = android.graphics.Paint().apply {
+            textSize = labelTextSizePx
+            color = labelColor.toArgb()
+            isAntiAlias = true
+        }
+
+        // 预计算所有标签位置
+        (0..scaleNum.toInt()).map { i ->
+            val labelValue = defaultYAxisMin + labelInterval * i
+            val labelText = settingLabelValue?.invoke(labelValue) ?: formatLabel(labelValue)
+            val x = point0.x + xOffset + 8.dp.toPx()
+            val y = point0.y - i * scaleIntervalSize + labelTextSizePx / 4
+            labelText to Point(x, y)
+        }.let {
+            drawContext.canvas.nativeCanvas.apply {
+                it.forEach { (text, pos) ->
+                    drawText(text, pos.x, pos.y, textPaint)
                 }
-            }
-
-            val labelFloat =
-                BigDecimal(defaultYAxisMin.toString()).add(
-                    BigDecimal(labelInterval.toString()).multiply(
-                        BigDecimal(i)
-                    )
-                ).toFloat()
-            var label = if (settingLabelValue == null) {
-                when {
-                    labelFloat.toInt().toFloat() == labelFloat -> {//为整数浮点数
-                        "${labelFloat.toInt()}"
-                    }
-
-                    else -> {//为小数浮点数
-                        "${labelFloat}"
-                    }
-                }
-            } else {
-                settingLabelValue(labelFloat)
-            }
-
-            label.let {
-                //            val label = "${(defaultYAxisMin + labelInterval * i).toInt()}"
-                val labelWidth = it.length * labelTextSizePx
-                val x = point0.x + xOffset + 8.dp.toPx()
-                val y = point0.y - i * scaleIntervalSize + labelTextSizePx / 4
-                drawContext.canvas.nativeCanvas.drawText(
-                    label,
-                    x,
-                    y,
-                    nativePaint
-                )
             }
         }
     }
@@ -1355,54 +1325,32 @@ fun drawYAxisLeftLabel(
     settingLabelValue: ((value: Float) -> String)?,
     xOffset: Float,
 ) {
-    drawScope.run {
-//        val scaleInterval = 2f //刻度之间的间隔 实际数据间隔
-        val scaleNum = (defaultYAxisMax - defaultYAxisMin) / labelInterval//刻度个数
-        val scaleIntervalSize = (point0.y - point3.y) / scaleNum //刻度间隔，换算成px
-        for (i in scaleNum.toInt() downTo 0) {
-            val nativePaint = android.graphics.Paint().let {
-                it.apply {
-                    textSize = labelTextSizePx
-                    color = labelColor.toArgb()
-                    isAntiAlias = true//抗锯齿
-                }
-            }
+    with(drawScope) {
+        val scaleNum = (defaultYAxisMax - defaultYAxisMin) / labelInterval
+        val scaleIntervalSize = (point0.y - point3.y) / scaleNum
 
-            val labelFloat =
-                BigDecimal(defaultYAxisMin.toString()).add(
-                    BigDecimal(labelInterval.toString()).multiply(
-                        BigDecimal(i)
-                    )
-                ).toFloat()
-
-            var label = if (settingLabelValue == null) {
-                when {
-                    labelFloat.toInt().toFloat() == labelFloat -> {//为整数浮点数
-                        "${labelFloat.toInt()}"
-                    }
-
-                    else -> {//为小数浮点数
-                        "${labelFloat}"
-                    }
-                }
-            } else {
-                settingLabelValue(labelFloat)
-            }
-            label.let {
-
-                //            val label = "${(defaultYAxisMin + labelInterval * i).toInt()}"
-                val labelWidth = label.length * labelTextSizePx
-                val x = point0.x + xOffset - labelWidth / 2 - 8.dp.toPx()
-                val y = point0.y - i * scaleIntervalSize + labelTextSizePx / 4
-                drawContext.canvas.nativeCanvas.drawText(
-                    label,
-                    x,
-                    y,
-                    nativePaint
-                )
-            }
-
+        val textPaint = android.graphics.Paint().apply {
+            textSize = labelTextSizePx
+            color = labelColor.toArgb()
+            isAntiAlias = true
         }
+
+        (0..scaleNum.toInt()).map { i ->
+            val labelValue = defaultYAxisMin + labelInterval * i
+            val labelText = settingLabelValue?.invoke(labelValue) ?: formatLabel(labelValue)
+            val textWidth = labelText.length * labelTextSizePx
+            val x = point0.x + xOffset - 8.dp.toPx() - textWidth / 2
+            val y = point0.y - i * scaleIntervalSize + labelTextSizePx * 0.3f
+            labelText to Point(x, y)
+        }.let {
+            drawContext.canvas.nativeCanvas.apply {
+                it.forEach { (text, pos) ->
+                    drawText(text, pos.x, pos.y, textPaint)
+                }
+            }
+        }
+
+
     }
 }
 
@@ -1421,55 +1369,36 @@ fun drawYAxisRightLabel(
     settingLabelValue: ((value: Float) -> String)?,
     xOffset: Float,
 ) {
-    drawScope.run {
-//        val scaleInterval = 2f //刻度之间的间隔 实际数据间隔
-        val scaleNum = (defaultYAxisMax - defaultYAxisMin) / labelInterval//刻度个数
-        val scaleIntervalSize = (point1.y - point2.y) / scaleNum //刻度间隔，换算成px
-        for (i in scaleNum.toInt() downTo 0) {
-            val nativePaint = android.graphics.Paint().let {
-                it.apply {
-                    textSize = labelTextSizePx
-                    color = labelColor.toArgb()
-                    isAntiAlias = true//抗锯齿
+    with(drawScope) {
+        val scaleNum = (defaultYAxisMax - defaultYAxisMin) / labelInterval
+        val scaleIntervalSize = (point1.y - point2.y) / scaleNum
+
+        val textPaint = android.graphics.Paint().apply {
+            textSize = labelTextSizePx
+            color = labelColor.toArgb()
+            isAntiAlias = true
+        }
+
+        (0..scaleNum.toInt()).map { i ->
+            val labelValue = defaultYAxisMin + labelInterval * i
+            val labelText = settingLabelValue?.invoke(labelValue) ?: formatLabel(labelValue)
+            val x = point1.x + xOffset + 8.dp.toPx()
+            val y = point1.y - i * scaleIntervalSize + labelTextSizePx * 0.3f
+            labelText to Point(x, y)
+        }.let {
+            drawContext.canvas.nativeCanvas.apply {
+                it.forEach { (text, pos) ->
+                    drawText(text, pos.x, pos.y, textPaint)
                 }
-            }
-
-            val labelFloat =
-                BigDecimal(defaultYAxisMin.toString()).add(
-                    BigDecimal(labelInterval.toString()).multiply(
-                        BigDecimal(i)
-                    )
-                ).toFloat()
-            var label = if (settingLabelValue == null) {
-                when {
-                    labelFloat.toInt().toFloat() == labelFloat -> {//为整数浮点数
-                        "${labelFloat.toInt()}"
-                    }
-
-                    else -> {//为小数浮点数
-                        "${labelFloat}"
-                    }
-                }
-            } else {
-                settingLabelValue(labelFloat)
-            }
-            label.let {
-
-                //            val label = "${(defaultYAxisMin + labelInterval * i).toInt()}"
-                val labelWidth = label.length * labelTextSizePx
-                val x = point1.x + xOffset + 8.dp.toPx()
-                val y = point1.y - i * scaleIntervalSize + labelTextSizePx / 4
-                drawContext.canvas.nativeCanvas.drawText(
-                    label,
-                    x,
-                    y,
-                    nativePaint
-                )
             }
         }
+
     }
 }
 
+private fun formatLabel(value: Float): String {
+    return if (value.isInteger()) value.toInt().toString() else value.toString()
+}
 
 /**
  * @author Brian
@@ -1786,27 +1715,7 @@ fun drawYGridLine(
                     pathEffect = dashPathEffect,
                     strokeWidth = widthPx
                 )
-//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-//                    // 使用原生虚线 低版本的系统，如果启用了硬件加速，drawLine可能不支持虚线
-//                    drawLine(
-//                        start = Offset(x = X1, y = Y1 - widthPx / 4),
-//                        end = Offset(x = X2, y = Y1 - widthPx / 4),
-//                        color = it.color,
-//                        pathEffect = dashPathEffect,
-//                        strokeWidth = widthPx
-//                    )
-//                } else {
-//                    // 使用自定义虚线
-//                    drawDashedLine(
-//                        drawScope = this,
-//                        start = Offset(x = X1, y = Y1 - widthPx / 4),
-//                        end = Offset(x = X2, y = Y1 - widthPx / 4),
-//                        color = it.color,
-//                        strokeWidth = widthPx,
-//                        dashLength = 5f,
-//                        gapLength = 5f
-//                    )
-//                }
+
             }
 
         }

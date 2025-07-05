@@ -1,7 +1,5 @@
 package com.hxj.chart.compose.view.chart
 
-import android.nfc.Tag
-import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.rememberTransformableState
@@ -9,14 +7,20 @@ import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
@@ -29,13 +33,20 @@ import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.launch
 import java.math.BigDecimal
-import kotlin.math.sqrt
+import kotlin.math.sin
 
 private val TAG = "LineChart"
 
@@ -48,12 +59,11 @@ private val TAG = "LineChart"
 fun LineChart(
     modifier: Modifier = Modifier, data: LineChartData? = null
 ) {
-    Log.d(TAG, "LineChart--")
     //用来记录缩放大小
     var scale by remember { mutableStateOf(1f) }//缩放
     var rotation by remember { mutableStateOf(0f) } //旋转
     var offset by remember { mutableStateOf(Offset.Zero) }//移动
-    val lineList: MutableList<Line>? = data?.lineList
+    val lineList: List<Line>? = data?.lineList
     val xAxis: Axis = data?.xAxis ?: Axis() //x
     val yLeftInsideAxis: Axis? = data?.yLeftInsideAxis//y左内
     val yLeftAxis: Axis? = data?.yLeftAxis //y左外
@@ -62,7 +72,6 @@ fun LineChart(
     val isScroll: Boolean = false
     if (isSelfAdaptation) {
         reSetXMax(xAxis, lineList)
-
         if (yLeftAxis != null) {
             val lineListNew = lineList?.filter { it.axisType == AxisType.LEFT }
             reSetYMax(yLeftAxis, lineListNew)
@@ -78,16 +87,37 @@ fun LineChart(
     }
     val state = rememberTransformableState { zoomChange, panChange, rotationChange ->
         scale = scale * zoomChange
-//        Log.d("LineChart", "scale = ${scale}  zoomChange = ${zoomChange} panChange = ${panChange}")
-
     }
+
+
     Box(modifier = modifier) {
-        Log.d(TAG, "LineChart Box--")//17:51:07.588
-        var lablePaddingLeft = getYAxisPaddingLeft(this, yLeftAxis, xAxis)
-        var lablePaddingRight = getAxisPaddingRight(this, yRightAxis, xAxis)
-        var lablePaddingTop = getXAxisPaddingTop(this, yLeftAxis, yRightAxis)
-        var lablePaddingBootom = getXAxisPaddingBottom(this, xAxis)
-        Log.d(TAG, "LineChart getXAxisPaddingBottom--")//17:51:07.596
+        val current = LocalDensity.current
+        val textMeasurer: TextMeasurer = rememberTextMeasurer()
+        var lablePaddingLeft by remember(
+            yLeftAxis, xAxis
+        ) {
+            mutableStateOf(getYAxisPaddingLeft(this, yLeftAxis, xAxis, textMeasurer))
+        }
+        var lablePaddingRight by remember(
+            yRightAxis, xAxis
+        ) {
+            mutableStateOf(getAxisPaddingRight(this, yRightAxis, xAxis, textMeasurer))
+        }
+        var lablePaddingTop by remember(
+            yLeftAxis, yRightAxis
+        ) {
+            mutableStateOf(getXAxisPaddingTop(this, yLeftAxis, yRightAxis, textMeasurer))
+        }
+        var lablePaddingBootom by remember(
+            xAxis
+        ) {
+            mutableStateOf(getXAxisPaddingBottom(this, xAxis, textMeasurer))
+        }
+
+        val yLeftScaleLengSize = with(current) { getScaleLengSize(yLeftAxis).toPx() } //左边刻度的长度
+        val yRightScaleLengSize = with(current) { getScaleLengSize(yLeftAxis).toPx() }//右边刻度的长度
+        val xBottomScaleLengSize = with(current) { getScaleLengSize(xAxis).toPx() }//低边刻度的长度
+
         val modifier = if (isScroll) {
             //监听手势缩放
             Modifier
@@ -96,40 +126,93 @@ fun LineChart(
         } else {
             Modifier
         }
-        Log.d(TAG, "LineChart getXAxisPaddingBottom--")//17:51:07.596
+
         Canvas(
             modifier = modifier
                 .fillMaxSize()
                 .drawWithCache {
-                    //TODO 使用缓存优化
-//                    val path = Path().apply { /* 复杂路径构建 */ }
-//                    val paint = Paint().apply { /* 样式配置 */ }
+
+                    //确定四个绘图点 (去除标签、刻度线、padding占据的位置)
+                    val point0 = Point(
+                        0f + lablePaddingLeft + yLeftScaleLengSize,
+                        size.height - xBottomScaleLengSize - lablePaddingBootom
+                    ) //左下角（原点）
+
+                    val point1 = Point(
+                        size.width - lablePaddingRight - yRightScaleLengSize,
+                        size.height - xBottomScaleLengSize - lablePaddingBootom
+                    )//右下角点
+
+                    val point2 = Point(
+                        size.width - lablePaddingRight - yRightScaleLengSize, 0f + lablePaddingTop
+                    )//右上角点
+
+                    val point3 = Point(
+                        0f + lablePaddingLeft + yLeftScaleLengSize, 0f + lablePaddingTop
+                    )//左上角点
+                    val listCurvePathOrPoints = mutableMapOf<String, MutableList<PathAndPoints>>()
+                    lineList?.let {
+                        yLeftInsideAxis?.let {
+                            val lineListNew =
+                                lineList.filter { it.axisType == AxisType.LEFT_INSIDE }
+                            createCurvePathOrPoints(
+                                lineList = lineListNew.toMutableList(),
+                                point0 = point0,
+                                point1 = point1,
+                                point2 = point2,
+                                point3 = point3,
+                                xAxisMax = xAxis.max,
+                                xAxisMin = xAxis.min,
+                                yAxisMax = it.max,
+                                yAxisMin = it.min,
+                                scale = scale,
+                                xAxisPosition = xAxis.position ?: 0f
+                            ).let {
+                                listCurvePathOrPoints.put(AxisType.LEFT_INSIDE.toString(), it)
+                            }
+                        }
+                        yLeftAxis?.let {
+                            val lineListNew = lineList.filter { it.axisType == AxisType.LEFT }
+                            createCurvePathOrPoints(
+                                lineList = lineListNew.toMutableList(),
+                                point0 = point0,
+                                point1 = point1,
+                                point2 = point2,
+                                point3 = point3,
+                                xAxisMin = xAxis.min,
+                                xAxisMax = xAxis.max,
+                                yAxisMin = it.min,
+                                yAxisMax = it.max,
+                                scale = scale,
+                                xAxisPosition = xAxis.position ?: 0f,
+
+                                ).let {
+                                listCurvePathOrPoints.put(AxisType.LEFT.toString(), it)
+                            }
+                        }
+                        yRightAxis?.let {
+                            val lineListNew = lineList.filter { it.axisType == AxisType.RIGHT }
+                            createCurvePathOrPoints(
+                                lineList = lineListNew.toMutableList(),
+                                point0 = point0,
+                                point1 = point1,
+                                point2 = point2,
+                                point3 = point3,
+                                xAxisMin = xAxis.min,
+                                xAxisMax = xAxis.max,
+                                yAxisMin = it.min,
+                                yAxisMax = it.max,
+                                scale = scale,
+                                xAxisPosition = xAxis.position ?: 0f,
+
+                                ).let {
+                                listCurvePathOrPoints.put(AxisType.RIGHT.toString(), it)
+                            }
+                        }
+                    }
+
                     onDrawBehind {
-                        Log.d(TAG, "LineChart onDrawBehind--")//17:51:07.596
                         clipRect {
-                            Log.d(TAG, "LineChart clipRect--")//17:51:07.613
-                            val yLeftScaleLengSize = getScaleLengSize(this, yLeftAxis)//左边刻度的长度
-                            val yRightScaleLengSize = getScaleLengSize(this, yLeftAxis)//右边刻度的长度
-                            val xBottomScaleLengSize = getScaleLengSize(this, xAxis)//低边刻度的长度
-                            //确定四个绘图点 (去除标签、刻度线、padding占据的位置)
-                            val point0 = Point(
-                                0f + lablePaddingLeft + yLeftScaleLengSize,
-                                size.height - xBottomScaleLengSize - lablePaddingBootom
-                            ) //左下角（原点）
-
-                            val point1 = Point(
-                                size.width - lablePaddingRight - yRightScaleLengSize,
-                                size.height - xBottomScaleLengSize - lablePaddingBootom
-                            )//右下角点
-
-                            val point2 = Point(
-                                size.width - lablePaddingRight - yRightScaleLengSize,
-                                0f + lablePaddingTop
-                            )//右上角点
-
-                            val point3 = Point(
-                                0f + lablePaddingLeft + yLeftScaleLengSize, 0f + lablePaddingTop
-                            )//左上角点
                             /**画gride 网格线*/
                             drawGrideLine(
                                 this,
@@ -143,7 +226,6 @@ fun LineChart(
                                 point3 = point3,
                                 scale = scale
                             )
-                            Log.d(TAG, "LineChart drawGrideLine--")
                             /**画chunk 块内容*/
                             drawChunk(
                                 this,
@@ -156,7 +238,6 @@ fun LineChart(
                                 point2 = point2,
                                 point3 = point3,
                             )
-                            Log.d(TAG, "LineChart drawChunk--")
                             /**画xy轴*/
                             drawXYAxis(
                                 this,
@@ -169,7 +250,6 @@ fun LineChart(
                                 point2 = point2,
                                 point3 = point3,
                             )
-                            Log.d(TAG, "LineChart drawXYAxis--")
                             /**刻度 label*/
                             drawLable(
                                 this,
@@ -183,7 +263,6 @@ fun LineChart(
                                 point3 = point3,
                                 scale = scale
                             )
-                            Log.d(TAG, "LineChart drawLable--")
                             /**划限制线*/
                             drawLimitLine(
                                 this,
@@ -197,7 +276,6 @@ fun LineChart(
                                 point3 = point3,
                                 scale = scale
                             )
-                            Log.d(TAG, "LineChart drawLimitLine--")
                             /**坐标轴名称*/
                             drawAxisName(
                                 this,
@@ -211,23 +289,10 @@ fun LineChart(
                                 point3 = point3,
                                 scale = scale
                             )
-                            Log.d(TAG, "LineChart drawAxisName--")
-                            /**画曲线*/
-                            if (lineList != null) {
-                                drawCurves(
-                                    this,
-                                    lineList,
-                                    xAxis,
-                                    yLeftInsideAxis,
-                                    yLeftAxis,
-                                    yRightAxis,
-                                    point0 = point0,
-                                    point1 = point1,
-                                    point2 = point2,
-                                    point3 = point3,
-                                    scale = scale
-                                )
-                                Log.d(TAG, "LineChart drawCurves--")
+
+                            /**画曲线或散点图*/
+                            listCurvePathOrPoints.let {
+                                drawCurveSplashes(this, it)
                             }
                         }
                     }
@@ -237,17 +302,17 @@ fun LineChart(
 
         }
     }
-    Log.d(TAG, "LineChart end--")
 }
+
 
 fun reSetXMax(
     axis: Axis,
-    lineList: MutableList<Line>?,
+    lineList: List<Line>?,
 
     ) {
     //动态调整最大值
-    val list = lineList?.map { it.pointList.maxByOrNull { it.x }?.x ?: 0f }
-    val maxListData = list?.maxOrNull() ?: axis.max
+    val maxListData =
+        lineList?.maxOfOrNull { it.pointList.maxByOrNull { it.x }?.x ?: 0f } ?: axis.max
     val maxLimitLine = axis.limitLineList?.maxByOrNull { it.value }?.value
     val maxChunk = axis.chunkList?.maxByOrNull { it.end }?.end
     var max = 0f
@@ -264,8 +329,9 @@ fun reSetXMax(
 
 fun reSetYMax(axis: Axis, lineList: List<Line>?) {
     //动态调整最大值
-    val list = lineList?.map { it.pointList.maxByOrNull { it.y }?.y ?: 0f }
-    val maxListData = list?.maxOrNull() ?: axis.max
+    val maxListData =
+        lineList?.maxOfOrNull { it.pointList.maxByOrNull { it.y }?.y ?: 0f } ?: axis.max
+//    val maxListData = list?.maxOrNull() ?: axis.max
     val maxLimitLine = axis.limitLineList?.maxByOrNull { it.value }?.value
     val maxChunk = axis.chunkList?.maxByOrNull { it.end }?.end
     var max = 0f
@@ -279,81 +345,10 @@ fun reSetYMax(axis: Axis, lineList: List<Line>?) {
 
 }
 
-fun drawCurves(
-    drawScope: DrawScope,
-    lineList: MutableList<Line>,
-    xAxis: Axis,
-    yLeftInsideAxis: Axis?,
-    yLeftAxis: Axis?,
-    yRightAxis: Axis?,
-    point0: Point,
-    point1: Point,
-    point2: Point,
-    point3: Point,
-    scale: Float
-) {
 
-    drawScope.run {
-        yLeftInsideAxis?.let {
-            val lineListNew = lineList.filter { it.axisType == AxisType.LEFT_INSIDE }
-            drawCurve(
-                drawScope = this,
-                lineList = lineListNew.toMutableList(),
-                point0 = point0,
-                point1 = point1,
-                point2 = point2,
-                point3 = point3,
-                xAxisMax = xAxis.max,
-                xAxisMin = xAxis.min,
-                yAxisMax = it.max,
-                yAxisMin = it.min,
-                scale = scale,
-                xAxisPosition = xAxis.position ?: 0f
-            )
-        }
-        yLeftAxis?.let {
-            val lineListNew = lineList.filter { it.axisType == AxisType.LEFT }
-            drawCurve(
-                drawScope = this,
-                lineList = lineListNew.toMutableList(),
-                point0 = point0,
-                point1 = point1,
-                point2 = point2,
-                point3 = point3,
-                xAxisMin = xAxis.min,
-                xAxisMax = xAxis.max,
-                yAxisMin = it.min,
-                yAxisMax = it.max,
-                scale = scale,
-                xAxisPosition = xAxis.position ?: 0f,
-
-                )
-        }
-        yRightAxis?.let {
-            val lineListNew = lineList.filter { it.axisType == AxisType.RIGHT }
-            drawCurve(
-                drawScope = this,
-                lineList = lineListNew.toMutableList(),
-                point0 = point0,
-                point1 = point1,
-                point2 = point2,
-                point3 = point3,
-                xAxisMin = xAxis.min,
-                xAxisMax = xAxis.max,
-                yAxisMin = it.min,
-                yAxisMax = it.max,
-                scale = scale,
-                xAxisPosition = xAxis.position ?: 0f,
-
-                )
-        }
-    }
-
-}
-
-
-@Composable
-fun getYAxisPaddingLeft(boxScope: BoxScope, yLeftAxis: Axis?, xAxis: Axis): Float {
+fun getYAxisPaddingLeft(
+    boxScope: BoxScope, yLeftAxis: Axis?, xAxis: Axis, textMeasurer: TextMeasurer
+): Float {
     var padding = 0f
     var paddingYLeft = 0f
     var paddingXLeft = 0f
@@ -378,19 +373,19 @@ fun getYAxisPaddingLeft(boxScope: BoxScope, yLeftAxis: Axis?, xAxis: Axis): Floa
                 }
             }
 
-            val maxLabelValueLayoutResult = rememberTextMeasurer().measure(
+            val maxLabelValueLayoutResult = textMeasurer.measure(
                 text = maxLabelValue,
                 style = TextStyle(color = Color.Black, fontSize = yLeftAxis.labelTextSize)
             )
-            val minLabelValueLayoutResult = rememberTextMeasurer().measure(
+            val minLabelValueLayoutResult = textMeasurer.measure(
                 text = minLabelValue,
                 style = TextStyle(color = Color.Black, fontSize = yLeftAxis.labelTextSize)
             )
-            val maxTextLayoutResult = rememberTextMeasurer().measure(
+            val maxTextLayoutResult = textMeasurer.measure(
                 text = yLeftAxis.max.toString(),
                 style = TextStyle(color = Color.Black, fontSize = yLeftAxis.labelTextSize)
             )
-            val nameTextLayoutResult = rememberTextMeasurer().measure(
+            val nameTextLayoutResult = textMeasurer.measure(
                 text = yLeftAxis.name ?: "",
                 style = TextStyle(color = Color.Black, fontSize = yLeftAxis.labelTextSize)
             )
@@ -403,8 +398,7 @@ fun getYAxisPaddingLeft(boxScope: BoxScope, yLeftAxis: Axis?, xAxis: Axis): Floa
                 minLabelWidth = if (it.isDrawLabel) minLabelValueLayoutResult.size.width else 0
             }
             mutableListOf(
-                maxLabelWidth, minLabelWidth,
-                labelWidth, nameTextLayoutResult.size.width
+                maxLabelWidth, minLabelWidth, labelWidth, nameTextLayoutResult.size.width
             ).maxOrNull()?.let {
                 paddingYLeft += it
             }
@@ -412,7 +406,7 @@ fun getYAxisPaddingLeft(boxScope: BoxScope, yLeftAxis: Axis?, xAxis: Axis): Floa
 
 
         xAxis.let {
-            val minTextLayoutResult = rememberTextMeasurer().measure(
+            val minTextLayoutResult = textMeasurer.measure(
                 text = it.min.toString(),
                 style = TextStyle(color = Color.Black, fontSize = it.labelTextSize)
             )
@@ -421,22 +415,21 @@ fun getYAxisPaddingLeft(boxScope: BoxScope, yLeftAxis: Axis?, xAxis: Axis): Floa
 
             paddingXLeft += labelWidth
         }
-//        Log.d(
-//            "LineChart",
-//            "getYAxisPaddingLeft  paddingYLeft = ${paddingYLeft}  paddingXLeft = ${paddingXLeft}"
-//        )
+
         mutableListOf(
             paddingYLeft, paddingXLeft
         ).maxOrNull()?.let {
             padding += it
         }
     }
-//    Log.d("LineChart", "getYAxisPaddingLeft  padding = ${padding}")
+
     return if (padding == 0f) padding else padding + 8f
 }
 
-@Composable
-fun getAxisPaddingRight(boxScope: BoxScope, yRightAxis: Axis?, xAxis: Axis): Float {
+
+fun getAxisPaddingRight(
+    boxScope: BoxScope, yRightAxis: Axis?, xAxis: Axis, textMeasurer: TextMeasurer
+): Float {
     var padding = 0f
     var paddingYRight = 0f
     var paddingXRight = 0f
@@ -458,19 +451,19 @@ fun getAxisPaddingRight(boxScope: BoxScope, yRightAxis: Axis?, xAxis: Axis): Flo
                     }
                 }
             }
-            val maxLabelValueLayoutResult = rememberTextMeasurer().measure(
+            val maxLabelValueLayoutResult = textMeasurer.measure(
                 text = maxLabelValue,
                 style = TextStyle(color = Color.Black, fontSize = it.labelTextSize)
             )
-            val minLabelValueLayoutResult = rememberTextMeasurer().measure(
+            val minLabelValueLayoutResult = textMeasurer.measure(
                 text = minLabelValue,
                 style = TextStyle(color = Color.Black, fontSize = it.labelTextSize)
             )
-            val maxTextLayoutResult = rememberTextMeasurer().measure(
+            val maxTextLayoutResult = textMeasurer.measure(
                 text = it.max.toString(),
                 style = TextStyle(color = Color.Black, fontSize = it.labelTextSize)
             )
-            val nameTextLayoutResult = rememberTextMeasurer().measure(
+            val nameTextLayoutResult = textMeasurer.measure(
                 text = it.name ?: "",
                 style = TextStyle(color = Color.Black, fontSize = it.labelTextSize)
             )
@@ -483,20 +476,17 @@ fun getAxisPaddingRight(boxScope: BoxScope, yRightAxis: Axis?, xAxis: Axis): Flo
                 labelWidth = if (it.isDrawLabel) maxTextLayoutResult.size.width else 0
             }
             mutableListOf(
-                maxLabelWidth,
-                minLabelWidth,
-                labelWidth,
-                nameTextLayoutResult.size.width
+                maxLabelWidth, minLabelWidth, labelWidth, nameTextLayoutResult.size.width
             ).maxOrNull()?.let {
                 paddingYRight += it
             }
         }
         xAxis.let {
-            val maxTextLayoutResult = rememberTextMeasurer().measure(
+            val maxTextLayoutResult = textMeasurer.measure(
                 text = it.max.toString(),
                 style = TextStyle(color = Color.Black, fontSize = it.labelTextSize)
             )
-            val nameTextLayoutResult = rememberTextMeasurer().measure(
+            val nameTextLayoutResult = textMeasurer.measure(
                 text = it.name ?: "",
                 style = TextStyle(color = Color.Black, fontSize = it.labelTextSize)
             )
@@ -515,33 +505,34 @@ fun getAxisPaddingRight(boxScope: BoxScope, yRightAxis: Axis?, xAxis: Axis): Flo
         }
 
     }
-//    Log.d("LineChart", "getAxisPaddingRight  padding = ${paddingYRight}")
+
     return if (padding == 0f) padding else padding + 8f
 }
 
-@Composable
-fun getXAxisPaddingTop(drawScope: BoxScope, yLeftAxis: Axis?, yRightAxis: Axis?): Float {
+fun getXAxisPaddingTop(
+    drawScope: BoxScope, yLeftAxis: Axis?, yRightAxis: Axis?, textMeasurer: TextMeasurer
+): Float {
     var padding = 0f
     drawScope.run {
 
 
-        val yLeftNameTextLayoutResult = rememberTextMeasurer().measure(
+        val yLeftNameTextLayoutResult = textMeasurer.measure(
             text = yLeftAxis?.name ?: "",
             style = TextStyle(color = Color.Black, fontSize = yLeftAxis?.labelTextSize ?: 12.sp)
         )
-        val yRightNameTextLayoutResult = rememberTextMeasurer().measure(
+        val yRightNameTextLayoutResult = textMeasurer.measure(
             text = yRightAxis?.name ?: "",
             style = TextStyle(color = Color.Black, fontSize = yLeftAxis?.labelTextSize ?: 12.sp)
         )
 
-        val yLeftMaxTextLayoutResult = rememberTextMeasurer().measure(
+        val yLeftMaxTextLayoutResult = textMeasurer.measure(
             text = yLeftAxis?.max?.toString() ?: "",
             style = TextStyle(color = Color.Black, fontSize = yLeftAxis?.labelTextSize ?: 0.sp)
         )
         val yLeftLabelHeight =
             if (yLeftAxis?.isDrawLabel == true) yLeftMaxTextLayoutResult.size.height else 0
 
-        val yRighMaxTextLayoutResult = rememberTextMeasurer().measure(
+        val yRighMaxTextLayoutResult = textMeasurer.measure(
             text = yLeftAxis?.max?.toString() ?: "",
             style = TextStyle(color = Color.Black, fontSize = yRightAxis?.labelTextSize ?: 0.sp)
         )
@@ -567,21 +558,21 @@ fun getXAxisPaddingTop(drawScope: BoxScope, yLeftAxis: Axis?, yRightAxis: Axis?)
         }
 
     }
-//    Log.d("LineChart", "getXAxisPaddingTop  padding = ${padding}")
+
     return if (padding == 0f) padding else padding + 8f
 }
 
-@Composable
-fun getXAxisPaddingBottom(drawScope: BoxScope, axis: Axis?): Float {
+
+fun getXAxisPaddingBottom(drawScope: BoxScope, axis: Axis?, textMeasurer: TextMeasurer): Float {
     var padding = 0f
     drawScope.run {
 
         axis?.let {
-            val nameTextLayoutResult = rememberTextMeasurer().measure(
+            val nameTextLayoutResult = textMeasurer.measure(
                 text = it.name ?: "",
                 style = TextStyle(color = Color.Black, fontSize = it.labelTextSize)
             )
-            val maxTextLayoutResult = rememberTextMeasurer().measure(
+            val maxTextLayoutResult = textMeasurer.measure(
                 text = it.max.toString(),
                 style = TextStyle(color = Color.Black, fontSize = it.labelTextSize)
             )
@@ -594,24 +585,99 @@ fun getXAxisPaddingBottom(drawScope: BoxScope, axis: Axis?): Float {
             ).maxOrNull()?.let {
                 padding += it
             }
-//            Log.d(
-//                "LineChart",
-//                "getXAxisPaddingBottom  name = ${it.name}"
-//            )
-//            Log.d(
-//                "LineChart",
-//                "getXAxisPaddingBottom  labelHeight = ${labelHeight}   nameHeight = ${nameTextLayoutResult.size.height}"
-//            )
+
         }
     }
 
-//    Log.d("LineChart", "getXAxisPaddingBottom  padding = ${padding}")
-    return if (padding == 0f) padding else padding +
-            8f
+    return if (padding == 0f) padding else padding + 8f
 }
 
-fun drawCurve(
+
+/**
+ *@author Brian
+ *@Description:绘制曲线或散点
+ */
+fun drawCurveSplashes(
     drawScope: DrawScope,
+    listCurvePathOrPoints: MutableMap<String, MutableList<PathAndPoints>>,
+) {
+    listCurvePathOrPoints.forEach {
+        it.value.let {
+            drawCurveSplashes(drawScope, it)
+        }
+    }
+}
+
+/**
+ *@author Brian
+ *@Description:绘制曲线或散点
+ */
+fun drawCurveSplashes(
+    drawScope: DrawScope,
+    pathAndPointsList: MutableList<PathAndPoints>,
+) {
+    drawScope.run {
+
+
+        pathAndPointsList.forEach {
+            it.line?.let { line ->
+                val dashPathEffect = if (line.isDashes) {
+                    //启用虚线，则绘制虚线样式。
+                    //若有自定义的虚线样式，则使用自定义样式；无，则使用默认样式
+                    line.pathEffect ?: PathEffect.dashPathEffect(floatArrayOf(10f, 4f), 4f)
+                } else {
+                    null
+                }
+                val color = line.color
+
+                when {
+                    line.isPoints -> {
+                        it.points?.let { points ->
+                            drawPoints(
+                                points = points,
+                                pointMode = PointMode.Points,
+                                color = color,
+                                strokeWidth = line.width.toPx()
+                            )
+                        }
+
+
+                    }
+
+                    line.isDrawArea -> {
+                        //绘制面
+
+                        it.path?.let { path ->
+                            drawPath(
+                                path = path, color = color, style = Fill
+                            )
+                        }
+                    }
+
+                    else -> {
+                        //绘制path
+                        it.path?.let { path ->
+                            drawPath(
+                                path = path,
+                                color = color,
+                                style = Stroke(
+                                    width = line.width.toPx(),
+                                    pathEffect = dashPathEffect
+                                )
+                            )
+                        }
+
+                    }
+                }
+            }
+        }
+
+
+    }
+
+}
+
+fun createCurvePathOrPoints(
     lineList: MutableList<Line>,
     point0: Point,
     point1: Point,
@@ -624,32 +690,45 @@ fun drawCurve(
     scale: Float,
     xAxisPosition: Float = 0f,
 
-    ) {
-    drawScope.run {
-        Log.d(TAG, "LineChart drawCurve--")
-        val oneDataXPx = (point1.x - point0.x) / (xAxisMax - xAxisMin) // X轴上 1f单位数据点对应的px数
-        val oneDataYPx = (point0.y - point3.y) / (yAxisMax - yAxisMin) // X轴上 1f单位数据点对应的px数
-        val offsetXPx = xAxisMin * oneDataXPx
-        val offsetYPx = yAxisMin * oneDataYPx
-        lineList.forEach {
-            var pointList: MutableList<Point> = mutableListOf()
-            if (it.isDrawArea) {
-                //绘制面
-                it.pointList.firstOrNull()?.let {
-                    pointList.add(Point(it.x, y = xAxisPosition))
-                }
-                pointList.addAll(it.pointList)
-                it.pointList.lastOrNull()?.let {
-                    pointList.add(Point(it.x, y = xAxisPosition))
-                }
-            } else {
-                pointList = it.pointList
+    ): MutableList<PathAndPoints> {
+
+
+    val oneDataXPx = (point1.x - point0.x) / (xAxisMax - xAxisMin) // X轴上 1f单位数据点对应的px数
+    val oneDataYPx = (point0.y - point3.y) / (yAxisMax - yAxisMin) // X轴上 1f单位数据点对应的px数
+    val offsetXPx = xAxisMin * oneDataXPx
+    val offsetYPx = yAxisMin * oneDataYPx
+    val pathAndPointsList = mutableListOf<PathAndPoints>()
+    lineList.forEach {
+        val pathAndPoints = PathAndPoints(line = it)
+        val pointList = if (it.isDrawArea) {
+            buildList {
+                it.pointList.firstOrNull()?.let { add(Point(it.x, xAxisPosition)) }
+                addAll(it.pointList)
+                it.pointList.lastOrNull()?.let { add(Point(it.x, xAxisPosition)) }
             }
+        } else {
+            it.pointList
+        }.asSequence()/*数据量大的时候asSequence比list的性能更高*/
+            .filter { it.x in xAxisMin..xAxisMax } /*过滤掉不在范围内的点*/.toList()
 
+        if (it.isPoints) { //散点
+            pathAndPoints.points =
+                getPoints(
+                    it.pointList.asSequence()/*数据量大的时候asSequence比list的性能更高*/
+                        .filter { it.x in xAxisMin..xAxisMax } /*过滤掉不在范围内的点*/.toList(),
+                    point0.x,
+                    point0.y,
+                    oneDataXPx,
+                    oneDataYPx,
+                    offsetXPx,
+                    offsetYPx,
+                    scale)
 
-            val path = if (it.isDrawCubic) {
+        } else {//曲线
+            pathAndPoints.path = if (it.isDrawCubic) {
+                //平滑
                 getCubicPath(
-                    pointList.filter { it.x in xAxisMin..xAxisMax },
+                    pointList,
                     point0.x,
                     point0.y,
                     oneDataXPx,
@@ -659,8 +738,9 @@ fun drawCurve(
                     scale,
                 )
             } else {
+                //折线
                 getPath(
-                    pointList.filter { it.x in xAxisMin..xAxisMax },
+                    pointList,
                     point0.x,
                     point0.y,
                     oneDataXPx,
@@ -671,59 +751,12 @@ fun drawCurve(
 
                     )
             }
-
-            Log.d(TAG, "LineChart path--")
-            val dashPathEffect = if (it.isDashes) {
-                //启用虚线，则绘制虚线样式。
-                //若有自定义的虚线样式，则使用自定义样式；无，则使用默认样式
-                it.pathEffect ?: PathEffect.dashPathEffect(floatArrayOf(10f, 4f), 4f)
-            } else {
-                null
-            }
-            val color = it.color
-            when {
-                it.isPoints -> {
-                    drawPoints(
-                        points = getPoints(
-                            it.pointList.filter { point -> point.x in xAxisMin..xAxisMax },
-                            point0.x,
-                            point0.y,
-                            oneDataXPx,
-                            oneDataYPx,
-                            offsetXPx,
-                            offsetYPx,
-                            scale
-                        ),
-                        pointMode = PointMode.Points,
-                        color = color,
-                        strokeWidth = it.width.toPx()
-                    )
-                    Log.d(TAG, "LineChart drawPoints--")
-                }
-
-                it.isDrawArea -> {
-                    //绘制面
-
-                    drawPath(
-                        path = path,
-                        color = color,
-                        style = Fill
-                    )
-                }
-
-                else -> {
-                    //绘制path
-                    drawPath(
-                        path = path,
-                        color = color,
-                        style = Stroke(width = it.width.toPx(), pathEffect = dashPathEffect)
-                    )
-                }
-            }
-
         }
+        pathAndPointsList.add(pathAndPoints)
 
     }
+
+    return pathAndPointsList
 
 }
 
@@ -742,6 +775,7 @@ fun getPath(
     offsetYPx: Float,
     scale: Float = 1f,
 ): Path {
+
     val path = Path()
     val points = pointList ?: return path // 如果 pointList 为空，直接返回空 Path
 
@@ -1077,8 +1111,7 @@ fun LineChartPreview6() {
             val list = getTestPointLineList()
             LineChart(
                 data = LineChartData(
-                    lineList = list,
-                    xAxis = Axis(
+                    lineList = list, xAxis = Axis(
                         max = 800f,
                         min = -400f,
                         position = 0f,
@@ -1107,10 +1140,9 @@ fun LineChartPreview7() {
     MaterialTheme {
         Surface {
             LineChart(
-                modifier = Modifier.padding(2.dp),
-                data = LineChartData(
+                modifier = Modifier.padding(2.dp), data = LineChartData(
                     xAxis = Axis(
-                        max = 0.83f,
+                        max = 0.833f,
                         min = -0f,
                         position = 0f,
                         scaleInterval = 0.1f,
@@ -1119,9 +1151,9 @@ fun LineChartPreview7() {
                     ),
 
                     yLeftAxis = Axis(
-                        max = 0.2f,
-                        scaleInterval = 0.03f,
-                        labelInterval = 0.03f,
+                        max = 0.02f,
+                        scaleInterval = 0.003f,
+                        labelInterval = 0.003f,
                         position = 0f,
                         name = "",
                         min = 0f,
@@ -1138,8 +1170,7 @@ fun LineChartPreview8() {
     MaterialTheme {
         Surface {
             LineChart(
-                modifier = Modifier.padding(2.dp),
-                data = LineChartData(
+                modifier = Modifier.padding(2.dp), data = LineChartData(
                     xAxis = Axis(
                         max = 8f,
                         min = -0f,
@@ -1173,10 +1204,9 @@ fun LineChartPreview9() {
             val list = getTestLineList()
 
             LineChart(
-                modifier = Modifier
-                    .padding(2.dp),
-                data = LineChartData(
+                modifier = Modifier.padding(2.dp), data = LineChartData(
                     lineList = list,
+                    isSelfAdaptation = true,
                     xAxis = Axis(
                         max = 500f,
                         gridLine = GridLine(interval = 10f, width = 0.5.dp),
@@ -1207,9 +1237,7 @@ fun LineChartPreview10() {
             list.forEach { it.isDrawArea = true }
 
             LineChart(
-                modifier = Modifier
-                    .padding(2.dp),
-                data = LineChartData(
+                modifier = Modifier.padding(2.dp), data = LineChartData(
                     lineList = list,
                     xAxis = Axis(
                         max = 500f,
@@ -1227,5 +1255,105 @@ fun LineChartPreview10() {
                 )
             )
         }
+    }
+}
+
+/**
+ *@author Brian
+ *@Description:实时绘图，性能测试
+ */
+@Composable
+@Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 250)
+fun LineChartWithTimer() {
+    // 使用不可变数据结构
+    var lineData by remember {
+        mutableStateOf(
+            LineChartData(
+                isSelfAdaptation = false,
+                lineList = listOf(
+                    Line(
+                        pointList = mutableListOf(), color = Color(0xff50E3C2)
+                    )
+                ) as MutableList<Line>?,
+                xAxis = Axis(
+                    max = 10000f,
+                    scaleInterval = 1000f,
+                    labelInterval = 1000f,
+                ),
+                yLeftAxis = Axis(
+                    max = 500f,
+                    min = -500f,
+                    scaleInterval = 100f,
+                    labelInterval = 100f,
+                ),
+            )
+        )
+    }
+
+    // 使用协程作用域
+    val scope = rememberCoroutineScope()
+
+    // 定时器Flow
+    val timerFlow = remember {
+        flow {
+            var i = 0
+            while (true) {
+                emit(i++)
+                delay(10) // 10ms间隔
+            }
+        }
+    }
+
+    // 启动/停止控制
+    var isRunning by remember { mutableStateOf(false) }
+    var job by remember { mutableStateOf<Job?>(null) }
+
+    Box(modifier = Modifier.background(Color.Black)) {
+        Button(
+            modifier = Modifier.align(Alignment.TopEnd), onClick = {
+                isRunning = !isRunning
+                if (isRunning) {
+                    // 清理数据
+                    lineData = lineData.copy(lineList = lineData.lineList?.map { line ->
+                        line.copy(pointList = mutableListOf())
+                    } as MutableList?)
+
+                    // 启动数据生成
+                    job = scope.launch {
+                        val amplitude = 200.0
+                        val frequency = 0.2
+
+                        timerFlow.take(1000) // 限制生成1000次
+                            .collect { i ->
+                                val newPoints = (0 until 10).map { j ->
+                                    val x = (i * 10 + j).toDouble()
+                                    val y = amplitude * sin(2 * Math.PI * frequency * x / 100.0)
+                                    Point(x.toFloat(), y.toFloat())
+                                }
+
+                                lineData = lineData.copy(lineList = lineData.lineList?.map { line ->
+                                    line.copy(pointList = (line.pointList + newPoints) as MutableList<Point>)
+                                } as MutableList<Line>?)
+                            }
+                    }
+                } else {
+                    job?.cancel() // 停止生成
+                }
+            }) {
+            Text(if (isRunning) "Stop" else "Start")
+        }
+
+        // 显示当前点数
+        Text(
+            "Points: ${lineData.lineList?.first()?.pointList?.size}",
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .height(40.dp)
+                .wrapContentHeight(Alignment.CenterVertically)
+                .padding(end = 100.dp),
+            color = Color.Blue
+        )
+
+        LineChart(data = lineData)
     }
 }

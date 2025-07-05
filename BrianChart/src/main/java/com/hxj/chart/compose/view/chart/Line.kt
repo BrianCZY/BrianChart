@@ -6,7 +6,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 data class Line(
-    var pointList: MutableList<Point> = mutableListOf(),
+    var pointList: List<Point> = emptyList<Point>(),
     var color: Color = Color.Blue,
     var isDrawCubic: Boolean = false,//是否启用贝塞尔曲线)
     var axisType: AxisType = AxisType.LEFT,

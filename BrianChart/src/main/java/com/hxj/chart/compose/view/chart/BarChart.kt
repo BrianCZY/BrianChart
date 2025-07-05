@@ -27,15 +27,16 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hxj.chart.TimeUtil
-import com.hxj.chart.compose.view.chart.Axis
 import com.hxj.chart.formatDigitOrNull
 import kotlin.math.abs
 
@@ -71,6 +72,13 @@ fun BarChart(
         var lablePaddingRight = getBarAxisPaddingRight(this, xAxis)
         var lablePaddingTop = getBarXAxisPaddingTop(this, yLeftAxis)
         var lablePaddingBootom = getBarXAxisPaddingBottom(this, xAxis)
+
+        val yLeftScaleLengSize =
+            with(LocalDensity.current) { getScaleLengSize(yLeftAxis).toPx() } //左边刻度的长度
+        val yRightScaleLengSize =
+            with(LocalDensity.current) { getScaleLengSize(yLeftAxis).toPx() }//右边刻度的长度
+        val xBottomScaleLengSize =
+            with(LocalDensity.current) { getScaleLengSize(xAxis).toPx() }//低边刻度的长度
         val modifier = if (isScroll) {
             //监听手势缩放
             Modifier
@@ -88,9 +96,7 @@ fun BarChart(
 
         ) {
 
-            val yLeftScaleLengSize = getScaleLengSize(this, yLeftAxis)//左边刻度的长度
-            val yRightScaleLengSize = getScaleLengSize(this, yLeftAxis)//右边刻度的长度
-            val xBottomScaleLengSize = getScaleLengSize(this, xAxis)//低边刻度的长度
+
             //确定四个绘图点
             val point0 = Point(
                 0f + lablePaddingLeft + yLeftScaleLengSize,
@@ -299,7 +305,7 @@ fun drawBar(
                         drawContext.canvas.nativeCanvas.drawText(
                             list[1],
                             x,
-                            y - valueTextSizePx ,
+                            y - valueTextSizePx,
                             nativePaint
                         )
                         drawContext.canvas.nativeCanvas.drawText(
