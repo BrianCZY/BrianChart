@@ -3,6 +3,7 @@ package com.czy.brianchart
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -11,6 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -64,11 +66,31 @@ fun ChartView() {
                 "BrianChart",
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
+                    .padding(top = 20.dp)
                     .height(48.dp)
                     .wrapContentSize(Alignment.Center)
             )
             HorizontalDivider(thickness = 1.dp)
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                Text(
+                    "动态示例",
+                    modifier = Modifier
+                        .height(40.dp)
+                        .fillMaxWidth()
+                        .background(color = MaterialTheme.colorScheme.primaryContainer)
+                        .wrapContentSize(Alignment.Center),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                LineChartWithTimer(modifier = Modifier.height(220.dp))
+                HorizontalDivider(thickness = 8.dp)
+                Text(
+                    "静态示例", modifier = Modifier
+                        .height(40.dp)
+                        .fillMaxWidth()
+                        .background(color = MaterialTheme.colorScheme.primaryContainer)
+                        .wrapContentSize(Alignment.Center),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
                 Chart1(modifier = Modifier.height(220.dp))
                 HorizontalDivider(thickness = 8.dp)
                 Chart2(modifier = Modifier.height(220.dp))
@@ -88,7 +110,7 @@ fun ChartView() {
                 Chart9(modifier = Modifier.height(220.dp))
                 HorizontalDivider(thickness = 8.dp)
                 Chart10(modifier = Modifier.height(220.dp))
-                LineChartWithTimer(modifier = Modifier.height(220.dp))
+
             }
 
 
@@ -96,6 +118,7 @@ fun ChartView() {
     }
 
 }
+
 /**
  *@author Brian
  *@Description:实时绘图，性能测试
@@ -145,7 +168,7 @@ fun LineChartWithTimer(modifier: Modifier) {
     var isRunning by remember { mutableStateOf(false) }
     var job by remember { mutableStateOf<Job?>(null) }
 
-    Box(modifier = modifier.background(Color.Black)) {
+    Box(modifier = modifier) {
         Button(
             modifier = Modifier.align(Alignment.TopEnd), onClick = {
                 isRunning = !isRunning
@@ -194,6 +217,7 @@ fun LineChartWithTimer(modifier: Modifier) {
         LineChart(data = lineData)
     }
 }
+
 @Composable
 fun Chart10(modifier: Modifier) {
     val list = getTestLineList()
@@ -512,8 +536,9 @@ fun ChartViewPreview() {
     }
 
 }
+
 @Composable
-@Preview(heightDp = 3800)
+@Preview(heightDp = 2000)
 fun ChartViewLongPreview() {
     BrianChartTheme {
         ChartView()
