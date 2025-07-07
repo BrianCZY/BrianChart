@@ -358,7 +358,7 @@ fun Chart5(modifier: Modifier) {
 fun Chart4(modifier: Modifier) {
     val list = getTestLineList()
     LineChart(
-        modifier = Modifier
+        modifier = modifier
             .padding(2.dp)
             .background(Color(0xffaabbcc)),
         data = LineChartData(
