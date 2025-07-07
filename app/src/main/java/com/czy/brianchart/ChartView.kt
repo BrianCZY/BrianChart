@@ -1,16 +1,24 @@
 package com.czy.brianchart
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -19,8 +27,10 @@ import androidx.compose.ui.unit.dp
 import com.czy.brianchart.ui.theme.BrianChartTheme
 import com.hxj.chart.compose.view.chart.Axis
 import com.hxj.chart.compose.view.chart.GridLine
+import com.hxj.chart.compose.view.chart.Line
 import com.hxj.chart.compose.view.chart.LineChart
 import com.hxj.chart.compose.view.chart.LineChartData
+import com.hxj.chart.compose.view.chart.Point
 import com.hxj.chart.compose.view.chart.getTestChunkList
 import com.hxj.chart.compose.view.chart.getTestChunkList1
 import com.hxj.chart.compose.view.chart.getTestChunkList2
@@ -38,6 +48,12 @@ import com.hxj.chart.compose.view.chart.getTestYLimitLineList1
 import com.hxj.chart.compose.view.chart.getTestYLimitLineList2
 import com.hxj.chart.compose.view.chart.getTestYLimitLineList3
 import com.hxj.chart.compose.view.chart.settingLineChartLabelValue
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.launch
+import kotlin.math.sin
 
 @Composable
 fun ChartView() {
@@ -72,7 +88,7 @@ fun ChartView() {
                 Chart9(modifier = Modifier.height(220.dp))
                 HorizontalDivider(thickness = 8.dp)
                 Chart10(modifier = Modifier.height(220.dp))
-
+                LineChartWithTimer(modifier = Modifier.height(220.dp))
             }
 
 
@@ -80,7 +96,104 @@ fun ChartView() {
     }
 
 }
+/**
+ *@author Brian
+ *@Description:实时绘图，性能测试
+ */
+@Composable
+fun LineChartWithTimer(modifier: Modifier) {
+    // 使用不可变数据结构
+    var lineData by remember {
+        mutableStateOf(
+            LineChartData(
+                isSelfAdaptation = false,
+                lineList = listOf(
+                    Line(
+                        pointList = mutableListOf(), color = Color(0xff50E3C2)
+                    )
+                ) as MutableList<Line>?,
+                xAxis = Axis(
+                    max = 10000f,
+                    scaleInterval = 1000f,
+                    labelInterval = 1000f,
+                ),
+                yLeftAxis = Axis(
+                    max = 500f,
+                    min = -500f,
+                    scaleInterval = 100f,
+                    labelInterval = 100f,
+                ),
+            )
+        )
+    }
 
+    // 使用协程作用域
+    val scope = rememberCoroutineScope()
+
+    // 定时器Flow
+    val timerFlow = remember {
+        flow {
+            var i = 0
+            while (true) {
+                emit(i++)
+                delay(10) // 10ms间隔
+            }
+        }
+    }
+
+    // 启动/停止控制
+    var isRunning by remember { mutableStateOf(false) }
+    var job by remember { mutableStateOf<Job?>(null) }
+
+    Box(modifier = modifier.background(Color.Black)) {
+        Button(
+            modifier = Modifier.align(Alignment.TopEnd), onClick = {
+                isRunning = !isRunning
+                if (isRunning) {
+                    // 清理数据
+                    lineData = lineData.copy(lineList = lineData.lineList?.map { line ->
+                        line.copy(pointList = mutableListOf())
+                    } as MutableList?)
+
+                    // 启动数据生成
+                    job = scope.launch {
+                        val amplitude = 200.0
+                        val frequency = 0.2
+
+                        timerFlow.take(1000) // 限制生成1000次
+                            .collect { i ->
+                                val newPoints = (0 until 10).map { j ->
+                                    val x = (i * 10 + j).toDouble()
+                                    val y = amplitude * sin(2 * Math.PI * frequency * x / 100.0)
+                                    Point(x.toFloat(), y.toFloat())
+                                }
+
+                                lineData = lineData.copy(lineList = lineData.lineList?.map { line ->
+                                    line.copy(pointList = (line.pointList + newPoints) as MutableList<Point>)
+                                } as MutableList<Line>?)
+                            }
+                    }
+                } else {
+                    job?.cancel() // 停止生成
+                }
+            }) {
+            Text(if (isRunning) "Stop" else "Start")
+        }
+
+        // 显示当前点数
+        Text(
+            "Points: ${lineData.lineList?.first()?.pointList?.size}",
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .height(40.dp)
+                .wrapContentHeight(Alignment.CenterVertically)
+                .padding(end = 100.dp),
+            color = Color.Blue
+        )
+
+        LineChart(data = lineData)
+    }
+}
 @Composable
 fun Chart10(modifier: Modifier) {
     val list = getTestLineList()
