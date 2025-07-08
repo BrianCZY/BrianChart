@@ -58,7 +58,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.sin
 
 @Composable
-fun ChartView() {
+fun LineChartView() {
 
     Surface {
         Column {
@@ -532,7 +532,7 @@ fun Chart1(modifier: Modifier) {
 @Preview
 fun ChartViewPreview() {
     BrianChartTheme {
-        ChartView()
+        ChartApp()
     }
 
 }
@@ -541,7 +541,7 @@ fun ChartViewPreview() {
 @Preview(heightDp = 2000)
 fun ChartViewLongPreview() {
     BrianChartTheme {
-        ChartView()
+        ChartApp()
     }
 
 }
