@@ -25,36 +25,27 @@ fun ChartApp() {
 
     }
     Surface {
-        Column {
-            Text(
-                "BrianChart",
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(top = 20.dp)
-                    .height(48.dp)
-                    .wrapContentSize(Alignment.Center)
-            )
-            NavHost(
-                modifier = Modifier,
-                navController = navController,
-                startDestination = Route.Home,
-            ) {
-                composable<Route.Home> {
-                    Home(navigationActions)
-                }
-                composable<Route.LineChart> {
-                    LineChartView(navigationActions)
-                }
-                composable<Route.BarChart> {
-                    BarChartView(navigationActions)
-                }
-                composable<Route.EcgChart> {
-                    EcgChartView(navigationActions)
-                }
+
+        NavHost(
+            modifier = Modifier,
+            navController = navController,
+            startDestination = Route.Home,
+        ) {
+            composable<Route.Home> {
+                Home(navigationActions)
             }
-
-
+            composable<Route.LineChart> {
+                LineChartView(navigationActions)
+            }
+            composable<Route.BarChart> {
+                BarChartView(navigationActions)
+            }
+            composable<Route.EcgChart> {
+                EcgChartView(navigationActions)
+            }
         }
+
+
     }
 
 }
