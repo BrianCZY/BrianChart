@@ -40,16 +40,16 @@ fun ChartApp() {
                 startDestination = Route.Home,
             ) {
                 composable<Route.Home> {
-                    Home()
+                    Home(navigationActions)
                 }
                 composable<Route.LineChart> {
-                    LineChartView()
+                    LineChartView(navigationActions)
                 }
                 composable<Route.BarChart> {
-                    BarChartView()
+                    BarChartView(navigationActions)
                 }
                 composable<Route.EcgChart> {
-                    EcgChartView()
+                    EcgChartView(navigationActions)
                 }
             }
 

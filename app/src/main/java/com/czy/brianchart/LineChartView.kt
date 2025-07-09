@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.czy.brianchart.ui.navigation.ChartNavigationActions
 import com.czy.brianchart.ui.theme.BrianChartTheme
 import com.hxj.chart.compose.view.chart.Axis
 import com.hxj.chart.compose.view.chart.GridLine
@@ -58,19 +59,19 @@ import kotlinx.coroutines.launch
 import kotlin.math.sin
 
 @Composable
-fun LineChartView() {
+fun LineChartView(navigationActions: ChartNavigationActions) {
 
     Surface {
         Column {
             Text(
-                "BrianChart",
+                "LineChart",
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .padding(top = 20.dp)
                     .height(48.dp)
                     .wrapContentSize(Alignment.Center)
             )
-            HorizontalDivider(thickness = 1.dp)
+            HorizontalDivider(thickness =    1.dp)
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 Text(
                     "动态示例",
