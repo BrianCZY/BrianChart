@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -24,7 +25,7 @@ import com.czy.brianchart.ui.theme.BrianChartTheme
 @Composable
 fun Home(navigationActions: ChartNavigationActions) {
     HomeView(
-        modifier = Modifier, lineChartClick = {
+        modifier = Modifier.fillMaxSize(), lineChartClick = {
             navigationActions.navigateTo(Route.LineChart)
         },
         barChartClick = { navigationActions.navigateTo(Route.BarChart) },

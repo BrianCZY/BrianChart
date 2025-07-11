@@ -45,4 +45,9 @@ class ChartNavigationActions(private val navController: NavHostController) {
             restoreState = true
         }
     }
+
+    // 返回上一页面
+    fun navigateBack() {
+        navController.popBackStack()
+    }
 }

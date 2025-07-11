@@ -1,8 +1,10 @@
 package com.czy.brianchart
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -26,10 +28,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.brian.screenmanager.ui.imagevector.MyIconPack
+import com.brian.screenmanager.ui.imagevector.myiconpack.IcChevronLeft
 import com.czy.brianchart.ui.navigation.ChartNavigationActions
+import com.czy.brianchart.ui.navigation.Route
 import com.czy.brianchart.ui.theme.BrianChartTheme
 import com.hxj.chart.compose.view.chart.Axis
 import com.hxj.chart.compose.view.chart.GridLine
@@ -62,17 +66,33 @@ import kotlinx.coroutines.launch
 import kotlin.math.sin
 
 @Composable
-fun LineChartView(navigationActions: ChartNavigationActions? = null) {
+fun LineChartPage(navigationActions: ChartNavigationActions? = null) {
+    LineChartView(modifier = Modifier.fillMaxSize(), backClick = {
+        navigationActions?.navigateBack()
+    })
 
-    Surface {
+
+}
+
+@Composable
+fun LineChartView(modifier: Modifier, backClick: () -> Unit?) {
+    Surface(modifier = modifier) {
         Column {
-            Box(modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 20.dp)) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 20.dp)
+            ) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_launcher_background),
+                    imageVector = MyIconPack.IcChevronLeft,
                     contentDescription = "",
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier
+                        .padding(start = 16.dp)
+                        .size(28.dp)
+                        .align(Alignment.CenterStart)
+                        .clickable {
+                            backClick()
+                        }
                 )
                 Text(
                     "LineChart",
@@ -90,6 +110,7 @@ fun LineChartView(navigationActions: ChartNavigationActions? = null) {
                     "动态示例",
                     modifier = Modifier
                         .height(40.dp)
+                        .fillMaxWidth()
                         .background(color = MaterialTheme.colorScheme.primaryContainer)
                         .wrapContentSize(Alignment.Center),
                     color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -131,7 +152,6 @@ fun LineChartView(navigationActions: ChartNavigationActions? = null) {
 
         }
     }
-
 }
 
 /**
@@ -547,7 +567,7 @@ fun Chart1(modifier: Modifier) {
 @Preview
 fun ChartViewPreview() {
     BrianChartTheme {
-        LineChartView()
+        LineChartPage()
     }
 
 }
@@ -556,7 +576,7 @@ fun ChartViewPreview() {
 @Preview(heightDp = 2000)
 fun ChartViewLongPreview() {
     BrianChartTheme {
-        LineChartView()
+        LineChartPage()
     }
 
 }
