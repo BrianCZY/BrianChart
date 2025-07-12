@@ -82,7 +82,7 @@ fun LineChartView(modifier: Modifier, backClick: () -> Unit?) {
         Column {
             TopBar(
                 modifier = Modifier.fillMaxWidth()
-                    .padding(top = 288.dp)
+                    .padding(top = 28.dp)
                     .height(48.dp),
                 title = "LineChart"
             ) { backClick?.invoke() }
