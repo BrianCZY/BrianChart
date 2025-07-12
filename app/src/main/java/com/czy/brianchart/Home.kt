@@ -52,10 +52,9 @@ fun HomeView(
             HorizontalDivider(thickness = 1.dp)
             Item(
                 modifier = Modifier
-                    .padding(8.dp)
+                    .padding(16.dp)
                     .fillMaxWidth()
-
-                    .height(68.dp)
+                    .height(78.dp)
                     .clickable {
                         lineChartClick?.invoke()
                     }, "LineChart"
@@ -63,20 +62,19 @@ fun HomeView(
 
             Item(
                 modifier = Modifier
-                    .padding(8.dp)
+                    .padding(16.dp)
                     .fillMaxWidth()
 
-                    .height(68.dp)
+                    .height(78.dp)
                     .clickable {
                         barChartClick?.invoke()
                     }, "BarChart"
             )
             Item(
                 modifier = Modifier
-                    .padding(8.dp)
+                    .padding(16.dp)
                     .fillMaxWidth()
-
-                    .height(68.dp)
+                    .height(78.dp)
                     .clickable {
                         ecgChartClick?.invoke()
                     }, "EcgChart"
@@ -99,8 +97,6 @@ fun Item(modifier: Modifier, text: String) {
             text,
             modifier = Modifier
                 .align(Alignment.Center)
-                .padding(top = 20.dp)
-                .height(48.dp)
                 .wrapContentSize(Alignment.Center)
         )
     }

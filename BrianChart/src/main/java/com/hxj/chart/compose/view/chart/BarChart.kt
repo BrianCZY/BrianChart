@@ -461,7 +461,10 @@ fun getTestBarData(): BarData {
     var barDataSetListTemp: MutableList<BarDataSet> = mutableListOf()
     var barEntryList: MutableList<BarEntry> = mutableListOf()
     barEntryList.add(BarEntry(1f, 60f))
-    barEntryList.add(BarEntry(2f, 200f))
+    barEntryList.add(BarEntry(5f, 200f))
+    barEntryList.add(BarEntry(10f, 200f))
+    barEntryList.add(BarEntry(15f, 250f))
+    barEntryList.add(BarEntry(20f, 100f))
 
     barDataSetListTemp.add(
         BarDataSet(

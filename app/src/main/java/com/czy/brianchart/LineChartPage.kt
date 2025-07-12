@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -32,6 +33,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.brian.screenmanager.ui.imagevector.MyIconPack
 import com.brian.screenmanager.ui.imagevector.myiconpack.IcChevronLeft
+import com.czy.brianchart.ui.components.TopBar
 import com.czy.brianchart.ui.navigation.ChartNavigationActions
 import com.czy.brianchart.ui.navigation.Route
 import com.czy.brianchart.ui.theme.BrianChartTheme
@@ -78,31 +80,12 @@ fun LineChartPage(navigationActions: ChartNavigationActions? = null) {
 fun LineChartView(modifier: Modifier, backClick: () -> Unit?) {
     Surface(modifier = modifier) {
         Column {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 20.dp)
-            ) {
-                Icon(
-                    imageVector = MyIconPack.IcChevronLeft,
-                    contentDescription = "",
-                    modifier = Modifier
-                        .padding(start = 16.dp)
-                        .size(28.dp)
-                        .align(Alignment.CenterStart)
-                        .clickable {
-                            backClick()
-                        }
-                )
-                Text(
-                    "LineChart",
-                    modifier = Modifier
-                        .align(Alignment.Center)
-
-                        .height(48.dp)
-                        .wrapContentSize(Alignment.Center)
-                )
-            }
+            TopBar(
+                modifier = Modifier.fillMaxWidth()
+                    .padding(top = 288.dp)
+                    .height(48.dp),
+                title = "LineChart"
+            ) { backClick?.invoke() }
             HorizontalDivider(thickness = 1.dp)
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
 
@@ -145,7 +128,11 @@ fun LineChartView(modifier: Modifier, backClick: () -> Unit?) {
                 HorizontalDivider(thickness = 8.dp)
                 Chart9(modifier = Modifier.height(220.dp))
                 HorizontalDivider(thickness = 8.dp)
-                Chart10(modifier = Modifier.height(220.dp))
+                Chart10(
+                    modifier = Modifier
+                        .padding(bottom = 40.dp)
+                        .height(220.dp)
+                )
 
             }
 
