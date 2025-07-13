@@ -1,4 +1,4 @@
-package com.czy.brianchart
+package com.czy.brianchart.ui
 
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable

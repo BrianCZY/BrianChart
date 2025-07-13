@@ -1,4 +1,4 @@
-package com.czy.brianchart
+package com.czy.brianchart.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

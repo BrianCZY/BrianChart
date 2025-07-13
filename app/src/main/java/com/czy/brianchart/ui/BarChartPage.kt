@@ -1,29 +1,20 @@
-package com.czy.brianchart
+package com.czy.brianchart.ui
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.brian.screenmanager.ui.imagevector.MyIconPack
-import com.brian.screenmanager.ui.imagevector.myiconpack.IcChevronLeft
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.czy.brianchart.ui.components.TopBar
 import com.czy.brianchart.ui.navigation.ChartNavigationActions
 import com.hxj.chart.compose.view.chart.Axis
@@ -39,9 +30,12 @@ import com.hxj.chart.compose.view.chart.getTestLimitLineList
 import com.hxj.chart.compose.view.chart.getTestXLimitLineList
 import com.hxj.chart.compose.view.chart.settingLabelValue
 import com.hxj.chart.compose.view.chart.settingLabelValue2
+import androidx.compose.runtime.getValue
 
 @Composable
 fun BarChartPage(navigationActions: ChartNavigationActions? = null) {
+    val barChartViewModel: BarChartViewModel = viewModel()
+    val barChartUIState by barChartViewModel.barChartUIState.collectAsStateWithLifecycle()
     BarChartView(modifier = Modifier.fillMaxSize(), backClick = {
         navigationActions?.navigateBack()
     })
@@ -53,7 +47,8 @@ fun BarChartView(modifier: Modifier, backClick: () -> Unit?) {
     Surface(modifier = modifier) {
         Column(Modifier.fillMaxSize()) {
             TopBar(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .padding(top = 28.dp)
                     .height(48.dp),
                 title = "BarChart"

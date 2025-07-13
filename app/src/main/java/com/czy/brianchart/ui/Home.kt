@@ -1,4 +1,4 @@
-package com.czy.brianchart
+package com.czy.brianchart.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

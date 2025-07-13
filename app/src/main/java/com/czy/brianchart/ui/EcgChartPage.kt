@@ -1,11 +1,9 @@
-package com.czy.brianchart
+package com.czy.brianchart.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,9 +14,10 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.czy.brianchart.data.testdata.BERRY_MED_WAVE_DATA_LIST
 import com.czy.brianchart.data.testdata.RD2000_WAVE_AVFDATA_LIST
 import com.czy.brianchart.data.testdata.RD2000_WAVE_AVLDATA_LIST
@@ -29,16 +28,18 @@ import com.czy.brianchart.data.testdata.RD2000_WAVE_IIIDATA_LIST
 import com.czy.brianchart.data.testdata.RD2000_WAVE_V1DATA_LIST
 import com.czy.brianchart.ui.components.TopBar
 import com.czy.brianchart.ui.navigation.ChartNavigationActions
-import com.czy.brianchart.ui.theme.BrianChartTheme
 import com.hxj.chart.compose.view.chart.EcgChart
 import com.hxj.chart.compose.view.chart.EcgChartData
 import com.hxj.chart.compose.view.chart.GrideDataSet
 import com.hxj.chart.compose.view.chart.LineDataSet
 import com.hxj.chart.compose.view.chart.PointDataSet
 import com.hxj.chart.compose.view.chart.colorFFFFC4C3
+import androidx.compose.runtime.getValue
 
 @Composable
 fun EcgChartPage(navigationActions: ChartNavigationActions? = null) {
+    var ecgChartViewModel:EcgChartViewModel = viewModel()
+    val ecgChartUIState by ecgChartViewModel.ecgChartUIState.collectAsStateWithLifecycle()
     EcgChartView(modifier = Modifier.fillMaxSize(), backClick = {
         navigationActions?.navigateBack()
     })
