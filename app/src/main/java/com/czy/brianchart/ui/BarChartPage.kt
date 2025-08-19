@@ -36,14 +36,14 @@ import androidx.compose.runtime.getValue
 fun BarChartPage(navigationActions: ChartNavigationActions? = null) {
     val barChartViewModel: BarChartViewModel = viewModel()
     val barChartUIState by barChartViewModel.barChartUIState.collectAsStateWithLifecycle()
-    BarChartView(modifier = Modifier.fillMaxSize(), backClick = {
+    BarChartView(barChartUIState = barChartUIState, modifier = Modifier.fillMaxSize(), backClick = {
         navigationActions?.navigateBack()
     })
 
 }
 
 @Composable
-fun BarChartView(modifier: Modifier, backClick: () -> Unit?) {
+fun BarChartView(modifier: Modifier, barChartUIState: BarChartUIState, backClick: () -> Unit?) {
     Surface(modifier = modifier) {
         Column(Modifier.fillMaxSize()) {
             TopBar(

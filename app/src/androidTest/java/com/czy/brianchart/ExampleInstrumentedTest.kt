@@ -7,6 +7,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 import org.junit.Assert.*
+import java.util.concurrent.locks.ReentrantLock
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -20,5 +21,7 @@ class ExampleInstrumentedTest {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         assertEquals("com.czy.brianchart", appContext.packageName)
+
+        ReentrantLock()
     }
 }

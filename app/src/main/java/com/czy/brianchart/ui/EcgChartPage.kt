@@ -40,14 +40,14 @@ import androidx.compose.runtime.getValue
 fun EcgChartPage(navigationActions: ChartNavigationActions? = null) {
     var ecgChartViewModel:EcgChartViewModel = viewModel()
     val ecgChartUIState by ecgChartViewModel.ecgChartUIState.collectAsStateWithLifecycle()
-    EcgChartView(modifier = Modifier.fillMaxSize(), backClick = {
+    EcgChartView(modifier = Modifier.fillMaxSize(),ecgChartUIState = ecgChartUIState, backClick = {
         navigationActions?.navigateBack()
     })
 
 }
 
 @Composable
-fun EcgChartView(modifier: Modifier, backClick: () -> Unit?) {
+fun EcgChartView(modifier: Modifier, ecgChartUIState: EcgChartUIState, backClick: () -> Unit?) {
     Surface(modifier = modifier) {
         Column {
             TopBar(

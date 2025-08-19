@@ -64,21 +64,25 @@ import kotlin.math.sin
 
 @Composable
 fun LineChartPage(navigationActions: ChartNavigationActions? = null) {
-    val lineChartViewModel:LineChartViewModel = viewModel()
+    val lineChartViewModel: LineChartViewModel = viewModel()
     val lineChartUIState by lineChartViewModel.lineChartUIState.collectAsStateWithLifecycle()
-    LineChartView(modifier = Modifier.fillMaxSize(), backClick = {
-        navigationActions?.navigateBack()
-    })
+    LineChartView(
+        modifier = Modifier.fillMaxSize(),
+        lineChartUIState = lineChartUIState,
+        backClick = {
+            navigationActions?.navigateBack()
+        })
 
 
 }
 
 @Composable
-fun LineChartView(modifier: Modifier, backClick: () -> Unit?) {
+fun LineChartView(modifier: Modifier, lineChartUIState: LineChartUIState, backClick: () -> Unit?) {
     Surface(modifier = modifier) {
         Column {
             TopBar(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .padding(top = 28.dp)
                     .height(48.dp),
                 title = "LineChart"
