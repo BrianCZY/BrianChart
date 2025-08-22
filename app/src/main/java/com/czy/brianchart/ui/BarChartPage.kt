@@ -17,20 +17,20 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.czy.brianchart.ui.components.TopBar
 import com.czy.brianchart.ui.navigation.ChartNavigationActions
-import com.hxj.chart.compose.view.chart.Axis
-import com.hxj.chart.compose.view.chart.BarChart
-import com.hxj.chart.compose.view.chart.BarChartData
-import com.hxj.chart.compose.view.chart.BarData
-import com.hxj.chart.compose.view.chart.getTestBarData
-import com.hxj.chart.compose.view.chart.getTestBarData2
-import com.hxj.chart.compose.view.chart.getTestBarData3
-import com.hxj.chart.compose.view.chart.getTestBarData4
-import com.hxj.chart.compose.view.chart.getTestChunkList
-import com.hxj.chart.compose.view.chart.getTestLimitLineList
-import com.hxj.chart.compose.view.chart.getTestXLimitLineList
-import com.hxj.chart.compose.view.chart.settingLabelValue
-import com.hxj.chart.compose.view.chart.settingLabelValue2
+import com.brian.chart.compose.view.chart.BarChart
+import com.brian.chart.compose.view.chart.BarData
+import com.brian.chart.compose.view.chart.getTestBarData
+import com.brian.chart.compose.view.chart.getTestBarData2
+import com.brian.chart.compose.view.chart.getTestBarData3
+import com.brian.chart.compose.view.chart.getTestBarData4
+import com.brian.chart.compose.view.chart.getTestChunkList
+import com.brian.chart.compose.view.chart.getTestLimitLineList
+import com.brian.chart.compose.view.chart.getTestXLimitLineList
+import com.brian.chart.compose.view.chart.settingLabelValue
+import com.brian.chart.compose.view.chart.settingLabelValue2
 import androidx.compose.runtime.getValue
+import com.brian.chart.compose.view.chart.Axis
+import com.brian.chart.compose.view.chart.BarChartData
 
 @Composable
 fun BarChartPage(navigationActions: ChartNavigationActions? = null) {

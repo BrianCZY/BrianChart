@@ -28,12 +28,11 @@ import com.czy.brianchart.data.testdata.RD2000_WAVE_IIIDATA_LIST
 import com.czy.brianchart.data.testdata.RD2000_WAVE_V1DATA_LIST
 import com.czy.brianchart.ui.components.TopBar
 import com.czy.brianchart.ui.navigation.ChartNavigationActions
-import com.hxj.chart.compose.view.chart.EcgChart
-import com.hxj.chart.compose.view.chart.EcgChartData
-import com.hxj.chart.compose.view.chart.GrideDataSet
-import com.hxj.chart.compose.view.chart.LineDataSet
-import com.hxj.chart.compose.view.chart.PointDataSet
-import com.hxj.chart.compose.view.chart.colorFFFFC4C3
+import com.brian.chart.compose.view.chart.EcgChart
+import com.brian.chart.compose.view.chart.EcgChartData
+import com.brian.chart.compose.view.chart.GrideDataSet
+import com.brian.chart.compose.view.chart.LineDataSet
+import com.brian.chart.compose.view.chart.PointDataSet
 import androidx.compose.runtime.getValue
 
 @Composable
@@ -122,13 +121,13 @@ fun EcgChartOne(modifier: Modifier) {
                 .height(180.dp)
                 .aspectRatio(20 / 8f) // 其中：（20 /8）  即是 x：20个格子 / y：8个格子   time:50*0.2s
             , data = EcgChartData(
-                ecgWaveLists = getTestWaveList().map { it.iterator() },
+                ecgWaveLists = getTestWaveList().map { it },
                 lineDataSet = LineDataSet(
-
+                    color = Color.Red,
                     onSecondDataNum = 250
                 ),//y 8个格子，
-                grideDataSet = GrideDataSet(color = colorFFFFC4C3, width = 1.dp),
-                pointDataSet = PointDataSet(radius = 0.5.dp, color = colorFFFFC4C3)
+                grideDataSet = GrideDataSet(color = Color.Gray, width = 1.dp),
+                pointDataSet = PointDataSet(radius = 0.5.dp, color = Color.Gray)
             )
 
         )
@@ -150,22 +149,22 @@ fun EcgChartSevenLead(modifier: Modifier) {
                 .aspectRatio(10 / 8f) // 其中：（50 /8）  即是 x：30个格子 / y：8个格子   time:50*0.2s
             , data = EcgChartData(
                 ecgWaveLists = listOf(
-                    RD2000_WAVE_IDATA_LIST.map { it.toFloat() }.iterator(),
-                    RD2000_WAVE_IIDATA_LIST.map { it.toFloat() }.iterator(),
-                    RD2000_WAVE_IIIDATA_LIST.map { it.toFloat() }.iterator(),
-                    RD2000_WAVE_AVRDATA_LIST.map { it.toFloat() }.iterator(),
-                    RD2000_WAVE_AVLDATA_LIST.map { it.toFloat() }.iterator(),
-                    RD2000_WAVE_AVFDATA_LIST.map { it.toFloat() }.iterator(),
-                    RD2000_WAVE_V1DATA_LIST.map { it.toFloat() }.iterator(),
+                    RD2000_WAVE_IDATA_LIST.map { it.toFloat() },
+                    RD2000_WAVE_IIDATA_LIST.map { it.toFloat() },
+                    RD2000_WAVE_IIIDATA_LIST.map { it.toFloat() },
+                    RD2000_WAVE_AVRDATA_LIST.map { it.toFloat() },
+                    RD2000_WAVE_AVLDATA_LIST.map { it.toFloat() },
+                    RD2000_WAVE_AVFDATA_LIST.map { it.toFloat() },
+                    RD2000_WAVE_V1DATA_LIST.map { it.toFloat() },
                 ),
                 lineDataSet = LineDataSet(
-
+                    color = Color.Red,
                     onSecondDataNum = 200,
                     leadCellNum = 4,
                     yCellNum = 4 * 7
                 ),//y 8个格子，
-                grideDataSet = GrideDataSet(color = colorFFFFC4C3, width = 1.dp),
-                pointDataSet = PointDataSet(radius = 0.5.dp, color = colorFFFFC4C3)
+                grideDataSet = GrideDataSet(color = Color.Gray, width = 1.dp),
+                pointDataSet = PointDataSet(radius = 0.5.dp, color = Color.Gray)
             )
 
         )

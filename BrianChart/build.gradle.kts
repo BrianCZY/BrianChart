@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.hxj.chart"
+    namespace = "com.brian.chart"
     compileSdk = 35
 
     defaultConfig {
