@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -836,30 +837,36 @@ fun getTestLineListSelfDefined(context: Context): MutableList<Line> {
             400f,
             80f,
             selfDefinedValue = { drawScope, offset ->
-               /* val bitmap = BitmapFactory.decodeResource(
+
+                val bitmap = BitmapFactory.decodeResource(
                     context.resources,  // 需要 Context
-                    com.brian.chart.R.drawable.ic_launcher_background
-                ).asImageBitmap()
+                    R.mipmap.icon_safelp_2
+                )
+                val scaledBmp = Bitmap.createScaledBitmap(
+                    bitmap,
+                    40,
+                    40,
+                    true   // 是否使用双线性滤波
+                )
                 drawSelfDefinedBitmap(
                     drawScope = drawScope,
-                    bitmap = bitmap,
+                    bitmap = scaledBmp.asImageBitmap(),
                     offset = offset,
-                )*/
-
+                )
             }),
         Point(
             500f,
             200f,
             selfDefinedValue = { drawScope, offset ->
-                /*val bitmap = BitmapFactory.decodeResource(
+                val bitmap = BitmapFactory.decodeResource(
                     context.resources,  // 需要 Context
-                    com.brian.chart.R.drawable.ic_launcher_background
+                    R.mipmap.icon_safelp_2
                 ).asImageBitmap()
                 drawSelfDefinedBitmap(
                     drawScope = drawScope,
                     bitmap = bitmap,
                     offset = offset,
-                )*/
+                )
 
             })
     )
@@ -1218,7 +1225,7 @@ fun getPointLineList(context: Context): MutableList<Line> {
         )
     )
     // 图标
-    val image = drawableToBitmap(ContextCompat.getDrawable(context, R.drawable.ic_launcher_background))
+    val image = drawableToBitmap(ContextCompat.getDrawable(context, R.mipmap.icon_safelp_2))
     val pointImage = mutableListOf(
         Point(0f, 1200f, image = image),
         Point(5f, 100f, image = image),
