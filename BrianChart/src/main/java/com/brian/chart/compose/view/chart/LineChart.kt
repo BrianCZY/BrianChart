@@ -400,34 +400,8 @@ fun drawCurveSplashes(
                     }
                 }
 
-                if (line.isCircle) {
-                    it.offsetList?.forEachIndexed { index, offset ->
-                        val point = line.pointList.getOrNull(index)
-                        drawCircle(
-                            center = offset,
-                            color = color,
-                            radius = point?.radius ?: 1f,
-                            style = point?.style ?: Fill,
-                        )
-                    }
-                }
 
-                if (line.isDrawDrawable) {
-                    it.offsetList?.forEachIndexed { index, offset ->
-                        val point = line.pointList.getOrNull(index)
-                        if (point?.image != null) {
-                            val x = offset.x - 40
-                            val y = offset.y - 40
-                            drawImage(
-                                image = point.image ?: ImageBitmap(100, 100),
-                                topLeft = Offset(
-                                    x = x,
-                                    y = y
-                                )
-                            )
-                        }
-                    }
-                }
+
 
                 if (line.isDrawPath) {
 
@@ -466,43 +440,6 @@ fun drawCurveSplashes(
 
                 }
 
-                if (line.isDrawLabel) {
-                    it.offsetList?.forEachIndexed { index, offset ->
-                        val point = line.pointList.getOrNull(index)
-                        if (point == null || point.label.isNullOrBlank()) {
-                            return
-                        }
-                        var chineseCount = 0 // 中文数量
-                        var otherCount = 0 // 其他数量
-                        point.label?.forEach { char ->
-                            when {
-                                char in '\u4E00'..'\u9FFF' -> chineseCount++
-                                else -> otherCount++
-                            }
-                        }
-                        val labelWidth =
-                            chineseCount * (point.labelTextSize
-                                ?: 12.sp).toPx() + otherCount * (point.labelTextSize
-                                ?: 12.sp).toPx() / 2
-                        val x = offset.x - labelWidth / 2
-                        val y = if (offset.y > (point.labelTextSize ?: 12.sp).toPx())
-                            offset.y - (point.labelTextSize ?: 12.sp).toPx()
-                        else
-                            offset.y + (point.labelTextSize ?: 12.sp).toPx()
-                        drawContext.canvas.nativeCanvas.drawText(
-                            point.label ?: "",
-                            x,
-                            y,
-                            android.graphics.Paint().let { paint ->
-                                paint.apply {
-                                    this.textSize = (point.labelTextSize ?: 12.sp).toPx()
-                                    this.color = (point.labelColor ?: Color.Black).toArgb()
-                                    this.isAntiAlias = true
-                                }
-                            }
-                        )
-                    }
-                }
 
                 line.renderer?.invoke(drawScope, it.line, it.offsetList)
             }
@@ -559,7 +496,7 @@ fun createCurvePathOrPoints(
         }.asSequence()/*数据量大的时候asSequence比list的性能更高*/
             .filter { it.x in xAxisMin..xAxisMax } /*过滤掉不在范围内的点*/.toList()
 
-        if (it.isPoints || it.isDrawDrawable || it.isCircle || it.isDrawLabel || it.renderer != null) { //散点
+        if (it.isPoints || it.renderer != null) { //散点
             pathAndPoints.offsetList =
                 getPoints(
                     pointList,
@@ -1126,51 +1063,7 @@ fun drawCurve(
                     strokeWidth = it.width.toPx(),
                     cap = StrokeCap.Round
                 )
-            } else if (it.isCircle) {
-                getPoints(
-                    /* it.pointList.filter { point -> point.x in xAxisMin..xAxisMax },*/
-                    pointList,
-                    point0.x,
-                    point0.y,
-                    oneDataXPx,
-                    oneDataYPx,
-                    offsetXPx,
-                    offsetYPx,
-                    scale
-                ).forEachIndexed { index, offset ->
-                    val point = it.pointList.getOrNull(index)
-                    drawCircle(
-                        center = offset,
-                        color = color,
-                        radius = point?.radius ?: 1f,
-                        style = point?.style ?: Fill,
-                    )
-                }
-            } else if (it.isDrawDrawable) {
-                getPoints(
-                    /*it.pointList.filter { point -> point.x in xAxisMin..xAxisMax },*/
-                    pointList,
-                    point0.x,
-                    point0.y,
-                    oneDataXPx,
-                    oneDataYPx,
-                    offsetXPx,
-                    offsetYPx,
-                    scale
-                ).forEachIndexed { index, offset ->
-                    val point = pointList.getOrNull(index)
-                    if (point?.image != null) {
-                        val x = offset.x - 40
-                        val y = offset.y - 40
-                        drawImage(
-                            image = point.image ?: ImageBitmap(100, 100),
-                            topLeft = Offset(
-                                x = x,
-                                y = y
-                            )
-                        )
-                    }
-                }
+
             } else if (it.isFill || it.isDrawArea) {
                 //绘制path
                 it.drawAreaBrush?.let {
@@ -1195,53 +1088,7 @@ fun drawCurve(
                     )
                 )
             }
-            if (it.isDrawLabel) {
-                getPoints(
-                    /*it.pointList.filter { point -> point.x in xAxisMin..xAxisMax },*/
-                    pointList,
-                    point0.x,
-                    point0.y,
-                    oneDataXPx,
-                    oneDataYPx,
-                    offsetXPx,
-                    offsetYPx,
-                    scale
-                ).forEachIndexed { index, offset ->
-                    val point = pointList.getOrNull(index)
-                    if (point == null || point.label.isNullOrBlank()) {
-                        return
-                    }
-                    var chineseCount = 0 // 中文数量
-                    var otherCount = 0 // 其他数量
-                    point.label?.forEach { char ->
-                        when {
-                            char in '\u4E00'..'\u9FFF' -> chineseCount++
-                            else -> otherCount++
-                        }
-                    }
-                    val labelWidth =
-                        chineseCount * (point.labelTextSize
-                            ?: 12.sp).toPx() + otherCount * (point.labelTextSize
-                            ?: 12.sp).toPx() / 2
-                    val x = offset.x - labelWidth / 2
-                    val y = if (offset.y > (point.labelTextSize ?: 12.sp).toPx())
-                        offset.y - (point.labelTextSize ?: 12.sp).toPx()
-                    else
-                        offset.y + (point.labelTextSize ?: 12.sp).toPx()
-                    drawContext.canvas.nativeCanvas.drawText(
-                        point.label ?: "",
-                        x,
-                        y,
-                        android.graphics.Paint().let { paint ->
-                            paint.apply {
-                                this.textSize = (point.labelTextSize ?: 12.sp).toPx()
-                                this.color = (point.labelColor ?: Color.Black).toArgb()
-                                this.isAntiAlias = true
-                            }
-                        }
-                    )
-                }
-            }
+
         }
 
     }

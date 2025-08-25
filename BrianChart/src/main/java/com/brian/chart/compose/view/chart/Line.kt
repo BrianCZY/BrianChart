@@ -21,9 +21,6 @@ data class Line(
     var drawAreaBrush: Brush? = null,//绘制面积的样式
     val isDashes: Boolean = false, // 是否启用虚线
     val isPoints: Boolean = false, // 是否启用散点
-    val isDrawDrawable: Boolean = false, // 是否启用图标
-    val isCircle: Boolean = false, // 是否启用圆形
-    val isDrawLabel: Boolean = false, // 是否启用散点标签
     val pathEffect: PathEffect? = null,// 虚线样式（自定义），null：则使用默认的样式
     var renderer:  ((drawScope: DrawScope, line: Line?, offsetList: List<Offset>?) -> Unit)? = null,//渲染器,自定义绘制
 )
