@@ -870,8 +870,8 @@ fun drawSelfDefinedTextAndShape(
         val textSize = 12.sp
         drawRoundRect(
             color = color,
-            topLeft = Offset(offset.x - 10f, offset.y - 10f),
-            size = Size(20f, 20f),
+            topLeft = Offset(offset.x - 20f, offset.y - 20f),
+            size = Size(40f, 40f),
             style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round),
             cornerRadius = CornerRadius(2f, 2f)
         )
@@ -886,7 +886,7 @@ fun drawSelfDefinedTextAndShape(
             drawText(
                 "(${x},${y})",
                 offset.x - 80f,
-                offset.y - textSize.toPx() / 2,
+                offset.y - textSize.toPx() ,
                 nativePaint
             )
         }

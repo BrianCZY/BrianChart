@@ -3,6 +3,7 @@ package com.czy.brianchart.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,8 +26,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.czy.brianchart.ui.components.TopBar
@@ -45,6 +48,7 @@ import com.hxj.chart.compose.view.chart.getTestChunkList3
 import com.hxj.chart.compose.view.chart.getTestLimitLineList
 import com.hxj.chart.compose.view.chart.getTestLineList
 import com.hxj.chart.compose.view.chart.getTestLineList2
+import com.hxj.chart.compose.view.chart.getTestLineListSelfDefined
 import com.hxj.chart.compose.view.chart.getTestPlusOrMinusLimitLineList
 import com.hxj.chart.compose.view.chart.getTestPlusOrMinusLineList
 import com.hxj.chart.compose.view.chart.getTestPointLineList
@@ -129,7 +133,11 @@ fun LineChartView(modifier: Modifier, lineChartUIState: LineChartUIState, backCl
                 HorizontalDivider(thickness = 8.dp)
                 Chart9(modifier = Modifier.height(220.dp))
                 HorizontalDivider(thickness = 8.dp)
-                Chart10(
+                Chart10(modifier = Modifier.height(220.dp))
+                HorizontalDivider(thickness = 8.dp)
+                ChartPading(modifier = Modifier.height(220.dp))
+                HorizontalDivider(thickness = 8.dp)
+                ChartSelfDefine(
                     modifier = Modifier
                         .padding(bottom = 40.dp)
                         .height(220.dp)
@@ -242,6 +250,101 @@ fun LineChartWithTimer(modifier: Modifier) {
 }
 
 @Composable
+fun ChartPading(modifier: Modifier) {
+    Row(modifier = modifier.padding(8.dp)) {
+        LineChart(
+            data = LineChartData(
+                lineList = null,
+                xAxis = Axis(
+                    max = 6f,
+                    min = 0f,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    scaleInterval = 1f,
+                    limitLineList = null,
+                    chunkList = null,
+                    labelTextSize = 14.sp,
+                    isDrawLabel = false
+                ),
+
+                yLeftAxis = Axis(
+                    max = 4.0f,
+                    min = -4f,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    scaleInterval = 2f,
+                    labelInterval = 2f,
+                    chunkList = null,
+                    limitLineList = null,
+                    labelTextSize = 14.sp,
+                    position = 3f,
+                ),
+
+
+                ),
+            modifier = Modifier.weight(1f)
+        )
+        LineChart(
+            data = LineChartData(
+                lineList = null,
+                xAxis = Axis(
+                    max = 6f,
+                    min = 0f,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    scaleInterval = 1f,
+                    limitLineList = null,
+                    chunkList = null,
+                    labelTextSize = 14.sp,
+                    isDrawLabel = false
+                ),
+
+                yLeftAxis = Axis(
+                    max = 4.0f,
+                    min = -4f,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    scaleInterval = 2f,
+                    labelInterval = 2f,
+                    chunkList = null,
+                    limitLineList = null,
+                    labelTextSize = 14.sp,
+                    position = 3f,
+                ),
+
+
+                ),
+            modifier = Modifier.weight(1f)
+        )
+
+    }
+}
+
+@Composable
+fun ChartSelfDefine(modifier: Modifier) {
+    val context = LocalContext.current
+    val list = getTestLineListSelfDefined(context)
+    LineChart(
+        modifier = modifier,
+        data = LineChartData(
+            lineList = list,
+            xAxis = Axis(
+                max = 500f,
+                scaleInterval = 20f,
+                labelInterval = 100f,
+                name = "",
+                gridLine = GridLine(10f, width = 0.5.dp)
+            ),
+
+            yLeftAxis = Axis(
+                max = 300f,
+                scaleInterval = 10f,
+                labelInterval = 50f,
+                name = "",
+                gridLine = GridLine(10f, width = 0.5.dp)
+            ),
+            isScroll = true
+        )
+    )
+}
+
+@Composable
 fun Chart10(modifier: Modifier) {
     val list = getTestLineList()
     list.forEach { it.isDrawArea = true }
@@ -265,6 +368,7 @@ fun Chart10(modifier: Modifier) {
         )
     )
 }
+
 
 @Composable
 fun Chart9(modifier: Modifier) {
