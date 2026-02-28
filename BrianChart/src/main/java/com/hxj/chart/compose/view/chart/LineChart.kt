@@ -493,34 +493,6 @@ fun drawCurveSplashes(
                     }
                 }
 
-                if (line.isCircle) {
-                    it.offsetList?.forEachIndexed { index, offset ->
-                        val point = line.pointList.getOrNull(index)
-                        drawCircle(
-                            center = offset,
-                            color = color,
-                            radius = point?.radius ?: 1f,
-                            style = point?.style ?: Fill,
-                        )
-                    }
-                }
-
-                if (line.isDrawDrawable) {
-                    it.offsetList?.forEachIndexed { index, offset ->
-                        val point = line.pointList.getOrNull(index)
-                        if (point?.image != null) {
-                            val x = offset.x - 40
-                            val y = offset.y - 40
-                            drawImage(
-                                image = point.image ?: ImageBitmap(100, 100),
-                                topLeft = Offset(
-                                    x = x,
-                                    y = y
-                                )
-                            )
-                        }
-                    }
-                }
 
                 if (line.isDrawPath) {
 
@@ -570,43 +542,6 @@ fun drawCurveSplashes(
 
                 }
 
-                if (line.isDrawLabel) {
-                    it.offsetList?.forEachIndexed { index, offset ->
-                        val point = line.pointList.getOrNull(index)
-                        if (point == null || point.label.isNullOrBlank()) {
-                            return
-                        }
-                        var chineseCount = 0 // 中文数量
-                        var otherCount = 0 // 其他数量
-                        point.label?.forEach { char ->
-                            when {
-                                char in '\u4E00'..'\u9FFF' -> chineseCount++
-                                else -> otherCount++
-                            }
-                        }
-                        val labelWidth =
-                            chineseCount * (point.labelTextSize
-                                ?: 12.sp).toPx() + otherCount * (point.labelTextSize
-                                ?: 12.sp).toPx() / 2
-                        val x = offset.x - labelWidth / 2
-                        val y = if (offset.y > (point.labelTextSize ?: 12.sp).toPx())
-                            offset.y - (point.labelTextSize ?: 12.sp).toPx()
-                        else
-                            offset.y + (point.labelTextSize ?: 12.sp).toPx()
-                        drawContext.canvas.nativeCanvas.drawText(
-                            point.label ?: "",
-                            x,
-                            y,
-                            android.graphics.Paint().let { paint ->
-                                paint.apply {
-                                    this.textSize = (point.labelTextSize ?: 12.sp).toPx()
-                                    this.color = (point.labelColor ?: Color.Black).toArgb()
-                                    this.isAntiAlias = true
-                                }
-                            }
-                        )
-                    }
-                }
 
                 line.renderer?.invoke(drawScope, it.line, it.offsetList)
             }
@@ -663,7 +598,7 @@ fun createCurvePathOrPoints(
             line.pointList
         }
 
-        if (line.isPoints || line.isDrawDrawable || line.isCircle || line.isDrawLabel || line.renderer != null) { //散点
+        if (line.isPoints || line.renderer != null) { //散点
             pathAndPoints.offsetList =
                 getPoints(
                     pointList,
@@ -1772,33 +1707,7 @@ fun LineChartSelfAdaptationPreview() {
     }
 }
 
-@Composable
-@Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 250)
-fun LineChartPoint() {
-    val context = LocalContext.current
-    MaterialTheme {
-        Surface {
-            LineChart(
-                data = LineChartData(
-                    lineList = getPointLineList(context),
-                    xAxis = Axis(
-                        max = 500f,
-                        scaleInterval = 20f,
-                        labelInterval = 100f,
-                        gridLine = GridLine(10f)
-                    ),
 
-                    yLeftAxis = Axis(
-                        max = 300f,
-                        scaleInterval = 10f,
-                        labelInterval = 50f,
-                        gridLine = GridLine(10f)
-                    ),
-                )
-            )
-        }
-    }
-}
 
 @Composable
 @Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 250)
