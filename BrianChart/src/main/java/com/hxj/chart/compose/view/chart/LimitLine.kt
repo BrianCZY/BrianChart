@@ -12,7 +12,6 @@ class LimitLine(
     var color: Color = Color(0xffF36464),
     var width: Dp = 1.dp,
     var text: String = "",
-    var tag: String? = null, //标记
     var textSize: TextUnit = 12.sp,
 
     )

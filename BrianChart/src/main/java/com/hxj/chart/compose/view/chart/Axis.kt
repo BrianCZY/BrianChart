@@ -6,10 +6,9 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-
 data class Axis(
     var min: Float = 00f,//默认最小值
-    var max: Float = 100f,//默认最大值
+    var max: Float = 10f,//默认最大值
     var position: Float? = null, //默认的位置0f，position：如果是X轴的Axis，position则是相对于Y轴上的位置
     var labelInterval: Float? = null,//X轴标签的间隔
     var scaleInterval: Float? = null,//X轴刻度的间隔

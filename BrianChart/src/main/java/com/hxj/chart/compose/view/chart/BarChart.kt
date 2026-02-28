@@ -28,16 +28,17 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.hxj.chart.TimeUtil
-import com.hxj.chart.formatDigitOrNull
+import com.hxj.view.chart.AxisPoints
+import java.text.SimpleDateFormat
+import java.util.Date
 import kotlin.math.abs
 
 /**
@@ -47,8 +48,7 @@ import kotlin.math.abs
  */
 @Composable
 fun BarChart(
-    modifier: Modifier = Modifier,
-    data: BarChartData? = null
+    modifier: Modifier = Modifier, data: BarChartData? = null
 ) {
     val barData: BarData? = data?.barData
     val xAxis: Axis = data?.xAxis ?: Axis()
@@ -68,17 +68,15 @@ fun BarChart(
 
     }
     Box(modifier = modifier) {
+
+        val textMeasurer: TextMeasurer = rememberTextMeasurer()
+        val currentDensity = LocalDensity.current
+
         var lablePaddingLeft = getBarYAxisPadding(this, yLeftAxis)
         var lablePaddingRight = getBarAxisPaddingRight(this, xAxis)
         var lablePaddingTop = getBarXAxisPaddingTop(this, yLeftAxis)
         var lablePaddingBootom = getBarXAxisPaddingBottom(this, xAxis)
 
-        val yLeftScaleLengSize =
-            with(LocalDensity.current) { getScaleLengSize(yLeftAxis).toPx() } //左边刻度的长度
-        val yRightScaleLengSize =
-            with(LocalDensity.current) { getScaleLengSize(yLeftAxis).toPx() }//右边刻度的长度
-        val xBottomScaleLengSize =
-            with(LocalDensity.current) { getScaleLengSize(xAxis).toPx() }//低边刻度的长度
         val modifier = if (isScroll) {
             //监听手势缩放
             Modifier
@@ -96,7 +94,9 @@ fun BarChart(
 
         ) {
 
-
+            val yLeftScaleLengSize = getScaleLengSize(this, yLeftAxis)//左边刻度的长度
+            val yRightScaleLengSize = getScaleLengSize(this, yLeftAxis)//右边刻度的长度
+            val xBottomScaleLengSize = getScaleLengSize(this, xAxis)//低边刻度的长度
             //确定四个绘图点
             val point0 = Point(
                 0f + lablePaddingLeft + yLeftScaleLengSize,
@@ -116,30 +116,22 @@ fun BarChart(
                 0f + lablePaddingLeft + yLeftScaleLengSize, 0f + lablePaddingTop
             )//左上角点
 
+            val axisPoints = AxisPoints(point0, point1, point2, point3)
             /**画chunk 块内容*/
             drawChunk(
-                this, xAxis = xAxis, yLeftAxis = yLeftAxis, point0 = point0,
-                point1 = point1,
-                point2 = point2,
-                point3 = point3,
+                this, xAxis = xAxis, yLeftAxis = yLeftAxis, axisPoints = axisPoints
             )
 
             /**画xy轴*/
             drawXYAxis(
-                this, xAxis = xAxis, yLeftAxis = yLeftAxis, point0 = point0,
-                point1 = point1,
-                point2 = point2,
-                point3 = point3,
+                this, xAxis = xAxis, yLeftAxis = yLeftAxis,axisPoints = axisPoints
             )
             /**刻度 label*/
             drawLable(
                 this,
                 xAxis = xAxis,
                 yLeftAxis = yLeftAxis,
-                point0 = point0,
-                point1 = point1,
-                point2 = point2,
-                point3 = point3,
+                axisPoints = axisPoints,
                 scale = scale
             )
             /**划限制线*/
@@ -147,10 +139,7 @@ fun BarChart(
                 this,
                 xAxis = xAxis,
                 yLeftAxis = yLeftAxis,
-                point0 = point0,
-                point1 = point1,
-                point2 = point2,
-                point3 = point3,
+                axisPoints = axisPoints,
                 scale = scale
             )
             /**坐标轴名称*/
@@ -158,10 +147,7 @@ fun BarChart(
                 this,
                 xAxis = xAxis,
                 yLeftAxis = yLeftAxis,
-                point0 = point0,
-                point1 = point1,
-                point2 = point2,
-                point3 = point3,
+                axisPoints = axisPoints,
                 scale = scale
             )
             /**画柱状图*/
@@ -303,23 +289,14 @@ fun drawBar(
                     if (label.contains("\n")) {
                         var list = label.split("\n").reversed()
                         drawContext.canvas.nativeCanvas.drawText(
-                            list[1],
-                            x,
-                            y - valueTextSizePx,
-                            nativePaint
+                            list[1], x, y - valueTextSizePx, nativePaint
                         )
                         drawContext.canvas.nativeCanvas.drawText(
-                            list[0],
-                            x,
-                            y,
-                            nativePaint
+                            list[0], x, y, nativePaint
                         )
                     } else {
                         drawContext.canvas.nativeCanvas.drawText(
-                            label,
-                            x,
-                            y,
-                            nativePaint
+                            label, x, y, nativePaint
                         )
                     }
 
@@ -433,8 +410,7 @@ fun getBarXAxisPaddingBottom(drawScope: BoxScope, axis: Axis?): Float {
 data class BarData(
     var barDataSetList: MutableList<BarDataSet>? = null, var groupPadding: Float = 10f,//组之间间隔
     var onGroupPadding: Float = 0f,//组内间隔
-    var width: Dp? = null,
-    var weight: Float = 0.8f, //一个单位可用的宽度 比例
+    var width: Dp? = null, var weight: Float = 0.8f, //一个单位可用的宽度 比例
     var dataSetPadding: Dp = 2.dp
 )
 
@@ -461,10 +437,7 @@ fun getTestBarData(): BarData {
     var barDataSetListTemp: MutableList<BarDataSet> = mutableListOf()
     var barEntryList: MutableList<BarEntry> = mutableListOf()
     barEntryList.add(BarEntry(1f, 60f))
-    barEntryList.add(BarEntry(5f, 200f))
-    barEntryList.add(BarEntry(10f, 200f))
-    barEntryList.add(BarEntry(15f, 250f))
-    barEntryList.add(BarEntry(20f, 100f))
+    barEntryList.add(BarEntry(2f, 200f))
 
     barDataSetListTemp.add(
         BarDataSet(
@@ -621,10 +594,7 @@ val background2: ((drawScope: DrawScope, color: Color, offset: Offset, size: Siz
     { drawScope, color, offset, size ->
         drawScope.run {
             drawRoundRect(
-                color = color,
-                topLeft = offset,
-                size = size,
-                cornerRadius = CornerRadius(2f, 2f)
+                color = color, topLeft = offset, size = size, cornerRadius = CornerRadius(2f, 2f)
             )
             drawRoundRect(
                 color = color,
@@ -665,13 +635,13 @@ val background3: ((drawScope: DrawScope, color: Color, offset: Offset, size: Siz
 
 
 fun settingValueText(name: String, value: Float) =
-    if (name.isNullOrEmpty()) "$${value}" else "${name}:${value.formatDigitOrNull(1)}"
+    if (name.isNullOrEmpty()) "$${value}" else "${name}:${value}"
 
 fun settingValueText2(name: String, value: Float) =
-    if (name.isNullOrEmpty()) "$${value}" else "${name}=${value.formatDigitOrNull(1)}"
+    if (name.isNullOrEmpty()) "$${value}" else "${name}=${value}"
 
 fun settingValueText3(name: String, value: Float) =
-    if (name.isNullOrEmpty()) "${value}" else "${name}\n${value.formatDigitOrNull(1)}"
+    if (name.isNullOrEmpty()) "${value}" else "${name}\n${value}"
 
 
 fun settingLabelValue(value: Float): String {
@@ -690,16 +660,30 @@ fun settingLabelValue(value: Float): String {
 fun settingLabelValue2(value: Float): String {
     val time = System.currentTimeMillis()
     var valueStr = ""
+    var dateFormatYMD = "yyyy-MM-dd"
     if (value > 0) {
-        valueStr =
-            TimeUtil.getStringByFormat(
-                (time + value * 24 * 60 * 60 * 1000).toLong(),
-                TimeUtil.dateFormatYMD
-            ).toString()
+        valueStr = getStringByFormat(
+            (time + value * 24 * 60 * 60 * 1000).toLong(), dateFormatYMD
+        ).toString()
     }
     return valueStr
 }
-
+/**
+ * 描述：获取milliseconds表示的日期时间的字符串.
+ *
+ * @param format 格式化字符串，如："yyyy-MM-dd HH:mm:ss"
+ * @return String 日期时间字符串
+ */
+fun getStringByFormat(milliseconds: Long, format: String?): String? {
+    var thisDateTime: String? = null
+    try {
+        val mSimpleDateFormat = SimpleDateFormat(format)
+        thisDateTime = mSimpleDateFormat.format(milliseconds)
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+    return thisDateTime
+}
 @Composable
 @Preview(showSystemUi = false, showBackground = true, widthDp = 1096, heightDp = 250)
 fun BarChartPreview4() {

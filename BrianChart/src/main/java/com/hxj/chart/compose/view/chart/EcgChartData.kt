@@ -12,8 +12,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
  */
 data class EcgChartData(
 
-    var ecgWaveLists:List<Iterator<Float>?>? = null,//心电列表
-    var ecgWaveConcurrentLinkedQueues:List<ConcurrentLinkedQueue<Float>?>? = null,//心电列表 ConcurrentLinkedQueue结构
+    var ecgWaveLists:List<List<Float>?>? = null,//心电列表
     var lineDataSet: LineDataSet = LineDataSet(), //数据设置
     var grideDataSet: GrideDataSet = GrideDataSet(), //网格设置
     var pointDataSet: PointDataSet = PointDataSet()//背景圆点设置

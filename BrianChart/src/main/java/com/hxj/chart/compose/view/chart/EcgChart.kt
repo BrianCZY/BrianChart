@@ -35,6 +35,14 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.hxj.chart.compose.view.BERRY_MED_WAVE_DATA_LIST
+import com.hxj.chart.compose.view.RD2000_WAVE_AVFDATA_LIST
+import com.hxj.chart.compose.view.RD2000_WAVE_AVLDATA_LIST
+import com.hxj.chart.compose.view.RD2000_WAVE_AVRDATA_LIST
+import com.hxj.chart.compose.view.RD2000_WAVE_IDATA_LIST
+import com.hxj.chart.compose.view.RD2000_WAVE_IIDATA_LIST
+import com.hxj.chart.compose.view.RD2000_WAVE_IIIDATA_LIST
+import com.hxj.chart.compose.view.RD2000_WAVE_V1DATA_LIST
 import kotlinx.coroutines.launch
 
 /**
@@ -244,9 +252,9 @@ fun drawEcgPoint(
 }
 
 /**
-*@author Brian
-*@Description: 批量绘制圆点，使用线段代替点，性能较高，缺点：画出来的点是正方形，不是圆形
-*/
+ *@author Brian
+ *@Description: 批量绘制圆点，使用线段代替点，性能较高，缺点：画出来的点是正方形，不是圆形
+ */
 fun drawEcgPointsByLine(
     drawScope: DrawScope,
     points: List<Offset>,
@@ -324,22 +332,24 @@ fun drawEcgCurve(drawScope: DrawScope, data: EcgChartData, size: Size) {
             val oneDataYPx = size.height / mvSum //1mv 对应的px
             val oneDataXPx = (oneDataYPx * oneCellMv) / oneCellTime
 
-
-
-            data.ecgWaveLists?.filter { it != null && it.hasNext() }
-                ?.forEachIndexed { index, floats ->
-                    floats?.let {
+            data.ecgWaveLists?.forEachIndexed { index, floats ->
+                floats?.let {
+                    if (floats.size > 0) {
+                        Log.d(TAG, "drawEcgCurve ecgWaveLists drawOnePath")
                         drawOnePath(
                             drawScope = this,
-                            data = this@apply,
+                            data = data,
                             floats = it,
                             oneDataXPx = oneDataXPx,
                             oneDataYPx = oneDataYPx,
                             y0Px = ((index + 0.5f) * lineDataSet.leadCellNum) * oneGridePx
                         )
+                    } else {
+                        Log.d(TAG, "drawEcgCurve floats null")
                     }
-
                 }
+
+            }
 
 
         }
@@ -348,7 +358,7 @@ fun drawEcgCurve(drawScope: DrawScope, data: EcgChartData, size: Size) {
 
 
 private fun buildEcgPath(
-    floats: Iterator<Float>,
+    floats: List<Float>,
     lineDataSet: LineDataSet,
     oneDataXPx: Float,
     oneDataYPx: Float,
@@ -356,9 +366,9 @@ private fun buildEcgPath(
     size: Size
 ): Path {
     val path = Path()
-    var index = 0 // 手动跟踪索引
-    while (floats.hasNext()) {
-        val fl = floats.next()
+
+    floats.forEachIndexed { index, data ->
+        val fl = data
         val X = index.toFloat() / lineDataSet.onSecondDataNum * oneDataXPx
         val Y = y0Px - fl * oneDataYPx
         if (X < size.width && Y < size.height) {
@@ -368,15 +378,15 @@ private fun buildEcgPath(
                 path.lineTo(X, Y)
             }
         }
-        index++ // 手动更新索引
     }
+
     return path
 }
 
 fun drawOnePath(
     drawScope: DrawScope,
     data: EcgChartData,
-    floats: Iterator<Float>,
+    floats: List<Float>,
     oneDataXPx: Float,
     oneDataYPx: Float,
     y0Px: Float
@@ -399,12 +409,120 @@ fun drawOnePath(
         }
     }
 }
-val colorFFFFC4C3 = Color(0xFFFFC4C3) // 定义颜色常量
 
 
+@Composable
+@Preview(heightDp = 116, widthDp = 825)
+fun EcgChartPreview(
+) {
+    MaterialTheme {
+        Surface {
+            Box(modifier = Modifier.height(116.dp)) {
+                EcgChart(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .height(100.dp)
+                        .aspectRatio(50 / 8f) // 其中：（50 /8）  即是 x：30个格子 / y：8个格子   time:50*0.2s
+                    , data = EcgChartData(
+                        ecgWaveLists = getTestWaveList(),
+                        lineDataSet = LineDataSet(
+
+                            onSecondDataNum = 250,
+                            yCellNum = 4
+                        ),//y 8个格子，
+                        grideDataSet = GrideDataSet(color = Color(0xFFFFC4C3), width = 1.dp),
+                        pointDataSet = PointDataSet(radius = 0.5.dp, color = Color(0xFFFFC4C3))
+                    )
+
+                )
+            }
+        }
+
+    }
+
+}
+
+@Composable
+@Preview(heightDp = 200, widthDp = 825)
+fun EcgChartPreview2(
+) {
+    MaterialTheme {
+        Surface {
 
 
+            Box(modifier = Modifier.height(200.dp)) {
 
+                EcgChart(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .height(180.dp)
+                        .aspectRatio(20 / 8f) // 其中：（50 /8）  即是 x：30个格子 / y：8个格子   time:50*0.2s
+                    , data = EcgChartData(
+                        ecgWaveLists = getTestWaveList(),
+                        lineDataSet = LineDataSet(
+
+                            onSecondDataNum = 250
+                        ),//y 8个格子，
+                        grideDataSet = GrideDataSet(color = Color(0xFFFFC4C3), width = 1.dp),
+                        pointDataSet = PointDataSet(radius = 0.5.dp, color = Color(0xFFFFC4C3))
+                    )
+
+                )
+            }
+        }
+
+    }
+
+}
+
+@Composable
+@Preview(heightDp = 380, widthDp = 825)
+fun EcgChartPreviewSevenLead() {
+    MaterialTheme {
+        Surface {
+
+
+            Box(modifier = Modifier.height(360.dp)) {
+
+                EcgChart(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .height(360.dp)
+                        .aspectRatio(20 / 8f) // 其中：（50 /8）  即是 x：30个格子 / y：8个格子   time:50*0.2s
+                    , data = EcgChartData(
+
+                        ecgWaveLists = listOf(
+                            RD2000_WAVE_IDATA_LIST.map { it.toFloat() },
+                            RD2000_WAVE_IIDATA_LIST.map { it.toFloat() },
+                            RD2000_WAVE_IIIDATA_LIST.map { it.toFloat() },
+                            RD2000_WAVE_AVRDATA_LIST.map { it.toFloat() },
+                            RD2000_WAVE_AVLDATA_LIST.map { it.toFloat() },
+                            RD2000_WAVE_AVFDATA_LIST.map { it.toFloat() },
+                            RD2000_WAVE_V1DATA_LIST.map { it.toFloat() },
+                        ),
+                        lineDataSet = LineDataSet(
+
+                            onSecondDataNum = 200,
+                            leadCellNum = 4,
+                            yCellNum = 4 * 7
+                        ),//y 8个格子，
+                        grideDataSet = GrideDataSet(color = Color(0xFFFFC4C3), width = 1.dp),
+                        pointDataSet = PointDataSet(radius = 0.5.dp, color = Color(0xFFFFC4C3))
+                    )
+
+                )
+            }
+        }
+
+    }
+
+}
+
+fun getTestWaveList(): List<MutableList<Float>> {
+//    1倍增益下，128是基线，70（128+70）对应1mv
+    val list = BERRY_MED_WAVE_DATA_LIST.map { (it - 128f) / 70f }.toMutableList()
+    return listOf(list)
+}
 
 @Composable
 @Preview(heightDp = 200, widthDp = 825)
@@ -439,6 +557,43 @@ fun EcgChartPreview4(
                     grideDataSet = GrideDataSet(color = Color.Red, width = 2.dp)
                 )
             )
+        }
+    }
+
+}
+
+@Composable
+@Preview(heightDp = 400, widthDp = 825)
+fun EcgChartPreview5(
+) {
+    MaterialTheme {
+        Surface {
+
+            Column(modifier = Modifier.padding(8.dp)) {
+
+                val onSecondDataNum = 250
+
+                EcgChart(
+                    modifier = Modifier
+                        .background(Color.Magenta)
+                        .padding(start = 8.dp, top = 4.dp, bottom = 4.dp, end = 8.dp)
+                        .fillMaxWidth()
+                        .onGloballyPositioned {
+
+                        }
+                        .aspectRatio(30 / 4f) // 其中：（50 /8）  即是 x：30个格子 / y：8个格子   time:50*0.2s
+                    , data = EcgChartData(
+//                    waveList = getTestWaveList(),
+                        ecgWaveLists = mutableListOf(),
+                        lineDataSet = LineDataSet(
+                            onSecondDataNum = onSecondDataNum
+                        ),//y 8个格子，
+                        grideDataSet = GrideDataSet(color = Color(0xFFFFC4C3), width = 1.dp),
+                        pointDataSet = PointDataSet(radius = 0.5.dp, color = Color(0xFFFFC4C3))
+                    )
+
+                )
+            }
         }
     }
 
