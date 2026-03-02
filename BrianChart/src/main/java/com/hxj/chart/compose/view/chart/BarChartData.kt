@@ -2,8 +2,8 @@ package com.hxj.chart.compose.view.chart
 
 
 data class BarChartData(
-    var barData: BarData? = null,
-    var xAxis: Axis = Axis(),
-    var yLeftAxis: Axis = Axis(),
-    var isScroll: Boolean = false
+    val barData: BarData? = null,
+    val xAxis: Axis = Axis(),
+    val yLeftAxis: Axis = Axis(),
+    val isScroll: Boolean = false
 )
