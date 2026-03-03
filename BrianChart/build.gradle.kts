@@ -1,5 +1,6 @@
 plugins {
     id("com.android.library")
+    id("maven-publish")
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
@@ -44,6 +45,26 @@ android {
     }
 }
 
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                from(components["release"]) // 这里引用 android 的 release 组件
+
+                groupId = "com.github.BrianCZY"
+                artifactId = "chart"
+                version = "v1.0.0"
+
+                // 可选：添加 POM 信息
+                pom {
+                    name.set("My Library Name")
+                    description.set("A cool android library")
+                }
+            }
+        }
+
+    }
+}
 dependencies {
 
     implementation(libs.androidx.core.ktx)
