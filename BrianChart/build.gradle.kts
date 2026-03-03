@@ -52,13 +52,21 @@ afterEvaluate {
                 from(components["release"]) // 这里引用 android 的 release 组件
 
                 groupId = "com.github.BrianCZY"
-                artifactId = "chart"
+                artifactId = "BrianChart"
                 version = "v1.0.0"
 
                 // 可选：添加 POM 信息
                 pom {
-                    name.set("chart")
-                    description.set("Brian chart")
+                    name.set("Brian Chart Library")
+                    description.set("A powerful chart library for Android")
+                    url.set("https://github.com/BrianCZY/chart")
+
+                    licenses {
+                        license {
+                            name.set("MIT License")
+                            url.set("https://opensource.org/licenses/MIT")
+                        }
+                    }
                 }
             }
         }
