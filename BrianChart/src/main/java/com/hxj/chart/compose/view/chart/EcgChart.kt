@@ -2,17 +2,8 @@ package com.hxj.chart.compose.view.chart
 
 import android.util.Log
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -23,26 +14,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PointMode
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.hxj.chart.compose.view.BERRY_MED_WAVE_DATA_LIST
-import com.hxj.chart.compose.view.RD2000_WAVE_AVFDATA_LIST
-import com.hxj.chart.compose.view.RD2000_WAVE_AVLDATA_LIST
-import com.hxj.chart.compose.view.RD2000_WAVE_AVRDATA_LIST
-import com.hxj.chart.compose.view.RD2000_WAVE_IDATA_LIST
-import com.hxj.chart.compose.view.RD2000_WAVE_IIDATA_LIST
-import com.hxj.chart.compose.view.RD2000_WAVE_IIIDATA_LIST
-import com.hxj.chart.compose.view.RD2000_WAVE_V1DATA_LIST
 import kotlinx.coroutines.launch
 
 /**
@@ -411,191 +391,4 @@ fun drawOnePath(
 }
 
 
-@Composable
-@Preview(heightDp = 116, widthDp = 825)
-fun EcgChartPreview(
-) {
-    MaterialTheme {
-        Surface {
-            Box(modifier = Modifier.height(116.dp)) {
-                EcgChart(
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .height(100.dp)
-                        .aspectRatio(50 / 8f) // 其中：（50 /8）  即是 x：30个格子 / y：8个格子   time:50*0.2s
-                    , data = EcgChartData(
-                        ecgWaveLists = getTestWaveList(),
-                        lineDataSet = LineDataSet(
-
-                            onSecondDataNum = 250,
-                            yCellNum = 4
-                        ),//y 8个格子，
-                        grideDataSet = GrideDataSet(color = Color(0xFFFFC4C3), width = 1.dp),
-                        pointDataSet = PointDataSet(radius = 0.5.dp, color = Color(0xFFFFC4C3))
-                    )
-
-                )
-            }
-        }
-
-    }
-
-}
-
-@Composable
-@Preview(heightDp = 200, widthDp = 825)
-fun EcgChartPreview2(
-) {
-    MaterialTheme {
-        Surface {
-
-
-            Box(modifier = Modifier.height(200.dp)) {
-
-                EcgChart(
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .height(180.dp)
-                        .aspectRatio(20 / 8f) // 其中：（50 /8）  即是 x：30个格子 / y：8个格子   time:50*0.2s
-                    , data = EcgChartData(
-                        ecgWaveLists = getTestWaveList(),
-                        lineDataSet = LineDataSet(
-
-                            onSecondDataNum = 250
-                        ),//y 8个格子，
-                        grideDataSet = GrideDataSet(color = Color(0xFFFFC4C3), width = 1.dp),
-                        pointDataSet = PointDataSet(radius = 0.5.dp, color = Color(0xFFFFC4C3))
-                    )
-
-                )
-            }
-        }
-
-    }
-
-}
-
-@Composable
-@Preview(heightDp = 380, widthDp = 825)
-fun EcgChartPreviewSevenLead() {
-    MaterialTheme {
-        Surface {
-
-
-            Box(modifier = Modifier.height(360.dp)) {
-
-                EcgChart(
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .height(360.dp)
-                        .aspectRatio(20 / 8f) // 其中：（50 /8）  即是 x：30个格子 / y：8个格子   time:50*0.2s
-                    , data = EcgChartData(
-
-                        ecgWaveLists = listOf(
-                            RD2000_WAVE_IDATA_LIST.map { it.toFloat() },
-                            RD2000_WAVE_IIDATA_LIST.map { it.toFloat() },
-                            RD2000_WAVE_IIIDATA_LIST.map { it.toFloat() },
-                            RD2000_WAVE_AVRDATA_LIST.map { it.toFloat() },
-                            RD2000_WAVE_AVLDATA_LIST.map { it.toFloat() },
-                            RD2000_WAVE_AVFDATA_LIST.map { it.toFloat() },
-                            RD2000_WAVE_V1DATA_LIST.map { it.toFloat() },
-                        ),
-                        lineDataSet = LineDataSet(
-
-                            onSecondDataNum = 200,
-                            leadCellNum = 4,
-                            yCellNum = 4 * 7
-                        ),//y 8个格子，
-                        grideDataSet = GrideDataSet(color = Color(0xFFFFC4C3), width = 1.dp),
-                        pointDataSet = PointDataSet(radius = 0.5.dp, color = Color(0xFFFFC4C3))
-                    )
-
-                )
-            }
-        }
-
-    }
-
-}
-
-fun getTestWaveList(): List<MutableList<Float>> {
-//    1倍增益下，128是基线，70（128+70）对应1mv
-    val list = BERRY_MED_WAVE_DATA_LIST.map { (it - 128f) / 70f }.toMutableList()
-    return listOf(list)
-}
-
-@Composable
-@Preview(heightDp = 200, widthDp = 825)
-fun EcgChartPreview3(
-) {
-    MaterialTheme {
-        Surface {
-            EcgChart(
-                modifier = Modifier
-                    .padding(8.dp)
-                    .fillMaxHeight(),
-                data = EcgChartData(
-                    lineDataSet = LineDataSet(),
-                    grideDataSet = GrideDataSet(color = Color.Red, width = 2.dp)
-                )
-            )
-        }
-    }
-
-}
-
-@Composable
-@Preview(heightDp = 200, widthDp = 825)
-fun EcgChartPreview4(
-) {
-    MaterialTheme {
-        Surface {
-            EcgChart(
-                modifier = Modifier,
-                data = EcgChartData(
-                    lineDataSet = LineDataSet(),
-                    grideDataSet = GrideDataSet(color = Color.Red, width = 2.dp)
-                )
-            )
-        }
-    }
-
-}
-
-@Composable
-@Preview(heightDp = 400, widthDp = 825)
-fun EcgChartPreview5(
-) {
-    MaterialTheme {
-        Surface {
-
-            Column(modifier = Modifier.padding(8.dp)) {
-
-                val onSecondDataNum = 250
-
-                EcgChart(
-                    modifier = Modifier
-                        .background(Color.Magenta)
-                        .padding(start = 8.dp, top = 4.dp, bottom = 4.dp, end = 8.dp)
-                        .fillMaxWidth()
-                        .onGloballyPositioned {
-
-                        }
-                        .aspectRatio(30 / 4f) // 其中：（50 /8）  即是 x：30个格子 / y：8个格子   time:50*0.2s
-                    , data = EcgChartData(
-//                    waveList = getTestWaveList(),
-                        ecgWaveLists = mutableListOf(),
-                        lineDataSet = LineDataSet(
-                            onSecondDataNum = onSecondDataNum
-                        ),//y 8个格子，
-                        grideDataSet = GrideDataSet(color = Color(0xFFFFC4C3), width = 1.dp),
-                        pointDataSet = PointDataSet(radius = 0.5.dp, color = Color(0xFFFFC4C3))
-                    )
-
-                )
-            }
-        }
-    }
-
-}
 

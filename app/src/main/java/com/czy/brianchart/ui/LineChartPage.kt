@@ -1,5 +1,11 @@
 package com.czy.brianchart.ui
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.drawable.Drawable
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -27,7 +33,19 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -38,29 +56,14 @@ import com.czy.brianchart.ui.components.TopBar
 import com.czy.brianchart.ui.navigation.ChartNavigationActions
 import com.czy.brianchart.ui.theme.BrianChartTheme
 import com.hxj.chart.compose.view.chart.Axis
+import com.hxj.chart.compose.view.chart.AxisType
+import com.hxj.chart.compose.view.chart.Chunk
 import com.hxj.chart.compose.view.chart.GridLine
+import com.hxj.chart.compose.view.chart.LimitLine
 import com.hxj.chart.compose.view.chart.Line
 import com.hxj.chart.compose.view.chart.LineChart
 import com.hxj.chart.compose.view.chart.LineChartData
 import com.hxj.chart.compose.view.chart.Point
-import com.hxj.chart.compose.view.chart.getTestChunkList
-import com.hxj.chart.compose.view.chart.getTestChunkList1
-import com.hxj.chart.compose.view.chart.getTestChunkList2
-import com.hxj.chart.compose.view.chart.getTestChunkList3
-import com.hxj.chart.compose.view.chart.getTestLimitLineList
-import com.hxj.chart.compose.view.chart.getTestLineList
-import com.hxj.chart.compose.view.chart.getTestLineList2
-import com.hxj.chart.compose.view.chart.getTestLineListSelfDefined
-import com.hxj.chart.compose.view.chart.getTestPlusOrMinusLimitLineList
-import com.hxj.chart.compose.view.chart.getTestPlusOrMinusLineList
-import com.hxj.chart.compose.view.chart.getTestPointLineList
-import com.hxj.chart.compose.view.chart.getTestXChunkList
-import com.hxj.chart.compose.view.chart.getTestXLimitLineList
-import com.hxj.chart.compose.view.chart.getTestXLimitLineList1
-import com.hxj.chart.compose.view.chart.getTestYLimitLineList1
-import com.hxj.chart.compose.view.chart.getTestYLimitLineList2
-import com.hxj.chart.compose.view.chart.getTestYLimitLineList3
-import com.hxj.chart.compose.view.chart.settingLineChartLabelValue
 import com.hxj.view.chart.AxisPadding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -70,6 +73,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlin.math.sin
+import kotlin.random.Random
 
 @Composable
 fun LineChartPage(navigationActions: ChartNavigationActions? = null) {
@@ -678,7 +682,479 @@ fun ChartViewLongPreview() {
 
 }
 
+fun getTestChunkList(): MutableList<Chunk> {
+    val yChunkList: MutableList<Chunk> = mutableListOf()
+    yChunkList.add(Chunk(40f, 60f))
+    yChunkList.add(Chunk(10f, 20f))
+    return yChunkList
+}
 
+fun getTestXChunkList(): MutableList<Chunk> {
+    val yChunkList: MutableList<Chunk> = mutableListOf()
+    yChunkList.add(Chunk(20f, 25f))
+    return yChunkList
+}
+
+fun getTestChunkList1(): MutableList<Chunk> {
+    val yChunkList: MutableList<Chunk> = mutableListOf()
+    yChunkList.add(Chunk(25f, 50f, color = Color(0X2218D276)))
+    return yChunkList
+}
+
+fun getTestChunkList2(): MutableList<Chunk> {
+    val yChunkList: MutableList<Chunk> = mutableListOf()
+    yChunkList.add(Chunk(800f, 1000f, color = Color(0X222FF4E87)))
+    return yChunkList
+}
+
+fun getTestChunkList3(): MutableList<Chunk> {
+    val yChunkList: MutableList<Chunk> = mutableListOf()
+    yChunkList.add(Chunk(1500f, 1800f, color = Color(0X22058BF6)))
+    return yChunkList
+}
+
+fun getTestLimitLineList(): MutableList<LimitLine> {
+    val limitLineList: MutableList<LimitLine> = mutableListOf()
+    limitLineList.add(LimitLine(50f, true, width = 2.dp, color = Color.Gray, text = "测试"))
+    limitLineList.add(LimitLine(15f))
+    return limitLineList
+}
+
+fun getTestPlusOrMinusLimitLineList(): MutableList<LimitLine> {
+    val limitLineList: MutableList<LimitLine> = mutableListOf()
+    limitLineList.add(LimitLine(50f, true, width = 2.dp, color = Color.Gray, text = "测试"))
+    limitLineList.add(LimitLine(-25f))
+    return limitLineList
+}
+
+fun getTestXLimitLineList(): MutableList<LimitLine> {
+    val limitLineList: MutableList<LimitLine> = mutableListOf()
+    limitLineList.add(LimitLine(100f, true, width = 2.dp, color = Color.Gray, text = "测试"))
+    limitLineList.add(LimitLine(20f))
+    return limitLineList
+}
+
+fun getTestXLimitLineList1(): MutableList<LimitLine> {
+    val limitLineList: MutableList<LimitLine> = mutableListOf()
+    limitLineList.add(LimitLine(10f, true, width = 2.dp, color = Color.Gray, text = "测试"))
+    limitLineList.add(LimitLine(20f))
+    return limitLineList
+}
+
+fun getTestYLimitLineList1(): MutableList<LimitLine> {
+    val limitLineList: MutableList<LimitLine> = mutableListOf()
+    limitLineList.add(
+        LimitLine(
+            10f,
+            true,
+            width = 2.dp,
+            color = Color(0XFF18D276),
+            text = "限制线"
+        )
+    )
+    return limitLineList
+}
+
+fun getTestYLimitLineList2(): MutableList<LimitLine> {
+    val limitLineList: MutableList<LimitLine> = mutableListOf()
+    limitLineList.add(
+        LimitLine(
+            600f,
+            true,
+            width = 2.dp,
+            color = Color(0XFFFF4E87),
+            text = "限制线"
+        )
+    )
+    return limitLineList
+}
+
+fun getTestYLimitLineList3(): MutableList<LimitLine> {
+    val limitLineList: MutableList<LimitLine> = mutableListOf()
+    limitLineList.add(
+        LimitLine(
+            1200f,
+            true,
+            width = 2.dp,
+            color = Color(0XFF058BF6),
+            text = "限制线"
+        )
+    )
+    return limitLineList
+}
+
+/**
+ * @author Brian
+ * @Description: test 测试数据，测试UI效果使用
+ */
+fun getTestLineList(): MutableList<Line> {
+    val linList: MutableList<Line> = mutableListOf()
+    val point = mutableListOf(
+        Point(10f, 10f), Point(50f, 100f), Point(100f, 30f),
+        Point(150f, 200f), Point(200f, 120f), Point(250f, 10f),
+        Point(300f, 280f), Point(350f, 100f), Point(400f, 10f),
+        Point(450f, 100f), Point(500f, 200f)
+    )
+    val point1 = mutableListOf(
+        Point(10f, 210f), Point(50f, 150f), Point(100f, 130f),
+        Point(150f, 200f), Point(200f, 80f), Point(250f, 240f),
+        Point(300f, 20f), Point(350f, 150f), Point(400f, 50f),
+        Point(450f, 240f), Point(500f, 140f)
+    )
+//    linList.add(
+//        Line(
+//            point,
+//            color = Color(0xff50E3C2),
+//            isDashes = true,
+//            pathEffect = PathEffect.dashPathEffect(floatArrayOf(18f, 12f), 2f)
+//        )
+//    )
+    linList.add(
+        Line(
+            point1,
+            color = Color(0xff4A90E2),
+            isDrawCubic = true,
+            isDrawArea = true,
+            drawAreaBrush = Brush.linearGradient(
+                colors = listOf(Color(0xff4A90E2), Color(0x204A90E2)),
+                start = Offset(0f, 0f),
+                end = Offset(0f, Float.POSITIVE_INFINITY)
+            )
+        )
+    )
+    return linList
+}
+
+
+/**
+ * @author Brian
+ * @Description: test 测试数据，测试UI效果使用
+ */
+fun getTestLineListSelfDefined(context: Context): MutableList<Line> {
+    val linList: MutableList<Line> = mutableListOf()
+    val point = mutableListOf(
+        Point(100f, 50f, selfDefinedValue = { drawScope, offset ->
+            drawSelfDefinedTextAndShape(
+                drawScope = drawScope,
+                offset = offset,
+                x = 100f,
+                y = 50f,
+                color = Color.Green
+            )
+
+        }),
+        Point(200f, 120f, selfDefinedValue = { drawScope, offset ->
+            drawSelfDefinedTextAndShape(
+                drawScope = drawScope,
+                offset = offset,
+                x = 200f,
+                y = 120f,
+                color = Color.Red
+            )
+
+        }),
+        Point(300f, 220f, selfDefinedValue = { drawScope, offset ->
+            drawSelfDefinedText(
+                drawScope = drawScope,
+                offset = offset,
+                x = 300f,
+                y = 220f,
+                color = Color.Black
+            )
+
+        }),
+        Point(400f, 80f, selfDefinedValue = { drawScope, offset ->
+            val bitmap = BitmapFactory.decodeResource(
+                context.resources,  // 需要 Context
+                android.R.drawable.ic_menu_edit
+            ).asImageBitmap()
+            drawSelfDefinedBitmap(
+                drawScope = drawScope,
+                bitmap = bitmap,
+                offset = offset,
+            )
+
+        }),
+        Point(500f, 200f, selfDefinedValue = { drawScope, offset ->
+            val bitmap = BitmapFactory.decodeResource(
+                context.resources,  // 需要 Context
+                android.R.drawable.ic_menu_edit
+            ).asImageBitmap()
+            drawSelfDefinedBitmap(
+                drawScope = drawScope,
+                bitmap = bitmap,
+                offset = offset,
+            )
+
+        })
+    )
+    val point1 = mutableListOf(
+        Point(10f, 210f), Point(50f, 150f), Point(100f, 130f),
+        Point(150f, 200f), Point(200f, 80f), Point(250f, 240f),
+        Point(300f, 20f), Point(350f, 150f), Point(400f, 50f),
+        Point(450f, 240f), Point(500f, 140f)
+    )
+    linList.add(
+        Line(
+            point,
+            color = Color(0xff50E3C2),
+            isDashes = true,
+            pathEffect = PathEffect.dashPathEffect(floatArrayOf(18f, 12f), 2f),
+            renderer = { drawScope, line, offsetList ->
+                line?.pointList?.forEachIndexed { index, point ->
+                    offsetList?.getOrNull(index)
+                        ?.let { point.selfDefinedValue?.invoke(drawScope, it) }
+                }
+            }
+        )
+    )
+    /*linList.add(
+        Line(
+            point1,
+            color = Color(0xff4A90E2),
+            isDrawCubic = true,
+            isDrawArea = true,
+            drawAreaBrush = Brush.linearGradient(
+                colors = listOf(Color(0xff4A90E2), Color(0x204A90E2)),
+                start = Offset(0f, 0f),
+                end = Offset(0f, Float.POSITIVE_INFINITY)
+            ),
+            renderer = { drawScope, line, offsetList ->
+                line?.pointList?.forEachIndexed { index, point ->
+                    offsetList?.getOrNull(index)
+                        ?.let { point.selfDefinedValue?.invoke(drawScope, it) }
+                }
+            }
+        )
+    )*/
+    return linList
+}
+
+/**
+ *@author Brian
+ *@Description:自定义样式，示例
+ */
+fun drawSelfDefinedBitmap(
+    drawScope: DrawScope,
+    bitmap: ImageBitmap,
+    offset: Offset,
+) {
+    drawScope.run {
+
+        drawImage(
+            image = bitmap,
+            topLeft = Offset(
+                offset.x - bitmap.width / 2,
+                offset.y - bitmap.height / 2
+            ) // Example position adjustment
+        )
+
+    }
+
+}
+
+/**
+ *@author Brian
+ *@Description:自定义样式，示例
+ */
+fun drawSelfDefinedTextAndShape(
+    drawScope: DrawScope,
+    offset: Offset,
+    x: Float,
+    y: Float,
+    color: Color
+) {
+    drawScope.run {
+        val textSize = 12.sp
+        drawRoundRect(
+            color = color,
+            topLeft = Offset(offset.x - 20f, offset.y - 20f),
+            size = Size(40f, 40f),
+            style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round),
+            cornerRadius = CornerRadius(2f, 2f)
+        )
+        drawContext.canvas.nativeCanvas.apply {
+            val nativePaint = Paint().let {
+                it.apply {
+                    this.textSize = textSize.toPx()
+                    this.color = color.toArgb()
+                    this.isAntiAlias = true//抗锯齿
+                }
+            }
+            drawText(
+                "(${x},${y})",
+                offset.x - 80f,
+                offset.y - textSize.toPx() ,
+                nativePaint
+            )
+        }
+    }
+}
+
+/**
+ *@author Brian
+ *@Description:自定义样式，示例
+ */
+fun drawSelfDefinedText(
+    drawScope: DrawScope,
+    offset: Offset,
+    x: Float,
+    y: Float,
+    color: Color
+) {
+    drawScope.run {
+        val textSize = 12.sp
+        drawContext.canvas.nativeCanvas.apply {
+            val nativePaint = Paint().let {
+                it.apply {
+                    this.textSize = textSize.toPx()
+                    this.color = color.toArgb()
+                    this.isAntiAlias = true//抗锯齿
+                }
+            }
+            drawText(
+                "${y.toInt()}次",
+                offset.x - 40f,
+                offset.y - textSize.toPx() / 2,
+                nativePaint
+            )
+        }
+    }
+}
+
+fun getTestLineList2(): MutableList<Line> {
+    val linList: MutableList<Line> = mutableListOf()
+    val point = mutableListOf(
+        Point(0f, 10f), Point(5f, 100f), Point(10f, 30f),
+        Point(15f, 200f), Point(20f, 120f), Point(25f, 10f),
+        Point(30f, 180f), Point(35f, 100f), Point(40f, 10f),
+
+        )
+    val point1 = mutableListOf(
+        Point(0f, 1000f), Point(5f, 1000f), Point(10f, 2000f),
+        Point(15f, 120f), Point(20f, 1120f), Point(25f, 1000f),
+        Point(30f, 180f), Point(35f, 100f), Point(40f, 1000f),
+    )
+    val point2 = mutableListOf(
+        Point(0f, 1200f), Point(5f, 100f), Point(10f, 2200f),
+        Point(15f, 600f), Point(20f, 120f), Point(25f, 1500f),
+        Point(30f, 680f), Point(35f, 200f), Point(40f, 1500f),
+    )
+    linList.add(Line(point, color = Color(0XFF18D276), axisType = AxisType.LEFT_INSIDE))
+    linList.add(Line(point1, color = Color(0XFFFF4E87), isDrawCubic = true, isDashes = true))
+    linList.add(
+        Line(
+            point2,
+            color = Color(0XFF058BF6),
+            axisType = AxisType.RIGHT,
+            isDrawCubic = true
+        )
+    )
+    return linList
+}
+
+
+fun drawableToBitmap(drawable: Drawable? = null): ImageBitmap? {
+    if (drawable == null) {
+        return null
+    }
+    val bitmap = Bitmap.createBitmap(
+        drawable.intrinsicWidth,
+        drawable.intrinsicHeight,
+        Bitmap.Config.ARGB_8888
+    )
+    val canvas = Canvas(bitmap)
+    drawable.setBounds(0, 0, canvas.width, canvas.height)
+    drawable.draw(canvas)
+    return bitmap.asImageBitmap()
+}
+
+/**
+ * @author Brian
+ * @Description: test 有正 有负 测试数据，测试UI效果使用
+ */
+fun getTestPlusOrMinusLineList(): MutableList<Line> {
+    val linList: MutableList<Line> = mutableListOf()
+    val point = mutableListOf<Point>().apply {
+        for (i in 0..20) {
+            val x = Random.nextInt(-500, 500).toFloat()
+            val y = Random.nextInt(-200, 200).toFloat()
+            add(Point(x, y))
+        }
+    }
+    val point1 = mutableListOf<Point>().apply {
+        for (i in -500..500 step 50) {
+            val y = Random.nextInt(-200, 200).toFloat()
+            add(Point(i.toFloat(), y))
+        }
+    }
+
+
+    linList.add(
+        Line(
+            point,
+            color = Color(0xff50E3C2),
+            isDrawCubic = true
+        )
+    )
+    linList.add(Line(point1, color = Color(0xff4A90E2), isDrawCubic = true))
+    return linList
+}
+
+/**
+ * @author Brian
+ * @Description: test 测试数据，测试UI效果使用
+ */
+fun getTestPointLineList(): MutableList<Line> {
+    val linList: MutableList<Line> = mutableListOf()
+    val point = mutableListOf(
+        Point(10f, 210f), Point(50f, 150f), Point(100f, 130f),
+        Point(150f, 200f), Point(200f, 80f), Point(250f, 240f),
+        Point(300f, 20f), Point(350f, 150f), Point(400f, 50f),
+        Point(450f, 240f), Point(500f, 140f)
+    )
+    linList.add(
+        Line(
+            point,
+            width = 2.dp,
+            color = Color(0xff4A90E2),
+            isDrawCubic = true,
+            isPoints = true,
+            isDrawPath = false,
+        )
+    )
+    return linList
+}
+
+/**
+ * @author Brian
+ * @Description: test 测试数据，测试UI效果使用
+ */
+fun getTestLine(): MutableList<Line> {
+    val linList: MutableList<Line> = mutableListOf()
+    val point = mutableListOf(
+        Point(10f, 0.1f),
+        Point(50f, 0.2f),
+        Point(100f, 0.1f),
+        Point(150f, 0.2f),
+    )
+    linList.add(Line(point, width = 2.dp, color = Color(0xff4A90E2), isDrawCubic = true))
+    return linList
+}
+
+fun settingLineChartLabelValue(value: Float): String {
+    val label = when {
+        value.toInt().toFloat() == value -> {//为整数浮点数
+            "${value.toInt()}"
+        }
+
+
+        else -> {//为小数浮点数
+            "${value}"
+        }
+    }
+    return "${label}T"
+}
 @Composable
 @Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 250)
 fun LineChartPreview() {

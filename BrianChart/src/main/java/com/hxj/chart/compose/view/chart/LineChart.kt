@@ -1359,16 +1359,4 @@ fun getCubicPathCatmullRom(
     return path
 }
 
-fun settingLineChartLabelValue(value: Float): String {
-    val label = when {
-        value.toInt().toFloat() == value -> {//为整数浮点数
-            "${value.toInt()}"
-        }
 
-
-        else -> {//为小数浮点数
-            "${value}"
-        }
-    }
-    return "${label}T"
-}
