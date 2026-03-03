@@ -57,8 +57,8 @@ afterEvaluate {
 
                 // 可选：添加 POM 信息
                 pom {
-                    name.set("My Library Name")
-                    description.set("A cool android library")
+                    name.set("chart")
+                    description.set("Brian chart")
                 }
             }
         }
