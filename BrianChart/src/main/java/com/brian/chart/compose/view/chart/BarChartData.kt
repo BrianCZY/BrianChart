@@ -1,4 +1,4 @@
-package com.hxj.chart.compose.view.chart
+package com.brian.chart.compose.view.chart
 
 
 data class BarChartData(

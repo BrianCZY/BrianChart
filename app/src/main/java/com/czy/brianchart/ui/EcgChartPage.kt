@@ -31,11 +31,11 @@ import com.czy.brianchart.data.testdata.RD2000_WAVE_IIIDATA_LIST
 import com.czy.brianchart.data.testdata.RD2000_WAVE_V1DATA_LIST
 import com.czy.brianchart.ui.components.TopBar
 import com.czy.brianchart.ui.navigation.ChartNavigationActions
-import com.hxj.chart.compose.view.chart.EcgChart
-import com.hxj.chart.compose.view.chart.EcgChartData
-import com.hxj.chart.compose.view.chart.GrideDataSet
-import com.hxj.chart.compose.view.chart.LineDataSet
-import com.hxj.chart.compose.view.chart.PointDataSet
+import com.brian.chart.compose.view.chart.EcgChart
+import com.brian.chart.compose.view.chart.EcgChartData
+import com.brian.chart.compose.view.chart.GrideDataSet
+import com.brian.chart.compose.view.chart.LineDataSet
+import com.brian.chart.compose.view.chart.PointDataSet
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.layout.onGloballyPositioned
 

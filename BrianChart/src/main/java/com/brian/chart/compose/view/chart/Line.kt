@@ -1,6 +1,5 @@
-package com.hxj.chart.compose.view.chart
+package com.brian.chart.compose.view.chart
 
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color

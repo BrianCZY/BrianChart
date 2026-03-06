@@ -1,6 +1,6 @@
-package com.hxj.chart.compose.view.chart
+package com.brian.chart.compose.view.chart
 
-import com.hxj.view.chart.AxisPadding
+import com.brian.view.chart.AxisPadding
 
 
 data class LineChartData(

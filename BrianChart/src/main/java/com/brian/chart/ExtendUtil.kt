@@ -1,4 +1,4 @@
-package com.hxj.chart
+package com.brian.chart
 
 import java.math.BigDecimal
 import java.math.RoundingMode

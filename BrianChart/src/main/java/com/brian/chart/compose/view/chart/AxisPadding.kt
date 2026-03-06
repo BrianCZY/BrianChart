@@ -1,7 +1,6 @@
-package com.hxj.view.chart
+package com.brian.view.chart
 
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 
 /**
  *@author Brian

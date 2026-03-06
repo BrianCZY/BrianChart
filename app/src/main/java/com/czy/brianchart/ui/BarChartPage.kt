@@ -26,12 +26,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.czy.brianchart.ui.components.TopBar
 import com.czy.brianchart.ui.navigation.ChartNavigationActions
-import com.hxj.chart.compose.view.chart.Axis
-import com.hxj.chart.compose.view.chart.BarChart
-import com.hxj.chart.compose.view.chart.BarChartData
-import com.hxj.chart.compose.view.chart.BarData
-import com.hxj.chart.compose.view.chart.BarDataSet
-import com.hxj.chart.compose.view.chart.BarEntry
+import com.brian.chart.compose.view.chart.Axis
+import com.brian.chart.compose.view.chart.BarChart
+import com.brian.chart.compose.view.chart.BarChartData
+import com.brian.chart.compose.view.chart.BarData
+import com.brian.chart.compose.view.chart.BarDataSet
+import com.brian.chart.compose.view.chart.BarEntry
 import java.text.SimpleDateFormat
 import kotlin.math.abs
 

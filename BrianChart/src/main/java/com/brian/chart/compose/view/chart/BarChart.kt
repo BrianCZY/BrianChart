@@ -1,4 +1,4 @@
-package com.hxj.chart.compose.view.chart
+package com.brian.chart.compose.view.chart
 
 import android.util.Log
 import androidx.compose.foundation.Canvas
@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,15 +29,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.hxj.view.chart.AxisPoints
-import java.text.SimpleDateFormat
-import java.util.Date
-import kotlin.math.abs
+import com.brian.view.chart.AxisPoints
 
 /**
  * @author Brian

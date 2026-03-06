@@ -1,10 +1,9 @@
-package com.hxj.chart.compose.view.chart
+package com.brian.chart.compose.view.chart
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+
 /**
 *@author Brian
 *@Description: 网格线
