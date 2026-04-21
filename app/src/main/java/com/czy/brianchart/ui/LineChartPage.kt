@@ -1776,3 +1776,40 @@ fun LineChartPreviewSelfDefined() {
         }
     }
 }
+@Composable
+@Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 250)
+fun LineChartPreviewChunk() {
+    BrianChartTheme {
+        Surface {
+            val context = LocalContext.current
+            LineChart(
+                data = LineChartData(
+                    lineList = null,
+                    xAxis = Axis(
+                        max = 500f,
+                        min = 200f,
+                        scaleInterval = 20f,
+                        labelInterval = 100f,
+                        chunkList = mutableListOf(
+                            Chunk(200f, 300f, Color.Red.copy(alpha = 0.5f)),
+                            Chunk(400f, 500f, Color.Blue.copy(alpha = 0.5f))
+                        ),
+                        name = "",
+                    ),
+
+                    yLeftAxis = Axis(
+                        max = 800f,
+                        min = 300f,
+                        scaleInterval = 10f,
+                        labelInterval = 50f,
+                        chunkList = mutableListOf(
+                            Chunk(400f, 420f, Color.Red.copy(alpha = 0.5f)),
+                            Chunk(600f, 700f, Color.Blue.copy(alpha = 0.5f))
+                        ),
+                        name = "",
+                    ),
+                )
+            )
+        }
+    }
+}

@@ -35,8 +35,8 @@ fun drawXChunk(
         val oneDataYPx =
             (axisPoints.point1.x - axisPoints.point0.x) / (axisMax - axisMin) // X轴上 1f单位数据点对应的px数
         chunkList?.forEachIndexed { index, chunk ->
-            val X1 = axisPoints.point0.x + chunk.start * oneDataYPx
-            val X2 = axisPoints.point0.x + chunk.end * oneDataYPx
+            val X1 = axisPoints.point0.x + (chunk.start - axisMin) * oneDataYPx
+            val X2 = axisPoints.point0.x + (chunk.end - axisMin) * oneDataYPx
             val Y1 = axisPoints.point0.y  //
             val Y2 = axisPoints.point3.y  //
 
@@ -1068,8 +1068,8 @@ fun drawYChunk(
         yChunkList?.forEachIndexed { index, chunk ->
             val X1 = axisPoints.point0.x
             val X2 = axisPoints.point1.x
-            val Y1 = axisPoints.point0.y - chunk.start * oneDataYPx //
-            val Y2 = axisPoints.point0.y - chunk.end * oneDataYPx //
+            val Y1 = axisPoints.point0.y - (chunk.start - yAxisMin) * oneDataYPx //
+            val Y2 = axisPoints.point0.y - (chunk.end - yAxisMin) * oneDataYPx //
 
             drawRect(
                 color = chunk.color,
