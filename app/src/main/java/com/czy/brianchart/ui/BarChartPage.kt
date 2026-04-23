@@ -318,6 +318,7 @@ fun BarChart7(modifier: Modifier) {
                 max = 5f,
                 scaleInterval = 1f,
                 labelInterval = 1f,
+                position = 0f,
                 name = "月份",
             ),
             yLeftAxis = Axis(
@@ -374,6 +375,7 @@ fun getTestBarData2(): BarData {
             name = "CHO",
             barEntryList = barEntryList,
             color = Color.Gray,
+            valueColor = Color.Red,
             background = background1,
             settingValueText = ::settingValueText2//定制顶部的值显示
         )
@@ -580,10 +582,16 @@ fun getTestStackedBarData(): BarData {
             color = Color.Blue,
             background = background2,
             showValue = true,
+            valueColor = Color.White, // 数值文字颜色
             stackColors = listOf(
                 Color.Blue.copy(alpha = 0.8f),
                 Color.Red.copy(alpha = 0.8f),
                 Color.Yellow.copy(alpha = 0.8f)
+            ),
+            stackValueColors = listOf(
+                Color.White,
+                Color.White,
+                Color.Black // 黄色背景用黑色文字更清晰
             ),
             settingValueText = { name, value -> "${value.toInt()}" }
         )
@@ -597,6 +605,13 @@ fun getTestStackedBarData(): BarData {
         Color(0xFF4CAF50).copy(alpha = 0.8f), // 收入 - 绿色
         Color(0xFFF44336).copy(alpha = 0.8f), // 成本 - 红色
         Color(0xFFFF9800).copy(alpha = 0.8f)  // 税费 - 橙色
+    )
+
+    // 定义每层的数值文字颜色
+    val profitValueColors = listOf(
+        Color.White,  // 绿色背景用白色
+        Color.White,  // 红色背景用白色
+        Color.White   // 橙色背景用白色
     )
 
     barEntryList2.add(
@@ -638,7 +653,9 @@ fun getTestStackedBarData(): BarData {
             color = Color.Green,
             showValue = true,
             background = background2,
+            valueColor = Color.White, // 数值文字颜色
             stackColors = profitColors,           // ⭐ 在 DataSet 级别配置每层颜色
+            stackValueColors = profitValueColors, // ⭐ 在 DataSet 级别配置每层数值颜色
             settingValueText = { name, value -> "${value.toInt()}" }
         )
     )

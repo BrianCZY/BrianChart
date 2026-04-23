@@ -428,8 +428,12 @@ private fun DrawScope.drawBarContentWithLayerStyle(
         if (barDataSet.showValue) {
             val valueTextSizePx = barDataSet.valueTextSize.toPx()
             
-            // 堆积图使用白色文字，非堆积图使用图层颜色
-            val textColor = if (stackIndex >= 0) Color.White else layerColor
+            // 确定数值文字颜色：堆积图优先使用 stackValueColors，否则使用 valueColor 或 color；非堆积图使用 valueColor 或 color
+            val textColor = if (stackIndex >= 0) {
+                barDataSet.stackValueColors?.getOrNull(stackIndex) ?: barDataSet.valueColor ?: barDataSet.color
+            } else {
+                barDataSet.valueColor ?: barDataSet.color
+            }
             
             val nativePaint = android.graphics.Paint().let {
                 it.apply {
@@ -512,10 +516,12 @@ private fun DrawScope.drawBarContent(
         // 绘制数值
         if (barDataSet.showValue) {
             val valueTextSizePx = barDataSet.valueTextSize.toPx()
+            // valueColor 为空时使用 color（柱子颜色）
+            val textColor = barDataSet.valueColor ?: barDataSet.color
             val nativePaint = android.graphics.Paint().let {
                 it.apply {
                     textSize = valueTextSizePx
-                    color = barDataSet.color.toArgb()
+                    color = textColor.toArgb()
                     isAntiAlias = true
                 }
             }
@@ -667,6 +673,7 @@ data class BarDataSet(
     var background: ((drawScope: DrawScope, color: Color, offset: Offset, size: Size) -> Unit)? = null,//TODO 可自由定制
     var name: String = "",
     var valueTextSize: TextUnit = 8.sp,
+    var valueColor: Color? = null, // 数值文字颜色，null 时使用 color
     var settingValueText: ((name: String, value: Float) -> String)? = null,//定制顶部的值显示
     var showValue: Boolean = true, //是否显示value数据
     /**
@@ -680,7 +687,13 @@ data class BarDataSet(
      * 如果设置了，将覆盖 BarDataSet 的 background
      * 长度应与 stackValues 一致
      */
-    var stackBackgrounds: List<((drawScope: DrawScope, color: Color, offset: Offset, size: Size) -> Unit)>? = null
+    var stackBackgrounds: List<((drawScope: DrawScope, color: Color, offset: Offset, size: Size) -> Unit)>? = null,
+    /**
+     * 堆积图中每一层的数值文字颜色数组（可选）
+     * 如果设置了，将覆盖 BarDataSet 的 valueColor
+     * 长度应与 stackValues 一致
+     */
+    var stackValueColors: List<Color>? = null
 )
 
 data class BarEntry(
