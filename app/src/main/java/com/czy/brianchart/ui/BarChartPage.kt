@@ -748,7 +748,7 @@ fun BarChartPreviewNoValue() {
             val barDataSetListTemp: MutableList<BarDataSet> = mutableListOf()
             val barEntryList: MutableList<BarEntry> = mutableListOf()
             barEntryList.add(BarEntry(1f, 60f))
-            barEntryList.add(BarEntry(2f, 200f))
+            barEntryList.add(BarEntry(2f, -100f))
 
             barDataSetListTemp.add(
                 BarDataSet(
@@ -766,13 +766,15 @@ fun BarChartPreviewNoValue() {
                     xAxis = Axis(
                         max = 5f,
                         scaleInterval = 10f,
-                        labelInterval = 10f,
+                        labelInterval = 20f,
+                        position = 0f,
                         name = "x轴"
                     ),
                     yLeftAxis = Axis(
-                        max = 300f,
+                        max = 200f,
+                        min = -200f,
                         scaleInterval = 10f,
-                        labelInterval = 50f,
+                        labelInterval = 100f,
                         name = "y轴"
                     ),
                 )

@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.brian.view.chart.AxisPoints
+import kotlin.math.abs
 
 /**
  * @author Brian
@@ -235,11 +236,22 @@ fun drawBar(
                         }
                     } ?: oneBardataMaxWidthNoPadding
 
-                    val barDataHeight = -barEntry.y * oneDataYPx //柱状图高度
 //                    val offsetX = point0.x + oneDataXPx * barEntry.x
                     val offsetX =
                         point0.x + (oneDataXPx * barEntry.x) - (oneDataXUsePx / 2) + (indexDataSet * oneBardataMaxWidth) + (oneBardataMaxWidth - barDataWidth) / 2
-                    val offsetY = point0.y
+                    
+                    // 计算X轴在画布中的Y位置（作为柱状图的起点）
+                    val xAxisYPosition = point0.y - (0 - yLeftAxis.min) * oneDataYPx
+                    
+                    // 柱状图高度（取绝对值）
+                    val barDataHeight = abs(barEntry.y) * oneDataYPx
+                    
+                    // 根据值的正负确定柱状图的起始Y位置
+                    val offsetY = if (barEntry.y >= 0) {
+                        xAxisYPosition - barDataHeight // 正值：从X轴向上绘制
+                    } else {
+                        xAxisYPosition // 负值：从X轴向下绘制
+                    }
 
                     val offset = Offset(x = offsetX, y = offsetY)
                     val size = Size(
@@ -280,7 +292,15 @@ fun drawBar(
 
                         val x = offsetX + barDataWidth / 2 - offsetText / 2 + defaultPadding / 4
 
-                        var y = offsetY + barDataHeight - valueTextSizePx - 2.dp.toPx()
+                        // 根据值的正负调整数值文本的Y位置
+                        var y = if (barEntry.y >= 0) {
+                            // 正值：显示在柱子顶部上方
+                            offsetY - valueTextSizePx - 2.dp.toPx()
+                        } else {
+                            // 负值：显示在柱子底部下方
+                            offsetY + barDataHeight + valueTextSizePx + 2.dp.toPx()
+                        }
+                        
                         if (label.contains("\n")) {
                             var list = label.split("\n").reversed()
                             drawContext.canvas.nativeCanvas.drawText(
