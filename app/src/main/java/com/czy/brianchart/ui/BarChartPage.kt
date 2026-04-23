@@ -82,6 +82,19 @@ fun BarChartView(modifier: Modifier, barChartUIState: BarChartUIState, backClick
                         .padding(bottom = 40.dp)
                         .height(200.dp)
                 )
+                HorizontalDivider(thickness = 8.dp)
+                BarChart5(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                )
+                HorizontalDivider(thickness = 8.dp)
+                BarChart6(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 40.dp)
+                        .height(200.dp)
+                )
 
             }
         }
@@ -213,6 +226,69 @@ fun BarChart4(modifier: Modifier) {
                 labelInterval = 50f,
                 name = "",
                 settingLabelValue = ::settingLabelValue
+            ),
+        )
+    )
+
+}
+
+@Composable
+fun BarChart5(modifier: Modifier) {
+
+    var barData = BarData()
+    barData = getTestBarDataNoValue()
+    val listChunk = getTestChunkList()
+    val limitLineList = getTestLimitLineList()
+    val xLimitLineList = getTestXLimitLineList()
+    BarChart(
+        modifier = modifier,
+        data = BarChartData(
+            barData = barData,
+
+            xAxis = Axis(
+                max = 5f,
+                scaleInterval = 10f,
+                labelInterval = 10f,
+                chunkList = listChunk,
+                name = "x轴",
+                limitLineList = xLimitLineList,
+                settingLabelValue = ::settingLabelValue
+            ),
+
+            yLeftAxis = Axis(
+                max = 300f,
+                scaleInterval = 10f,
+                labelInterval = 50f,
+                name = "y轴",
+                chunkList = listChunk,
+                limitLineList = xLimitLineList
+            ),
+        )
+    )
+
+}
+
+@Composable
+fun BarChart6(modifier: Modifier) {
+
+    var barData = BarData()
+    barData = getTestBarDataNoValueNoAxis()
+    val listChunk = getTestChunkList()
+    val limitLineList = getTestLimitLineList()
+    val xLimitLineList = getTestXLimitLineList()
+    BarChart(
+        modifier = modifier,
+        data = BarChartData(
+            barData = barData,
+
+            xAxis = Axis(
+                max = 5f,
+                isDrawAxis = false,
+            ),
+
+            yLeftAxis = Axis(
+                max = 200f,
+                isDrawAxis = false,
             ),
         )
     )
@@ -373,6 +449,45 @@ fun getTestBarData4(): BarData {
             color = Color.Gray,
             background = background3,
             settingValueText = ::settingValueText3//定制顶部的值显示
+        )
+    )
+    barData.barDataSetList = barDataSetListTemp
+    return barData
+}
+
+fun getTestBarDataNoValue(): BarData {
+    val barData = BarData(width = 80.dp)
+    var barDataSetListTemp: MutableList<BarDataSet> = mutableListOf()
+    var barEntryList: MutableList<BarEntry> = mutableListOf()
+    barEntryList.add(BarEntry(1f, 60f))
+    barEntryList.add(BarEntry(2f, 200f))
+
+    barDataSetListTemp.add(
+        BarDataSet(
+            barEntryList = barEntryList,
+            color = Color.Gray,
+            background = background1,
+            showValue = false // 不显示数值
+        )
+    )
+
+    barData.barDataSetList = barDataSetListTemp
+    return barData
+}
+
+fun getTestBarDataNoValueNoAxis(): BarData {
+    val barData = BarData(width = 80.dp)
+    val barDataSetListTemp: MutableList<BarDataSet> = mutableListOf()
+    val barEntryList: MutableList<BarEntry> = mutableListOf()
+    barEntryList.add(BarEntry(1f, 60f))
+    barEntryList.add(BarEntry(2f, 200f))
+
+    barDataSetListTemp.add(
+        BarDataSet(
+            barEntryList = barEntryList,
+            color = Color.Gray,
+            background = background1,
+            showValue = false // 不显示数值
         )
     )
     barData.barDataSetList = barDataSetListTemp
@@ -617,6 +732,86 @@ fun BarChartPreview1() {
                         name = "y轴",
                         chunkList = listChunk,
                         limitLineList = xLimitLineList
+                    ),
+                )
+            )
+        }
+    }
+}
+
+@Composable
+@Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 250)
+fun BarChartPreviewNoValue() {
+    MaterialTheme {
+        Surface {
+            val barData = BarData(width = 80.dp)
+            val barDataSetListTemp: MutableList<BarDataSet> = mutableListOf()
+            val barEntryList: MutableList<BarEntry> = mutableListOf()
+            barEntryList.add(BarEntry(1f, 60f))
+            barEntryList.add(BarEntry(2f, 200f))
+
+            barDataSetListTemp.add(
+                BarDataSet(
+                    barEntryList = barEntryList,
+                    color = Color.Gray,
+                    background = background1,
+                    showValue = false // 不显示数值
+                )
+            )
+            barData.barDataSetList = barDataSetListTemp
+
+            BarChart(
+                data = BarChartData(
+                    barData = barData,
+                    xAxis = Axis(
+                        max = 5f,
+                        scaleInterval = 10f,
+                        labelInterval = 10f,
+                        name = "x轴"
+                    ),
+                    yLeftAxis = Axis(
+                        max = 300f,
+                        scaleInterval = 10f,
+                        labelInterval = 50f,
+                        name = "y轴"
+                    ),
+                )
+            )
+        }
+    }
+}
+
+@Composable
+@Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 250)
+fun BarChartPreviewNoValueNoAxis() {
+    MaterialTheme {
+        Surface {
+            val barData = BarData(width = 80.dp)
+            val barDataSetListTemp: MutableList<BarDataSet> = mutableListOf()
+            val barEntryList: MutableList<BarEntry> = mutableListOf()
+            barEntryList.add(BarEntry(1f, 60f))
+            barEntryList.add(BarEntry(2f, 200f))
+
+            barDataSetListTemp.add(
+                BarDataSet(
+                    barEntryList = barEntryList,
+                    color = Color.Gray,
+                    background = background1,
+                    showValue = false // 不显示数值
+                )
+            )
+            barData.barDataSetList = barDataSetListTemp
+
+            BarChart(
+                data = BarChartData(
+                    barData = barData,
+                    xAxis = Axis(
+                        max = 5f,
+                        isDrawAxis = false,
+                    ),
+                    yLeftAxis = Axis(
+                        max = 200f,
+                        isDrawAxis = false,
                     ),
                 )
             )

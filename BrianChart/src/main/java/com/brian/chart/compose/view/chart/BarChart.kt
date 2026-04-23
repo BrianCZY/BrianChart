@@ -263,35 +263,37 @@ fun drawBar(
                         }
                     }
                     //画数值 ----------------
-                    val valueTextSizePx = barDataSet.valueTextSize.toPx()
-                    val nativePaint = android.graphics.Paint().let {
-                        it.apply {
-                            textSize = valueTextSizePx
-                            color = barDataSet.color.toArgb()
-                            isAntiAlias = true//抗锯齿
+                    if (barDataSet.showValue) {
+                        val valueTextSizePx = barDataSet.valueTextSize.toPx()
+                        val nativePaint = android.graphics.Paint().let {
+                            it.apply {
+                                textSize = valueTextSizePx
+                                color = barDataSet.color.toArgb()
+                                isAntiAlias = true//抗锯齿
+                            }
                         }
-                    }
-                    val label = barDataSet.settingValueText?.let { it(barDataSet.name, barEntry.y) }
-                        ?: "${barEntry.y}"
+                        val label = barDataSet.settingValueText?.let { it(barDataSet.name, barEntry.y) }
+                            ?: "${barEntry.y}"
 //                    val label = "${barDataSet.name}${barEntry.y}"
-                    val labelWidth = label.length * valueTextSizePx
-                    val offsetText = labelWidth / 2
+                        val labelWidth = label.length * valueTextSizePx
+                        val offsetText = labelWidth / 2
 
-                    val x = offsetX + barDataWidth / 2 - offsetText / 2 + defaultPadding / 4
+                        val x = offsetX + barDataWidth / 2 - offsetText / 2 + defaultPadding / 4
 
-                    var y = offsetY + barDataHeight - valueTextSizePx - 2.dp.toPx()
-                    if (label.contains("\n")) {
-                        var list = label.split("\n").reversed()
-                        drawContext.canvas.nativeCanvas.drawText(
-                            list[1], x, y - valueTextSizePx, nativePaint
-                        )
-                        drawContext.canvas.nativeCanvas.drawText(
-                            list[0], x, y, nativePaint
-                        )
-                    } else {
-                        drawContext.canvas.nativeCanvas.drawText(
-                            label, x, y, nativePaint
-                        )
+                        var y = offsetY + barDataHeight - valueTextSizePx - 2.dp.toPx()
+                        if (label.contains("\n")) {
+                            var list = label.split("\n").reversed()
+                            drawContext.canvas.nativeCanvas.drawText(
+                                list[1], x, y - valueTextSizePx, nativePaint
+                            )
+                            drawContext.canvas.nativeCanvas.drawText(
+                                list[0], x, y, nativePaint
+                            )
+                        } else {
+                            drawContext.canvas.nativeCanvas.drawText(
+                                label, x, y, nativePaint
+                            )
+                        }
                     }
 
                 }
@@ -414,7 +416,8 @@ data class BarDataSet(
     var background: ((drawScope: DrawScope, color: Color, offset: Offset, size: Size) -> Unit)? = null,//TODO 可自由定制
     var name: String = "",
     var valueTextSize: TextUnit = 8.sp,
-    var settingValueText: ((name: String, value: Float) -> String)? = null//定制顶部的值显示
+    var settingValueText: ((name: String, value: Float) -> String)? = null,//定制顶部的值显示
+    var showValue: Boolean = true //是否显示value数据
 )
 
 data class BarEntry(
