@@ -405,9 +405,9 @@ private fun DrawScope.drawBarContentWithLayerStyle(
     layerBackground: ((drawScope: DrawScope, color: Color, offset: Offset, size: Size) -> Unit)?
 ) {
     // 绘制柱状形状
-    if (barEntry.renderer != null) {
-        // 使用 BarEntry 级别的自定义渲染器
-        barEntry.renderer?.invoke(this, layerColor, offset, size, stackValue(barEntry, stackIndex), barDataSet.name, valueRelativeToXAxis, stackIndex)
+    if (barEntry.stackRenderer != null) {
+        // 使用 BarEntry 级别的堆积图自定义渲染器
+        barEntry.stackRenderer?.invoke(this, layerColor, offset, size, stackValue(barEntry, stackIndex), barDataSet.name, valueRelativeToXAxis, stackIndex)
     } else {
         // 使用默认背景或 BarDataSet.background
         val backgroundToUse = layerBackground ?: barDataSet.background
@@ -497,8 +497,8 @@ private fun DrawScope.drawBarContent(
 ) {
     // 绘制柱状形状
     if (barEntry.renderer != null) {
-        // 使用 BarEntry 级别的自定义渲染器
-        barEntry.renderer?.invoke(this, barDataSet.color, offset, size, stackValue(barEntry, stackIndex), barDataSet.name, valueRelativeToXAxis, stackIndex)
+        // 使用 BarEntry 级别的非堆积图自定义渲染器
+        barEntry.renderer?.invoke(this, barDataSet.color, offset, size, stackValue(barEntry, stackIndex), barDataSet.name, valueRelativeToXAxis)
     } else {
         // 使用 BarDataSet 的背景配置或默认背景
         if (barDataSet.background == null) {
@@ -707,19 +707,33 @@ data class BarEntry(
     val stackValues: List<Float>? = null,
     
     /** 
-     * 自定义渲染器，同时负责柱状图和数值的绘制
+     * 非堆积图的自定义渲染器
      * 如果设置了此参数，将完全接管该数据点的绘制逻辑（包括柱子和数值）
      * 参数说明：
      * - drawScope: 绘制作用域
-     * - color: 数据集颜色或当前层的颜色
+     * - color: 数据集颜色
      * - offset: 柱子左上角坐标
      * - size: 柱子尺寸
      * - value: 数据值
      * - name: 数据集名称
      * - valueRelativeToXAxis: 相对于X轴的值（用于判断正负）
-     * - stackIndex: 当前堆积段的索引（如果是堆积图），非堆积图为 -1
      */
-    val renderer: ((drawScope: DrawScope, color: Color, offset: Offset, size: Size, value: Float, name: String, valueRelativeToXAxis: Float, stackIndex: Int) -> Unit)? = null
+    val renderer: ((drawScope: DrawScope, color: Color, offset: Offset, size: Size, value: Float, name: String, valueRelativeToXAxis: Float) -> Unit)? = null,
+    
+    /** 
+     * 堆积图的自定义渲染器
+     * 如果设置了此参数，将完全接管该堆积段的绘制逻辑（包括柱子和数值）
+     * 参数说明：
+     * - drawScope: 绘制作用域
+     * - color: 当前层的颜色
+     * - offset: 当前段柱子左上角坐标
+     * - size: 当前段柱子尺寸
+     * - value: 当前段的值
+     * - name: 数据集名称
+     * - valueRelativeToXAxis: 当前段相对于X轴的值
+     * - stackIndex: 当前堆积段的索引
+     */
+    val stackRenderer: ((drawScope: DrawScope, color: Color, offset: Offset, size: Size, value: Float, name: String, valueRelativeToXAxis: Float, stackIndex: Int) -> Unit)? = null
 )
 
 object NameAglin {

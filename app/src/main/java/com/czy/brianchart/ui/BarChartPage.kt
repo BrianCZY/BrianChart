@@ -664,6 +664,144 @@ fun getTestStackedBarData(): BarData {
     return barData
 }
 
+/**
+ * 测试数据：使用 stackRenderer 自定义堆积图样式
+ */
+fun getTestStackedBarDataWithCustomRenderer(): BarData {
+    val barData = BarData(width = 80.dp)
+    val barDataSetListTemp: MutableList<BarDataSet> = mutableListOf()
+    
+    val barEntryList: MutableList<BarEntry> = mutableListOf()
+    
+    // x=1: 使用 stackRenderer 自定义每层样式
+    barEntryList.add(
+        BarEntry(
+            x = 1f,
+            y = 100f,
+            stackValues = listOf(50f, 30f, 20f),
+            stackRenderer = { drawScope, color, offset, size, value, name, valueRelativeToXAxis, stackIndex ->
+                with(drawScope) {
+                    // 根据 stackIndex 为不同层设置不同的圆角和样式
+                    when (stackIndex) {
+                        0 -> {
+                            // 第1层：大圆角，蓝色
+                            drawRoundRect(
+                                color = Color(0xFF2196F3),
+                                topLeft = offset,
+                                size = size,
+                                cornerRadius = CornerRadius(12f, 12f)
+                            )
+                        }
+                        1 -> {
+                            // 第2层：无圆角，绿色
+                            drawRoundRect(
+                                color = Color(0xFF4CAF50),
+                                topLeft = offset,
+                                size = size,
+                                cornerRadius = CornerRadius(0f, 0f)
+                            )
+                        }
+                        2 -> {
+                            // 第3层：小圆角，橙色
+                            drawRoundRect(
+                                color = Color(0xFFFF9800),
+                                topLeft = offset,
+                                size = size,
+                                cornerRadius = CornerRadius(6f, 6f)
+                            )
+                        }
+                    }
+                    
+                    // 绘制数值（白色文字）
+                    val label = "${value.toInt()}"
+                    val valueTextSizePx = 10.sp.toPx()
+                    val nativePaint = android.graphics.Paint().let {
+                        it.apply {
+                            textSize = valueTextSizePx
+                            setColor(Color.White.toArgb())
+                            isAntiAlias = true
+                            textAlign = android.graphics.Paint.Align.CENTER
+                        }
+                    }
+                    val textX = offset.x + size.width / 2
+                    val textY = offset.y + size.height / 2 + valueTextSizePx / 3
+                    drawContext.canvas.nativeCanvas.drawText(label, textX, textY, nativePaint)
+                }
+            }
+        )
+    )
+    
+    // x=2: 使用默认样式（不设置 stackRenderer）
+    barEntryList.add(
+        BarEntry(
+            x = 2f,
+            y = 150f,
+            stackValues = listOf(60f, 50f, 40f)
+        )
+    )
+    
+    // x=3: 另一个自定义样式的柱子
+    barEntryList.add(
+        BarEntry(
+            x = 3f,
+            y = 120f,
+            stackValues = listOf(40f, 40f, 40f),
+            stackRenderer = { drawScope, color, offset, size, value, name, valueRelativeToXAxis, stackIndex ->
+                with(drawScope) {
+                    // 所有层使用相同的渐变效果
+                    drawRoundRect(
+                        color = when (stackIndex) {
+                            0 -> Color(0xFF9C27B0) // 紫色
+                            1 -> Color(0xFFE91E63) // 粉色
+                            else -> Color(0xFFF44336) // 红色
+                        },
+                        topLeft = offset,
+                        size = size,
+                        cornerRadius = CornerRadius(4f, 4f)
+                    )
+                    
+                    // 添加边框
+                    drawRoundRect(
+                        color = Color.White.copy(alpha = 0.5f),
+                        topLeft = offset,
+                        size = size,
+                        style = Stroke(width = 2f),
+                        cornerRadius = CornerRadius(4f, 4f)
+                    )
+                    
+                    // 绘制数值
+                    val label = "${value.toInt()}"
+                    val valueTextSizePx = 10.sp.toPx()
+                    val nativePaint = android.graphics.Paint().let {
+                        it.apply {
+                            textSize = valueTextSizePx
+                            setColor(Color.White.toArgb())
+                            isAntiAlias = true
+                            textAlign = android.graphics.Paint.Align.CENTER
+                        }
+                    }
+                    val textX = offset.x + size.width / 2
+                    val textY = offset.y + size.height / 2 + valueTextSizePx / 3
+                    drawContext.canvas.nativeCanvas.drawText(label, textX, textY, nativePaint)
+                }
+            }
+        )
+    )
+    
+    barDataSetListTemp.add(
+        BarDataSet(
+            name = "自定义堆积",
+            barEntryList = barEntryList,
+            color = Color.Blue,
+            showValue = false, // 关闭默认数值显示，因为 stackRenderer 中已经绘制
+            settingValueText = { name, value -> "${value.toInt()}" }
+        )
+    )
+    
+    barData.barDataSetList = barDataSetListTemp
+    return barData
+}
+
 val background1: ((drawScope: DrawScope, color: Color, offset: Offset, size: Size) -> Unit) =
     { drawScope, color, offset, size ->
         drawScope.run {
@@ -1008,7 +1146,7 @@ fun BarChartPreviewRenderer() {
                 BarEntry(
                     x = 1f,
                     y = 150f,
-                    renderer = { drawScope, color, offset, size, value, name, valueRelativeToXAxis, stackIndex ->
+                    renderer = { drawScope, color, offset, size, value, name, valueRelativeToXAxis ->
                         with(density) {
                             // 绘制渐变效果的柱状图
                             drawScope.drawRoundRect(
@@ -1059,7 +1197,7 @@ fun BarChartPreviewRenderer() {
                 BarEntry(
                     x = 3f,
                     y = -80f,
-                    renderer = { drawScope, color, offset, size, value, name, valueRelativeToXAxis, stackIndex ->
+                    renderer = { drawScope, color, offset, size, value, name, valueRelativeToXAxis ->
                         with(density) {
                             // 负值用不同颜色
                             drawScope.drawRoundRect(
@@ -1145,6 +1283,34 @@ fun BarChartPreviewStacked() {
                         scaleInterval = 50f,
                         labelInterval = 50f,
                         name = "金额"
+                    ),
+                )
+            )
+        }
+    }
+}
+
+@Composable
+@Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 300)
+fun BarChartPreviewStackedWithCustomRenderer() {
+    MaterialTheme {
+        Surface {
+            val barData = getTestStackedBarDataWithCustomRenderer()
+
+            BarChart(
+                data = BarChartData(
+                    barData = barData,
+                    xAxis = Axis(
+                        max = 5f,
+                        scaleInterval = 1f,
+                        labelInterval = 1f,
+                        name = "X轴"
+                    ),
+                    yLeftAxis = Axis(
+                        max = 200f,
+                        scaleInterval = 50f,
+                        labelInterval = 50f,
+                        name = "Y轴"
                     ),
                 )
             )
