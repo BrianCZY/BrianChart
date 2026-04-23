@@ -30,6 +30,7 @@ import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.sp
 import com.brian.view.chart.AxisPadding
@@ -475,6 +476,14 @@ fun drawCurveSplashes(
 
                         it.path?.let { path ->
                             //绘制path
+                            drawPathWithDashEffect(
+                                path = path,
+                                color = color,
+                                lineWidth = line.width,
+                                isDashes = line.isDashes,
+                                pathEffect = line.pathEffect
+                            )
+                            //绘制填充
                             line.drawAreaBrush?.let { brush ->
                                 drawPath(
                                     path = path,
@@ -490,23 +499,12 @@ fun drawCurveSplashes(
                         }
                     } else {
                         it.path?.let { path ->
-                            val dashPathEffect = if (line.isDashes) {
-                                //启用虚线，则绘制虚线样式。
-                                //若有自定义的虚线样式，则使用自定义样式；无，则使用默认样式
-                                line.pathEffect ?: PathEffect.dashPathEffect(
-                                    floatArrayOf(10f, 4f),
-                                    4f
-                                )
-                            } else {
-                                null
-                            }
-                            drawPath(
+                            drawPathWithDashEffect(
                                 path = path,
                                 color = color,
-                                style = Stroke(
-                                    width = line.width.toPx(),
-                                    pathEffect = dashPathEffect
-                                )
+                                lineWidth = line.width,
+                                isDashes = line.isDashes,
+                                pathEffect = line.pathEffect
                             )
 
                         }
@@ -523,6 +521,36 @@ fun drawCurveSplashes(
 
     }
 
+}
+
+/**
+ * 绘制带虚线效果的路径
+ */
+private fun DrawScope.drawPathWithDashEffect(
+    path: Path,
+    color: Color,
+    lineWidth: Dp,
+    isDashes: Boolean,
+    pathEffect: PathEffect?
+) {
+    val dashPathEffect = if (isDashes) {
+        //启用虚线，则绘制虚线样式。
+        //若有自定义的虚线样式，则使用自定义样式；无，则使用默认样式
+        pathEffect ?: PathEffect.dashPathEffect(
+            floatArrayOf(10f, 4f),
+            4f
+        )
+    } else {
+        null
+    }
+    drawPath(
+        path = path,
+        color = color,
+        style = Stroke(
+            width = lineWidth.toPx(),
+            pathEffect = dashPathEffect
+        )
+    )
 }
 
 fun createCurvePathOrPoints(
