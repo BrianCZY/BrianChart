@@ -697,13 +697,15 @@ data class BarDataSet(
 )
 
 data class BarEntry(
-    var x: Float,
-    var y: Float,
+    val x: Float,
+    val y: Float,
+    
     /** 
      * 堆积图的值数组。如果设置了此参数，则该 Entry 为堆积模式
-     * 例如：floatArrayOf(50f, 30f, 20f) 表示三个堆叠段
+     * 例如：listOf(50f, 30f, 20f) 表示三个堆叠段
      */
-    var stackValues: FloatArray? = null,
+    val stackValues: List<Float>? = null,
+    
     /** 
      * 自定义渲染器，同时负责柱状图和数值的绘制
      * 如果设置了此参数，将完全接管该数据点的绘制逻辑（包括柱子和数值）
@@ -717,7 +719,7 @@ data class BarEntry(
      * - valueRelativeToXAxis: 相对于X轴的值（用于判断正负）
      * - stackIndex: 当前堆积段的索引（如果是堆积图），非堆积图为 -1
      */
-    var renderer: ((drawScope: DrawScope, color: Color, offset: Offset, size: Size, value: Float, name: String, valueRelativeToXAxis: Float, stackIndex: Int) -> Unit)? = null
+    val renderer: ((drawScope: DrawScope, color: Color, offset: Offset, size: Size, value: Float, name: String, valueRelativeToXAxis: Float, stackIndex: Int) -> Unit)? = null
 )
 
 object NameAglin {

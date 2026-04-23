@@ -544,7 +544,7 @@ fun getTestStackedBarData(): BarData {
         BarEntry(
             x = 1f,
             y = 100f,
-            stackValues = floatArrayOf(50f, 30f, 20f)
+            stackValues = listOf(50f, 30f, 20f)
         )
     )
 
@@ -553,7 +553,7 @@ fun getTestStackedBarData(): BarData {
         BarEntry(
             x = 2f,
             y = 170f,
-            stackValues = floatArrayOf(80f, 50f, 40f)
+            stackValues = listOf(80f, 50f, 40f)
         )
     )
 
@@ -562,7 +562,7 @@ fun getTestStackedBarData(): BarData {
         BarEntry(
             x = 3f,
             y = 160f,
-            stackValues = floatArrayOf(60f, 70f, 30f)
+            stackValues = listOf(60f, 70f, 30f)
         )
     )
 
@@ -571,7 +571,7 @@ fun getTestStackedBarData(): BarData {
         BarEntry(
             x = 4f,
             y = 190f,
-            stackValues = floatArrayOf(90f, 40f, 60f)
+            stackValues = listOf(90f, 40f, 60f)
         )
     )
 
@@ -618,7 +618,7 @@ fun getTestStackedBarData(): BarData {
         BarEntry(
             x = 1f,
             y = 10f,
-            stackValues = floatArrayOf(40f, 20f, 10f)
+            stackValues = listOf(40f, 20f, 10f)
         )
     )
 
@@ -626,7 +626,7 @@ fun getTestStackedBarData(): BarData {
         BarEntry(
             x = 2f,
             y = 15f,
-            stackValues = floatArrayOf(60f, 30f, 15f)
+            stackValues = listOf(60f, 30f, 15f)
         )
     )
 
@@ -634,7 +634,7 @@ fun getTestStackedBarData(): BarData {
         BarEntry(
             x = 3f,
             y = -10f,
-            stackValues = floatArrayOf(50f, 40f, 20f)
+            stackValues = listOf(50f, 40f, 20f)
         )
     )
 
@@ -642,7 +642,7 @@ fun getTestStackedBarData(): BarData {
         BarEntry(
             x = 4f,
             y = 30f,
-            stackValues = floatArrayOf(-20f, -25f, -15f)
+            stackValues = listOf(-20f, -25f, -15f)
         )
     )
 
