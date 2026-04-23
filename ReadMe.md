@@ -1,6 +1,6 @@
 To get a Git project into your build:
 
-Tag = 1.0.4
+Tag = 1.0.5
 
 --------------------------------------------------
 gradle:
