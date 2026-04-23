@@ -224,9 +224,13 @@ fun drawBar(
             val barDataSetCount = barData.barDataSetList?.size ?: 0
             val oneBardataMaxWidth = oneDataXUsePx / barDataSetCount
             val oneBardataMaxWidthNoPadding = oneBardataMaxWidth - defaultPadding * 2
+            
+            // 计算X轴在画布中的Y位置（作为柱状图的起点）
+            val xAxisPositionValue = xAxis.position ?: 0f
+            val xAxisYPosition = point0.y - (xAxisPositionValue - yLeftAxis.min) * oneDataYPx
+            
             barData.barDataSetList?.forEachIndexed { indexDataSet, barDataSet ->
                 barDataSet.barEntryList?.forEachIndexed { index, barEntry ->
-
                     //柱状图的宽度
                     val barDataWidth = barData.width?.toPx()?.let {
                         if (oneBardataMaxWidthNoPadding < it) {
@@ -236,100 +240,316 @@ fun drawBar(
                         }
                     } ?: oneBardataMaxWidthNoPadding
 
-//                    val offsetX = point0.x + oneDataXPx * barEntry.x
                     val offsetX =
                         point0.x + (oneDataXPx * barEntry.x) - (oneDataXUsePx / 2) + (indexDataSet * oneBardataMaxWidth) + (oneBardataMaxWidth - barDataWidth) / 2
                     
-                    // 计算X轴在画布中的Y位置（作为柱状图的起点）
-                    // xAxis.position 表示X轴在Y轴上的位置值，如果未设置则默认为0
-                    val xAxisPositionValue = xAxis.position ?: 0f
-                    val xAxisYPosition = point0.y - (xAxisPositionValue - yLeftAxis.min) * oneDataYPx
-                    
-                    // 计算数据点相对于X轴的值
-                    val valueRelativeToXAxis = barEntry.y - xAxisPositionValue
-                    
-                    // 柱状图高度（取绝对值）
-                    val barDataHeight = abs(valueRelativeToXAxis) * oneDataYPx
-                    
-                    // 根据值相对于X轴的正负确定柱状图的起始Y位置
-                    val offsetY = if (valueRelativeToXAxis >= 0) {
-                        xAxisYPosition - barDataHeight // 正值：从X轴向上绘制
+                    // 检查是否为堆积图
+                    if (barEntry.stackValues != null && barEntry.stackValues!!.isNotEmpty()) {
+                        // 堆积图模式：在单个 Entry 内堆叠
+                        drawStackedEntry(
+                            barEntry = barEntry,
+                            barDataSet = barDataSet,
+                            offsetX = offsetX,
+                            barDataWidth = barDataWidth,
+                            xAxisYPosition = xAxisYPosition,
+                            xAxisPositionValue = xAxisPositionValue,
+                            oneDataYPx = oneDataYPx,
+                            defaultPadding = defaultPadding
+                        )
                     } else {
-                        xAxisYPosition // 负值：从X轴向下绘制
+                        // 普通模式
+                        drawSingleBar(
+                            barEntry = barEntry,
+                            barDataSet = barDataSet,
+                            offsetX = offsetX,
+                            barDataWidth = barDataWidth,
+                            xAxisYPosition = xAxisYPosition,
+                            xAxisPositionValue = xAxisPositionValue,
+                            oneDataYPx = oneDataYPx,
+                            defaultPadding = defaultPadding
+                        )
                     }
-
-                    val offset = Offset(x = offsetX, y = offsetY)
-                    val size = Size(
-                        width = barDataWidth, height = barDataHeight
-                    )
-
-                    // 绘制柱状图和数值
-                    if (barEntry.renderer != null) {
-                        // 使用 BarEntry 级别的自定义渲染器（同时负责柱子和数值的绘制）
-                        barEntry.renderer?.invoke(this, barDataSet.color, offset, size, barEntry.y, barDataSet.name, valueRelativeToXAxis)
-                    } else {
-                        //画柱状形状-------------
-                        // 使用 BarDataSet 的背景配置或默认背景
-                        if (barDataSet.background == null) {
-                            drawRoundRect(
-                                color = barDataSet.color,
-                                topLeft = offset,
-                                size = size,
-                                style = Stroke(width = 1.dp.toPx(), cap = StrokeCap.Butt),
-                                cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
-                            )
-                        } else {
-                            barDataSet.background?.invoke(this, barDataSet.color, offset, size)
-                        }
-                        
-                        //画数值 ----------------
-                        // 使用 BarDataSet 的数值显示配置
-                        if (barDataSet.showValue) {
-                            val valueTextSizePx = barDataSet.valueTextSize.toPx()
-                            val nativePaint = android.graphics.Paint().let {
-                                it.apply {
-                                    textSize = valueTextSizePx
-                                    color = barDataSet.color.toArgb()
-                                    isAntiAlias = true//抗锯齿
-                                }
-                            }
-                            val label = barDataSet.settingValueText?.let { it(barDataSet.name, barEntry.y) }
-                                ?: "${barEntry.y}"
-                            val labelWidth = label.length * valueTextSizePx
-                            val offsetText = labelWidth / 2
-
-                            val x = offsetX + barDataWidth / 2 - offsetText / 2 + defaultPadding / 4
-
-                            // 根据值相对于X轴的正负调整数值文本的Y位置
-                            var y = if (valueRelativeToXAxis >= 0) {
-                                // 正值：显示在柱子顶部上方
-                                offsetY - valueTextSizePx - 2.dp.toPx()
-                            } else {
-                                // 负值：显示在柱子底部下方
-                                offsetY + barDataHeight + valueTextSizePx + 2.dp.toPx()
-                            }
-                            
-                            if (label.contains("\n")) {
-                                var list = label.split("\n").reversed()
-                                drawContext.canvas.nativeCanvas.drawText(
-                                    list[1], x, y - valueTextSizePx, nativePaint
-                                )
-                                drawContext.canvas.nativeCanvas.drawText(
-                                    list[0], x, y, nativePaint
-                                )
-                            } else {
-                                drawContext.canvas.nativeCanvas.drawText(
-                                    label, x, y, nativePaint
-                                )
-                            }
-                        }
-                    }
-
                 }
             }
         }
     }
+}
 
+/**
+ * 绘制单个普通柱子
+ */
+private fun DrawScope.drawSingleBar(
+    barEntry: BarEntry,
+    barDataSet: BarDataSet,
+    offsetX: Float,
+    barDataWidth: Float,
+    xAxisYPosition: Float,
+    xAxisPositionValue: Float,
+    oneDataYPx: Float,
+    defaultPadding: Float
+) {
+    // 计算数据点相对于X轴的值
+    val valueRelativeToXAxis = barEntry.y - xAxisPositionValue
+    
+    // 柱状图高度（取绝对值）
+    val barDataHeight = abs(valueRelativeToXAxis) * oneDataYPx
+    
+    // 根据值相对于X轴的正负确定柱状图的起始Y位置
+    val offsetY = if (valueRelativeToXAxis >= 0) {
+        xAxisYPosition - barDataHeight // 正值：从X轴向上绘制
+    } else {
+        xAxisYPosition // 负值：从X轴向下绘制
+    }
+
+    val offset = Offset(x = offsetX, y = offsetY)
+    val size = Size(width = barDataWidth, height = barDataHeight)
+
+    drawBarContent(
+        barEntry = barEntry,
+        barDataSet = barDataSet,
+        offset = offset,
+        size = size,
+        valueRelativeToXAxis = valueRelativeToXAxis,
+        offsetX = offsetX,
+        barDataWidth = barDataWidth,
+        defaultPadding = defaultPadding,
+        stackIndex = -1
+    )
+}
+
+/**
+ * 绘制堆积图的单个 Entry
+ */
+private fun DrawScope.drawStackedEntry(
+    barEntry: BarEntry,
+    barDataSet: BarDataSet,
+    offsetX: Float,
+    barDataWidth: Float,
+    xAxisYPosition: Float,
+    xAxisPositionValue: Float,
+    oneDataYPx: Float,
+    defaultPadding: Float
+) {
+    val stackValues = barEntry.stackValues!!
+    var currentY = xAxisYPosition
+    
+    // 遍历堆积值数组，逐个绘制
+    stackValues.forEachIndexed { stackIndex, stackValue ->
+        val valueRelativeToXAxis = stackValue - xAxisPositionValue
+        val barHeight = abs(valueRelativeToXAxis) * oneDataYPx
+        
+        // 确定柱子的 Y 起始位置
+        val offsetY = if (valueRelativeToXAxis >= 0) {
+            currentY - barHeight // 正值向上
+        } else {
+            currentY // 负值向下
+        }
+        
+        val offset = Offset(x = offsetX, y = offsetY)
+        val size = Size(width = barDataWidth, height = barHeight)
+        
+        // 从 BarDataSet 获取当前层的颜色（优先使用 stackColors，否则使用 BarDataSet.color）
+        val layerColor = barDataSet.stackColors?.getOrNull(stackIndex) ?: barDataSet.color
+        
+        // 从 BarDataSet 获取当前层的背景绘制函数（优先使用 stackBackgrounds，否则使用 BarDataSet.background）
+        val layerBackground = barDataSet.stackBackgrounds?.getOrNull(stackIndex) ?: barDataSet.background
+        
+        drawBarContentWithLayerStyle(
+            barEntry = barEntry,
+            barDataSet = barDataSet,
+            offset = offset,
+            size = size,
+            valueRelativeToXAxis = valueRelativeToXAxis,
+            offsetX = offsetX,
+            barDataWidth = barDataWidth,
+            defaultPadding = defaultPadding,
+            stackIndex = stackIndex,
+            layerColor = layerColor,
+            layerBackground = layerBackground
+        )
+        
+        // 更新下一个段的起始位置
+        currentY = if (valueRelativeToXAxis >= 0) {
+            offsetY // 正值的顶部
+        } else {
+            offsetY + barHeight // 负值的底部
+        }
+    }
+}
+
+/**
+ * 获取堆积图中指定索引的值
+ */
+private fun stackValue(barEntry: BarEntry, stackIndex: Int): Float {
+    return if (stackIndex >= 0 && barEntry.stackValues != null && stackIndex < barEntry.stackValues!!.size) {
+        barEntry.stackValues!![stackIndex]
+    } else {
+        barEntry.y
+    }
+}
+
+/**
+ * 绘制柱子内容和数值（支持每层自定义样式）
+ */
+private fun DrawScope.drawBarContentWithLayerStyle(
+    barEntry: BarEntry,
+    barDataSet: BarDataSet,
+    offset: Offset,
+    size: Size,
+    valueRelativeToXAxis: Float,
+    offsetX: Float,
+    barDataWidth: Float,
+    defaultPadding: Float,
+    stackIndex: Int,
+    layerColor: Color,
+    layerBackground: ((drawScope: DrawScope, color: Color, offset: Offset, size: Size) -> Unit)?
+) {
+    // 绘制柱状形状
+    if (barEntry.renderer != null) {
+        // 使用 BarEntry 级别的自定义渲染器
+        barEntry.renderer?.invoke(this, layerColor, offset, size, stackValue(barEntry, stackIndex), barDataSet.name, valueRelativeToXAxis, stackIndex)
+    } else {
+        // 使用默认背景或 BarDataSet.background
+        val backgroundToUse = layerBackground ?: barDataSet.background
+        
+        if (backgroundToUse == null) {
+            drawRoundRect(
+                color = layerColor,
+                topLeft = offset,
+                size = size,
+                style = Stroke(width = 1.dp.toPx(), cap = StrokeCap.Butt),
+                cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
+            )
+        } else {
+            backgroundToUse.invoke(this, layerColor, offset, size)
+        }
+        
+        // 绘制数值
+        if (barDataSet.showValue) {
+            val valueTextSizePx = barDataSet.valueTextSize.toPx()
+            
+            // 堆积图使用白色文字，非堆积图使用图层颜色
+            val textColor = if (stackIndex >= 0) Color.White else layerColor
+            
+            val nativePaint = android.graphics.Paint().let {
+                it.apply {
+                    textSize = valueTextSizePx
+                    color = textColor.toArgb()
+                    isAntiAlias = true
+                }
+            }
+            val label = barDataSet.settingValueText?.let { it(barDataSet.name, valueRelativeToXAxis) }
+                ?: "${valueRelativeToXAxis}"
+            val labelWidth = label.length * valueTextSizePx
+            val offsetText = labelWidth / 2
+
+            val x = offsetX + barDataWidth / 2 - offsetText / 2 + defaultPadding / 4
+
+            // 如果是堆积图，文字显示在柱子内部；否则显示在外部
+            var y = if (stackIndex >= 0) {
+                // 堆积图：文字显示在当前段的中心位置
+                offset.y + size.height / 2 + valueTextSizePx / 3
+            } else {
+                // 非堆积图：根据值相对于X轴的正负调整数值文本的Y位置
+                if (valueRelativeToXAxis >= 0) {
+                    // 正值：显示在柱子顶部上方
+                    offset.y - valueTextSizePx - 2.dp.toPx()
+                } else {
+                    // 负值：显示在柱子底部下方
+                    offset.y + size.height + valueTextSizePx + 2.dp.toPx()
+                }
+            }
+            
+            if (label.contains("\n")) {
+                var list = label.split("\n").reversed()
+                drawContext.canvas.nativeCanvas.drawText(
+                    list[1], x, y - valueTextSizePx, nativePaint
+                )
+                drawContext.canvas.nativeCanvas.drawText(
+                    list[0], x, y, nativePaint
+                )
+            } else {
+                drawContext.canvas.nativeCanvas.drawText(
+                    label, x, y, nativePaint
+                )
+            }
+        }
+    }
+}
+
+/**
+ * 绘制柱子内容和数值
+ */
+private fun DrawScope.drawBarContent(
+    barEntry: BarEntry,
+    barDataSet: BarDataSet,
+    offset: Offset,
+    size: Size,
+    valueRelativeToXAxis: Float,
+    offsetX: Float,
+    barDataWidth: Float,
+    defaultPadding: Float,
+    stackIndex: Int
+) {
+    // 绘制柱状形状
+    if (barEntry.renderer != null) {
+        // 使用 BarEntry 级别的自定义渲染器
+        barEntry.renderer?.invoke(this, barDataSet.color, offset, size, stackValue(barEntry, stackIndex), barDataSet.name, valueRelativeToXAxis, stackIndex)
+    } else {
+        // 使用 BarDataSet 的背景配置或默认背景
+        if (barDataSet.background == null) {
+            drawRoundRect(
+                color = barDataSet.color,
+                topLeft = offset,
+                size = size,
+                style = Stroke(width = 1.dp.toPx(), cap = StrokeCap.Butt),
+                cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
+            )
+        } else {
+            barDataSet.background?.invoke(this, barDataSet.color, offset, size)
+        }
+        
+        // 绘制数值
+        if (barDataSet.showValue) {
+            val valueTextSizePx = barDataSet.valueTextSize.toPx()
+            val nativePaint = android.graphics.Paint().let {
+                it.apply {
+                    textSize = valueTextSizePx
+                    color = barDataSet.color.toArgb()
+                    isAntiAlias = true
+                }
+            }
+            val label = barDataSet.settingValueText?.let { it(barDataSet.name, valueRelativeToXAxis) }
+                ?: "${valueRelativeToXAxis}"
+            val labelWidth = label.length * valueTextSizePx
+            val offsetText = labelWidth / 2
+
+            val x = offsetX + barDataWidth / 2 - offsetText / 2 + defaultPadding / 4
+
+            // 根据值相对于X轴的正负调整数值文本的Y位置
+            var y = if (valueRelativeToXAxis >= 0) {
+                // 正值：显示在柱子顶部上方
+                offset.y - valueTextSizePx - 2.dp.toPx()
+            } else {
+                // 负值：显示在柱子底部下方
+                offset.y + size.height + valueTextSizePx + 2.dp.toPx()
+            }
+            
+            if (label.contains("\n")) {
+                var list = label.split("\n").reversed()
+                drawContext.canvas.nativeCanvas.drawText(
+                    list[1], x, y - valueTextSizePx, nativePaint
+                )
+                drawContext.canvas.nativeCanvas.drawText(
+                    list[0], x, y, nativePaint
+                )
+            } else {
+                drawContext.canvas.nativeCanvas.drawText(
+                    label, x, y, nativePaint
+                )
+            }
+        }
+    }
 }
 
 
@@ -433,9 +653,11 @@ fun getBarXAxisPaddingBottom(drawScope: BoxScope, axis: Axis?): Float {
 }
 
 data class BarData(
-    var barDataSetList: MutableList<BarDataSet>? = null, var groupPadding: Float = 10f,//组之间间隔
+    var barDataSetList: MutableList<BarDataSet>? = null, 
+    var groupPadding: Float = 10f,//组之间间隔
     var onGroupPadding: Float = 0f,//组内间隔
-    var width: Dp? = null, var weight: Float = 0.8f, //一个单位可用的宽度 比例
+    var width: Dp? = null, 
+    var weight: Float = 0.8f, //一个单位可用的宽度 比例
     var dataSetPadding: Dp = 2.dp
 )
 
@@ -446,25 +668,43 @@ data class BarDataSet(
     var name: String = "",
     var valueTextSize: TextUnit = 8.sp,
     var settingValueText: ((name: String, value: Float) -> String)? = null,//定制顶部的值显示
-    var showValue: Boolean = true //是否显示value数据
+    var showValue: Boolean = true, //是否显示value数据
+    /**
+     * 堆积图中每一层的颜色数组（可选）
+     * 如果设置了，将覆盖 BarDataSet 的 color
+     * 长度应与 stackValues 一致
+     */
+    var stackColors: List<Color>? = null,
+    /**
+     * 堆积图中每一层的背景绘制函数数组（可选）
+     * 如果设置了，将覆盖 BarDataSet 的 background
+     * 长度应与 stackValues 一致
+     */
+    var stackBackgrounds: List<((drawScope: DrawScope, color: Color, offset: Offset, size: Size) -> Unit)>? = null
 )
 
 data class BarEntry(
     var x: Float,
     var y: Float,
     /** 
+     * 堆积图的值数组。如果设置了此参数，则该 Entry 为堆积模式
+     * 例如：floatArrayOf(50f, 30f, 20f) 表示三个堆叠段
+     */
+    var stackValues: FloatArray? = null,
+    /** 
      * 自定义渲染器，同时负责柱状图和数值的绘制
      * 如果设置了此参数，将完全接管该数据点的绘制逻辑（包括柱子和数值）
      * 参数说明：
      * - drawScope: 绘制作用域
-     * - color: 数据集颜色
+     * - color: 数据集颜色或当前层的颜色
      * - offset: 柱子左上角坐标
      * - size: 柱子尺寸
      * - value: 数据值
      * - name: 数据集名称
      * - valueRelativeToXAxis: 相对于X轴的值（用于判断正负）
+     * - stackIndex: 当前堆积段的索引（如果是堆积图），非堆积图为 -1
      */
-    var renderer: ((drawScope: DrawScope, color: Color, offset: Offset, size: Size, value: Float, name: String, valueRelativeToXAxis: Float) -> Unit)? = null
+    var renderer: ((drawScope: DrawScope, color: Color, offset: Offset, size: Size, value: Float, name: String, valueRelativeToXAxis: Float, stackIndex: Int) -> Unit)? = null
 )
 
 object NameAglin {
