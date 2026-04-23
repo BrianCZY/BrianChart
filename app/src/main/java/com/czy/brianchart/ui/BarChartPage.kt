@@ -20,8 +20,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.czy.brianchart.ui.components.TopBar
@@ -814,6 +817,134 @@ fun BarChartPreviewNoValueNoAxis() {
                     yLeftAxis = Axis(
                         max = 200f,
                         isDrawAxis = false,
+                    ),
+                )
+            )
+        }
+    }
+}
+
+@Composable
+@Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 300)
+fun BarChartPreviewRenderer() {
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    
+    MaterialTheme {
+        Surface {
+            val barData = BarData(width = 60.dp)
+            val barDataSetListTemp: MutableList<BarDataSet> = mutableListOf()
+            val barEntryList: MutableList<BarEntry> = mutableListOf()
+            
+            // 第一个柱子：使用自定义渲染器（同时绘制柱子和数值）
+            barEntryList.add(
+                BarEntry(
+                    x = 1f,
+                    y = 150f,
+                    renderer = { drawScope, color, offset, size, value, name, valueRelativeToXAxis ->
+                        with(density) {
+                            // 绘制渐变效果的柱状图
+                            drawScope.drawRoundRect(
+                                color = Color.Blue.copy(alpha = 0.7f),
+                                topLeft = offset,
+                                size = size,
+                                cornerRadius = CornerRadius(8f, 8f)
+                            )
+                            // 在柱子顶部添加装饰
+                            drawScope.drawCircle(
+                                color = Color.Blue,
+                                radius = 8f,
+                                center = Offset(offset.x + size.width / 2, offset.y)
+                            )
+                            
+                            // 绘制数值（柱子内部居中）
+                            val label = "${value.toInt()}"
+                            val valueTextSizePx = 10.sp.toPx()
+                            val nativePaint = android.graphics.Paint().let {
+                                it.apply {
+                                    textSize = valueTextSizePx
+                                    setColor(androidx.compose.ui.graphics.Color.White.toArgb())
+                                    isAntiAlias = true
+                                }
+                            }
+                            val textX = offset.x + size.width / 2 - (label.length * valueTextSizePx) / 4
+                            val textY = offset.y + size.height / 2 + valueTextSizePx / 3
+                            drawScope.drawContext.canvas.nativeCanvas.drawText(
+                                label, textX, textY, nativePaint
+                            )
+                        }
+                    }
+                )
+            )
+            
+            // 第二个柱子：使用默认绘制，不设置 renderer
+            barEntryList.add(
+                BarEntry(
+                    x = 2f,
+                    y = 100f
+                    // 不设置 renderer，将使用 BarDataSet 的默认配置
+                )
+            )
+            
+            // 第三个柱子：负值，自定义样式
+            barEntryList.add(
+                BarEntry(
+                    x = 3f,
+                    y = -80f,
+                    renderer = { drawScope, color, offset, size, value, name, valueRelativeToXAxis ->
+                        with(density) {
+                            // 负值用不同颜色
+                            drawScope.drawRoundRect(
+                                color = Color.Red.copy(alpha = 0.6f),
+                                topLeft = offset,
+                                size = size,
+                                cornerRadius = CornerRadius(4f, 4f)
+                            )
+                            
+                            // 绘制数值（负值显示在更下方）
+                            val label = "${value.toInt()}"
+                            val valueTextSizePx = 10.sp.toPx()
+                            val nativePaint = android.graphics.Paint().let {
+                                it.apply {
+                                    textSize = valueTextSizePx
+                                    setColor(androidx.compose.ui.graphics.Color.Red.toArgb())
+                                    isAntiAlias = true
+                                }
+                            }
+                            val textX = offset.x + size.width / 2 - (label.length * valueTextSizePx) / 4
+                            val textY = offset.y + size.height + valueTextSizePx + 4f
+                            drawScope.drawContext.canvas.nativeCanvas.drawText(
+                                label, textX, textY, nativePaint
+                            )
+                        }
+                    }
+                )
+            )
+
+            barDataSetListTemp.add(
+                BarDataSet(
+                    barEntryList = barEntryList,
+                    color = Color.Gray,
+                    showValue = true
+                )
+            )
+            barData.barDataSetList = barDataSetListTemp
+
+            BarChart(
+                data = BarChartData(
+                    barData = barData,
+                    xAxis = Axis(
+                        max = 5f,
+                        scaleInterval = 1f,
+                        labelInterval = 1f,
+                        position = 0f,
+                        name = "X轴"
+                    ),
+                    yLeftAxis = Axis(
+                        max = 200f,
+                        min = -200f,
+                        scaleInterval = 10f,
+                        labelInterval = 100f,
+                        name = "Y轴"
                     ),
                 )
             )

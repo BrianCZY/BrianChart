@@ -241,13 +241,18 @@ fun drawBar(
                         point0.x + (oneDataXPx * barEntry.x) - (oneDataXUsePx / 2) + (indexDataSet * oneBardataMaxWidth) + (oneBardataMaxWidth - barDataWidth) / 2
                     
                     // 计算X轴在画布中的Y位置（作为柱状图的起点）
-                    val xAxisYPosition = point0.y - (0 - yLeftAxis.min) * oneDataYPx
+                    // xAxis.position 表示X轴在Y轴上的位置值，如果未设置则默认为0
+                    val xAxisPositionValue = xAxis.position ?: 0f
+                    val xAxisYPosition = point0.y - (xAxisPositionValue - yLeftAxis.min) * oneDataYPx
+                    
+                    // 计算数据点相对于X轴的值
+                    val valueRelativeToXAxis = barEntry.y - xAxisPositionValue
                     
                     // 柱状图高度（取绝对值）
-                    val barDataHeight = abs(barEntry.y) * oneDataYPx
+                    val barDataHeight = abs(valueRelativeToXAxis) * oneDataYPx
                     
-                    // 根据值的正负确定柱状图的起始Y位置
-                    val offsetY = if (barEntry.y >= 0) {
+                    // 根据值相对于X轴的正负确定柱状图的起始Y位置
+                    val offsetY = if (valueRelativeToXAxis >= 0) {
                         xAxisYPosition - barDataHeight // 正值：从X轴向上绘制
                     } else {
                         xAxisYPosition // 负值：从X轴向下绘制
@@ -258,61 +263,65 @@ fun drawBar(
                         width = barDataWidth, height = barDataHeight
                     )
 
-                    //画柱状形状-------------
-                    if (barDataSet.background == null) { //采用默认背景
-                        drawRoundRect(
-                            color = barDataSet.color,
-                            topLeft = offset,
-                            size = size,
-                            style = Stroke(width = 1.dp.toPx(), cap = StrokeCap.Butt),
-                            cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
-                        )
-                    } else {//自定义背景 ，可绘画
-                        barDataSet.background?.let { background ->
-                            background(
-                                this, barDataSet.color, offset, size
+                    // 绘制柱状图和数值
+                    if (barEntry.renderer != null) {
+                        // 使用 BarEntry 级别的自定义渲染器（同时负责柱子和数值的绘制）
+                        barEntry.renderer?.invoke(this, barDataSet.color, offset, size, barEntry.y, barDataSet.name, valueRelativeToXAxis)
+                    } else {
+                        //画柱状形状-------------
+                        // 使用 BarDataSet 的背景配置或默认背景
+                        if (barDataSet.background == null) {
+                            drawRoundRect(
+                                color = barDataSet.color,
+                                topLeft = offset,
+                                size = size,
+                                style = Stroke(width = 1.dp.toPx(), cap = StrokeCap.Butt),
+                                cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
                             )
-                        }
-                    }
-                    //画数值 ----------------
-                    if (barDataSet.showValue) {
-                        val valueTextSizePx = barDataSet.valueTextSize.toPx()
-                        val nativePaint = android.graphics.Paint().let {
-                            it.apply {
-                                textSize = valueTextSizePx
-                                color = barDataSet.color.toArgb()
-                                isAntiAlias = true//抗锯齿
-                            }
-                        }
-                        val label = barDataSet.settingValueText?.let { it(barDataSet.name, barEntry.y) }
-                            ?: "${barEntry.y}"
-//                    val label = "${barDataSet.name}${barEntry.y}"
-                        val labelWidth = label.length * valueTextSizePx
-                        val offsetText = labelWidth / 2
-
-                        val x = offsetX + barDataWidth / 2 - offsetText / 2 + defaultPadding / 4
-
-                        // 根据值的正负调整数值文本的Y位置
-                        var y = if (barEntry.y >= 0) {
-                            // 正值：显示在柱子顶部上方
-                            offsetY - valueTextSizePx - 2.dp.toPx()
                         } else {
-                            // 负值：显示在柱子底部下方
-                            offsetY + barDataHeight + valueTextSizePx + 2.dp.toPx()
+                            barDataSet.background?.invoke(this, barDataSet.color, offset, size)
                         }
                         
-                        if (label.contains("\n")) {
-                            var list = label.split("\n").reversed()
-                            drawContext.canvas.nativeCanvas.drawText(
-                                list[1], x, y - valueTextSizePx, nativePaint
-                            )
-                            drawContext.canvas.nativeCanvas.drawText(
-                                list[0], x, y, nativePaint
-                            )
-                        } else {
-                            drawContext.canvas.nativeCanvas.drawText(
-                                label, x, y, nativePaint
-                            )
+                        //画数值 ----------------
+                        // 使用 BarDataSet 的数值显示配置
+                        if (barDataSet.showValue) {
+                            val valueTextSizePx = barDataSet.valueTextSize.toPx()
+                            val nativePaint = android.graphics.Paint().let {
+                                it.apply {
+                                    textSize = valueTextSizePx
+                                    color = barDataSet.color.toArgb()
+                                    isAntiAlias = true//抗锯齿
+                                }
+                            }
+                            val label = barDataSet.settingValueText?.let { it(barDataSet.name, barEntry.y) }
+                                ?: "${barEntry.y}"
+                            val labelWidth = label.length * valueTextSizePx
+                            val offsetText = labelWidth / 2
+
+                            val x = offsetX + barDataWidth / 2 - offsetText / 2 + defaultPadding / 4
+
+                            // 根据值相对于X轴的正负调整数值文本的Y位置
+                            var y = if (valueRelativeToXAxis >= 0) {
+                                // 正值：显示在柱子顶部上方
+                                offsetY - valueTextSizePx - 2.dp.toPx()
+                            } else {
+                                // 负值：显示在柱子底部下方
+                                offsetY + barDataHeight + valueTextSizePx + 2.dp.toPx()
+                            }
+                            
+                            if (label.contains("\n")) {
+                                var list = label.split("\n").reversed()
+                                drawContext.canvas.nativeCanvas.drawText(
+                                    list[1], x, y - valueTextSizePx, nativePaint
+                                )
+                                drawContext.canvas.nativeCanvas.drawText(
+                                    list[0], x, y, nativePaint
+                                )
+                            } else {
+                                drawContext.canvas.nativeCanvas.drawText(
+                                    label, x, y, nativePaint
+                                )
+                            }
                         }
                     }
 
@@ -441,7 +450,21 @@ data class BarDataSet(
 )
 
 data class BarEntry(
-    var x: Float, var y: Float
+    var x: Float,
+    var y: Float,
+    /** 
+     * 自定义渲染器，同时负责柱状图和数值的绘制
+     * 如果设置了此参数，将完全接管该数据点的绘制逻辑（包括柱子和数值）
+     * 参数说明：
+     * - drawScope: 绘制作用域
+     * - color: 数据集颜色
+     * - offset: 柱子左上角坐标
+     * - size: 柱子尺寸
+     * - value: 数据值
+     * - name: 数据集名称
+     * - valueRelativeToXAxis: 相对于X轴的值（用于判断正负）
+     */
+    var renderer: ((drawScope: DrawScope, color: Color, offset: Offset, size: Size, value: Float, name: String, valueRelativeToXAxis: Float) -> Unit)? = null
 )
 
 object NameAglin {
