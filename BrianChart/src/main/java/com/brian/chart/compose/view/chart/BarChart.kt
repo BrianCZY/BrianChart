@@ -224,11 +224,11 @@ fun drawBar(
             val barDataSetCount = barData.barDataSetList?.size ?: 0
             val oneBardataMaxWidth = oneDataXUsePx / barDataSetCount
             val oneBardataMaxWidthNoPadding = oneBardataMaxWidth - defaultPadding * 2
-            
+
             // 计算X轴在画布中的Y位置（作为柱状图的起点）
             val xAxisPositionValue = xAxis.position ?: 0f
             val xAxisYPosition = point0.y - (xAxisPositionValue - yLeftAxis.min) * oneDataYPx
-            
+
             barData.barDataSetList?.forEachIndexed { indexDataSet, barDataSet ->
                 barDataSet.barEntryList?.forEachIndexed { index, barEntry ->
                     //柱状图的宽度
@@ -242,7 +242,7 @@ fun drawBar(
 
                     val offsetX =
                         point0.x + (oneDataXPx * barEntry.x) - (oneDataXUsePx / 2) + (indexDataSet * oneBardataMaxWidth) + (oneBardataMaxWidth - barDataWidth) / 2
-                    
+
                     // 检查是否为堆积图
                     if (barEntry.stackValues != null && barEntry.stackValues!!.isNotEmpty()) {
                         // 堆积图模式：在单个 Entry 内堆叠
@@ -290,10 +290,10 @@ private fun DrawScope.drawSingleBar(
 ) {
     // 计算数据点相对于X轴的值
     val valueRelativeToXAxis = barEntry.y - xAxisPositionValue
-    
+
     // 柱状图高度（取绝对值）
     val barDataHeight = abs(valueRelativeToXAxis) * oneDataYPx
-    
+
     // 根据值相对于X轴的正负确定柱状图的起始Y位置
     val offsetY = if (valueRelativeToXAxis >= 0) {
         xAxisYPosition - barDataHeight // 正值：从X轴向上绘制
@@ -332,28 +332,28 @@ private fun DrawScope.drawStackedEntry(
 ) {
     val stackValues = barEntry.stackValues!!
     var currentY = xAxisYPosition
-    
+
     // 遍历堆积值数组，逐个绘制
     stackValues.forEachIndexed { stackIndex, stackValue ->
         val valueRelativeToXAxis = stackValue - xAxisPositionValue
         val barHeight = abs(valueRelativeToXAxis) * oneDataYPx
-        
+
         // 确定柱子的 Y 起始位置
         val offsetY = if (valueRelativeToXAxis >= 0) {
             currentY - barHeight // 正值向上
         } else {
             currentY // 负值向下
         }
-        
+
         val offset = Offset(x = offsetX, y = offsetY)
         val size = Size(width = barDataWidth, height = barHeight)
-        
+
         // 从 BarDataSet 获取当前层的颜色（优先使用 stackColors，否则使用 BarDataSet.color）
         val layerColor = barDataSet.stackColors?.getOrNull(stackIndex) ?: barDataSet.color
-        
+
         // 从 BarDataSet 获取当前层的背景绘制函数（优先使用 stackBackgrounds，否则使用 BarDataSet.background）
         val layerBackground = barDataSet.stackBackgrounds?.getOrNull(stackIndex) ?: barDataSet.background
-        
+
         drawBarContentWithLayerStyle(
             barEntry = barEntry,
             barDataSet = barDataSet,
@@ -367,7 +367,7 @@ private fun DrawScope.drawStackedEntry(
             layerColor = layerColor,
             layerBackground = layerBackground
         )
-        
+
         // 更新下一个段的起始位置
         currentY = if (valueRelativeToXAxis >= 0) {
             offsetY // 正值的顶部
@@ -411,7 +411,7 @@ private fun DrawScope.drawBarContentWithLayerStyle(
     } else {
         // 使用默认背景或 BarDataSet.background
         val backgroundToUse = layerBackground ?: barDataSet.background
-        
+
         if (backgroundToUse == null) {
             drawRoundRect(
                 color = layerColor,
@@ -423,18 +423,18 @@ private fun DrawScope.drawBarContentWithLayerStyle(
         } else {
             backgroundToUse.invoke(this, layerColor, offset, size)
         }
-        
+
         // 绘制数值
         if (barDataSet.showValue) {
             val valueTextSizePx = barDataSet.valueTextSize.toPx()
-            
+
             // 确定数值文字颜色：堆积图优先使用 stackValueColors，否则使用 valueColor 或 color；非堆积图使用 valueColor 或 color
             val textColor = if (stackIndex >= 0) {
                 barDataSet.stackValueColors?.getOrNull(stackIndex) ?: barDataSet.valueColor ?: barDataSet.color
             } else {
                 barDataSet.valueColor ?: barDataSet.color
             }
-            
+
             val nativePaint = android.graphics.Paint().let {
                 it.apply {
                     textSize = valueTextSizePx
@@ -463,7 +463,7 @@ private fun DrawScope.drawBarContentWithLayerStyle(
                     offset.y + size.height + valueTextSizePx + 2.dp.toPx()
                 }
             }
-            
+
             if (label.contains("\n")) {
                 var list = label.split("\n").reversed()
                 drawContext.canvas.nativeCanvas.drawText(
@@ -512,7 +512,7 @@ private fun DrawScope.drawBarContent(
         } else {
             barDataSet.background?.invoke(this, barDataSet.color, offset, size)
         }
-        
+
         // 绘制数值
         if (barDataSet.showValue) {
             val valueTextSizePx = barDataSet.valueTextSize.toPx()
@@ -540,7 +540,7 @@ private fun DrawScope.drawBarContent(
                 // 负值：显示在柱子底部下方
                 offset.y + size.height + valueTextSizePx + 2.dp.toPx()
             }
-            
+
             if (label.contains("\n")) {
                 var list = label.split("\n").reversed()
                 drawContext.canvas.nativeCanvas.drawText(
@@ -659,10 +659,10 @@ fun getBarXAxisPaddingBottom(drawScope: BoxScope, axis: Axis?): Float {
 }
 
 data class BarData(
-    var barDataSetList: MutableList<BarDataSet>? = null, 
+    var barDataSetList: MutableList<BarDataSet>? = null,
     var groupPadding: Float = 10f,//组之间间隔
     var onGroupPadding: Float = 0f,//组内间隔
-    var width: Dp? = null, 
+    var width: Dp? = null,
     var weight: Float = 0.8f, //一个单位可用的宽度 比例
     var dataSetPadding: Dp = 2.dp
 )
@@ -699,14 +699,14 @@ data class BarDataSet(
 data class BarEntry(
     val x: Float,
     val y: Float,
-    
-    /** 
+
+    /**
      * 堆积图的值数组。如果设置了此参数，则该 Entry 为堆积模式
      * 例如：listOf(50f, 30f, 20f) 表示三个堆叠段
      */
     val stackValues: List<Float>? = null,
-    
-    /** 
+
+    /**
      * 非堆积图的自定义渲染器
      * 如果设置了此参数，将完全接管该数据点的绘制逻辑（包括柱子和数值）
      * 参数说明：
@@ -719,8 +719,8 @@ data class BarEntry(
      * - valueRelativeToXAxis: 相对于X轴的值（用于判断正负）
      */
     val renderer: ((drawScope: DrawScope, color: Color, offset: Offset, size: Size, value: Float, name: String, valueRelativeToXAxis: Float) -> Unit)? = null,
-    
-    /** 
+
+    /**
      * 堆积图的自定义渲染器
      * 如果设置了此参数，将完全接管该堆积段的绘制逻辑（包括柱子和数值）
      * 参数说明：

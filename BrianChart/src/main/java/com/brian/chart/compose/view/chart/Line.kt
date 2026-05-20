@@ -26,4 +26,4 @@ data class Line(
     var renderer: ((drawScope: DrawScope, line: Line?, offsetList: List<Offset>?) -> Unit)? = null,//渲染器,自定义绘制
     var code: String = "${AxisType.LEFT.name}_${System.nanoTime()}_${Random.nextInt(100000)}",//创建Line时，生成一个code,用于区分Line
 
-    )
+)

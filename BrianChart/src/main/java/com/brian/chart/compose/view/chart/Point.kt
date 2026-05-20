@@ -11,4 +11,4 @@ data class Point(
     var selfDefinedValue: ((drawScope: DrawScope, offset: Offset) -> Unit)? = null,
 
 
-)
+    )

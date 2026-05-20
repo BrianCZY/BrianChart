@@ -670,9 +670,9 @@ fun getTestStackedBarData(): BarData {
 fun getTestStackedBarDataWithCustomRenderer(): BarData {
     val barData = BarData(width = 80.dp)
     val barDataSetListTemp: MutableList<BarDataSet> = mutableListOf()
-    
+
     val barEntryList: MutableList<BarEntry> = mutableListOf()
-    
+
     // x=1: 使用 stackRenderer 自定义每层样式
     barEntryList.add(
         BarEntry(
@@ -711,7 +711,7 @@ fun getTestStackedBarDataWithCustomRenderer(): BarData {
                             )
                         }
                     }
-                    
+
                     // 绘制数值（白色文字）
                     val label = "${value.toInt()}"
                     val valueTextSizePx = 10.sp.toPx()
@@ -730,7 +730,7 @@ fun getTestStackedBarDataWithCustomRenderer(): BarData {
             }
         )
     )
-    
+
     // x=2: 使用默认样式（不设置 stackRenderer）
     barEntryList.add(
         BarEntry(
@@ -739,7 +739,7 @@ fun getTestStackedBarDataWithCustomRenderer(): BarData {
             stackValues = listOf(60f, 50f, 40f)
         )
     )
-    
+
     // x=3: 另一个自定义样式的柱子
     barEntryList.add(
         BarEntry(
@@ -759,7 +759,7 @@ fun getTestStackedBarDataWithCustomRenderer(): BarData {
                         size = size,
                         cornerRadius = CornerRadius(4f, 4f)
                     )
-                    
+
                     // 添加边框
                     drawRoundRect(
                         color = Color.White.copy(alpha = 0.5f),
@@ -768,7 +768,7 @@ fun getTestStackedBarDataWithCustomRenderer(): BarData {
                         style = Stroke(width = 2f),
                         cornerRadius = CornerRadius(4f, 4f)
                     )
-                    
+
                     // 绘制数值
                     val label = "${value.toInt()}"
                     val valueTextSizePx = 10.sp.toPx()
@@ -787,7 +787,7 @@ fun getTestStackedBarDataWithCustomRenderer(): BarData {
             }
         )
     )
-    
+
     barDataSetListTemp.add(
         BarDataSet(
             name = "自定义堆积",
@@ -797,7 +797,7 @@ fun getTestStackedBarDataWithCustomRenderer(): BarData {
             settingValueText = { name, value -> "${value.toInt()}" }
         )
     )
-    
+
     barData.barDataSetList = barDataSetListTemp
     return barData
 }
