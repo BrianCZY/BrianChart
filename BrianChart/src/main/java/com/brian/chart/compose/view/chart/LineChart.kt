@@ -55,8 +55,7 @@ fun LineChart(
     modifier: Modifier = Modifier,
     data: LineChartData? = null,
     onTouch: ((touchEvent: TouchEventData) -> Unit)? = null,
-    // 可选的动态限制线（例如触摸交互时传入的限制线），单独传入以避免频繁重建整个 data
-    dynamicLimitLines: List<LimitLine>? = null
+    // 注意: 不再通过 dynamicLimitLines 合并限制线，调用方应直接更新 data.xAxis.limitLineList
 ) {
     //用来记录缩放大小
     var scale by remember { mutableStateOf(1f) }//缩放
@@ -73,17 +72,8 @@ fun LineChart(
     val axisPadding by derivedStateOf { data?.axisPadding }
     val isTouchEnabled by derivedStateOf { data?.isTouchEnabled == true }
 
-    // 合并动态限制线到 xAxis，但保持原始 xAxisRaw 不变以减少不必要的重组
-    val xAxis by derivedStateOf {
-        if (dynamicLimitLines != null) {
-            val merged = mutableListOf<LimitLine>()
-            xAxisRaw.limitLineList?.let { merged.addAll(it) }
-            merged.addAll(dynamicLimitLines)
-            xAxisRaw.copy(limitLineList = merged)
-        } else {
-            xAxisRaw
-        }
-    }
+    // 使用来自 data 的 xAxis（调用方负责就地更新 xAxis.limitLineList 来避免重建）
+    val xAxis by derivedStateOf { xAxisRaw }
 
     remember(lineList, xAxis, yLeftAxis, yLeftInsideAxis, yRightAxis, isSelfAdaptation) {
         if (isSelfAdaptation) {
@@ -298,6 +288,7 @@ fun LineChart(
                             yAxisMax = yLeftInsideAxis?.max ?: yLeftAxis?.max ?: yRightAxis?.max ?: 0f,
                             scale = scale
                         )
+                        Log.d(TAG, "onTouch DOWN dataX=$downDataX dataY=$downDataY pixel=(${down.position.x},${down.position.y})")
                         onTouch.invoke(
                             TouchEventData(
                                 dataX = downDataX,
@@ -365,6 +356,7 @@ fun LineChart(
                                     scale = scale
                                 )
 
+                                Log.d(TAG, "onTouch UP dataX=$upDataX dataY=$upDataY pixel=(${upPos.x},${upPos.y}) eventType=${if (moved) TouchEventType.UP else TouchEventType.TAP}")
                                 onTouch.invoke(
                                     TouchEventData(
                                         dataX = upDataX,
@@ -380,7 +372,7 @@ fun LineChart(
                                 )
 
                                 // 标记为已消费位移变化，仅消费位置变化以便系统还能处理其他手势
-                                event.changes.forEach { it.consumePositionChange() }
+                                event.changes.forEach { it.consume() }
                                 break
                             }
 
@@ -425,6 +417,7 @@ fun LineChart(
                                     )
                                 } else null
 
+                                Log.d(TAG, "onTouch MOVE dataX=$mvDataX dataY=$mvDataY pixel=(${mvPos.x},${mvPos.y}) nearest=${mvNearest != null}")
                                 onTouch.invoke(
                                     TouchEventData(
                                         dataX = mvDataX,
@@ -440,7 +433,7 @@ fun LineChart(
                                 )
 
                                 // 只消费位置变化，让系统继续处理其他必要事件
-                                change.consumePositionChange()
+                                change.consume()
                             }
                         }
                     }

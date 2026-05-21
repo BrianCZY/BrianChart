@@ -26,6 +26,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -1852,55 +1853,73 @@ fun ChartWithTouchPreview() {
  */
 @Composable
 fun ChartWithTouch(modifier: Modifier) {
-    var selectedX by remember { mutableStateOf<Float?>(null) }
-
-    val scope = rememberCoroutineScope()
-    var pendingX by remember { mutableStateOf<Float?>(null) }
-    var throttleJob by remember { mutableStateOf<Job?>(null) }
-
-    // 根据选中的X值动态创建限制线
-    val limitLines = selectedX?.let { x ->
-        mutableListOf(LimitLine(x, color = Color.Red, width = 2.dp, text = "X=%.1f".format(x)))
-    }
 
     // 将静态图表数据与动态限制线分离，避免在拖拽时重建整个 LineChartData 导致卡顿
-    val lineData = remember {
-        LineChartData(
-            lineList = listOf(
-                Line(
-                    pointList = mutableListOf(
-                        Point(0f, 10f),
-                        Point(25f, 80f),
-                        Point(50f, 40f),
-                        Point(75f, 120f),
-                        Point(100f, 90f),
-                        Point(125f, 160f),
-                        Point(150f, 130f),
-                        Point(175f, 200f),
-                        Point(200f, 170f)
-                    ),
-                    color = Color(0xff4A90E2),
-                    isDrawCubic = true,
-                    isDrawPath = true
-                )
-            ),
+    // 使用 mutableStateOf 包装 lineData，确保对 lineData 重新赋值时会触发重组
+    var lineData by remember {
+        mutableStateOf(
+            LineChartData(
+                lineList = listOf(
+                    Line(
+                        pointList = mutableListOf(
+                            Point(0f, 10f),
+                            Point(25f, 80f),
+                            Point(50f, 40f),
+                            Point(75f, 120f),
+                            Point(100f, 90f),
+                            Point(125f, 160f),
+                            Point(150f, 130f),
+                            Point(175f, 200f),
+                            Point(200f, 170f)
+                        ),
+                        color = Color(0xff4A90E2),
+                        isDrawCubic = true,
+                        isDrawPath = true
+                    )
+                ),
                 xAxis = Axis(
-                max = 200f,
-                min = 0f,
-                scaleInterval = 20f,
-                labelInterval = 50f,
-                name = "时间 (s)",
-                    // 注意：不要把动态 limitLines 放到这里，会导致每次 selectedX 变化时重建整个 data
-            ),
-            yLeftAxis = Axis(
-                max = 250f,
-                min = 0f,
-                scaleInterval = 25f,
-                labelInterval = 50f,
-                name = "数值"
-            ),
-            isTouchEnabled = true  // 启用触摸功能
+                    max = 200f,
+                    min = 0f,
+                    scaleInterval = 20f,
+                    labelInterval = 50f,
+                    name = "时间 (s)",
+                    // 使用原有的 limitLineList 字段，初始化为空列表以便后续就地更新
+                    limitLineList = mutableListOf()
+                ),
+                yLeftAxis = Axis(
+                    max = 250f,
+                    min = 0f,
+                    scaleInterval = 25f,
+                    labelInterval = 50f,
+                    name = "数值"
+                ),
+                isTouchEnabled = true  // 启用触摸功能
+            )
         )
+    }
+
+
+    var selectedX by remember { mutableStateOf<Float?>(200f) }
+
+    fun updateLimitLine(x: Float?) {
+        val min = lineData.xAxis.min
+        val max = lineData.xAxis.max
+        val clamped = x?.coerceIn(min, max)
+        val list = if (clamped != null) mutableListOf(
+            LimitLine(
+                clamped,
+                color = Color.Red,
+                width = 2.dp,
+                text = "X=%.1f".format(clamped)
+            )
+        ) else mutableListOf()
+//        lineData.xAxis.limitLineList = list
+        lineData = lineData.copy(xAxis = lineData.xAxis.copy(limitLineList = list))
+    }
+
+    // 初始同步（若 selectedX 有初始值）
+    LaunchedEffect(Unit) {
+        updateLimitLine(selectedX)
     }
 
     Column(modifier = modifier.padding(8.dp)) {
@@ -1909,56 +1928,9 @@ fun ChartWithTouch(modifier: Modifier) {
                 .fillMaxWidth()
                 .weight(1f),
             data = lineData,
-            // 将动态限制线单独传入，LineChart 已支持合并动态限制线以减少重组开销
-            dynamicLimitLines = limitLines,
+            // 不再使用 dynamicLimitLines，改为直接更新 data.xAxis.limitLineList
             onTouch = { touchEvent: TouchEventData ->
-                // 支持拖动（MOVE）和触摸结束（UP/TAP），对 MOVE 做节流以减少重组频率
-                try {
-                    when (touchEvent.eventType) {
-                        com.brian.chart.compose.view.chart.TouchEventType.MOVE -> {
-                            // 记录最新位置，启动节流任务（若未启动）
-                            pendingX = touchEvent.dataX
-                            if (throttleJob == null) {
-                                throttleJob = scope.launch {
-                                    // 以 ~60Hz（16ms）频率将 pendingX 刷新到 selectedX
-                                    while (true) {
-                                        val x = pendingX
-                                        if (x != null) {
-                                            selectedX = x
-                                            pendingX = null
-                                        } else {
-                                            // 若短时间内没有新值，退出节流任务
-                                            delay(50)
-                                            if (pendingX == null) {
-                                                throttleJob = null
-                                                break
-                                            } else {
-                                                continue
-                                            }
-                                        }
-                                        delay(16)
-                                    }
-                                }
-                            }
-                        }
-
-                        com.brian.chart.compose.view.chart.TouchEventType.UP,
-                        com.brian.chart.compose.view.chart.TouchEventType.TAP -> {
-                            // 触摸结束或点击，立即更新选中并取消节流任务
-                            throttleJob?.cancel()
-                            throttleJob = null
-                            pendingX = null
-                            selectedX = touchEvent.dataX
-                        }
-
-                        else -> {
-                            // DOWN 等事件暂不处理
-                        }
-                    }
-                } catch (e: Exception) {
-                    // 兼容老版本 TouchEventData（若无 eventType 字段）
-                    selectedX = touchEvent.dataX
-                }
+                updateLimitLine(touchEvent.dataX)
 
             }
         )
