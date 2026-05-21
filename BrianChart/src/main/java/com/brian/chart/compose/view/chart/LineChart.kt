@@ -336,9 +336,21 @@ fun LineChart(
                                 // 抬起事件 - UP 或 TAP（如果没有移动则视为 TAP）
                                 val upPos = change.position
                                 // 最终位置的 dataX/dataY 直接用公式计算，成本小
-                                val upDataX = (upPos.x - axisPoints.point0.x + offsetXPx) / (oneDataXPx * scale)
-                                val upDataY = if (oneDataYPx != null) (axisPoints.point0.y - upPos.y + offsetYPx) / oneDataYPx else
-                                    (convertPixelToDataY(upPos.y, axisPoints, yLeftInsideAxis, yLeftAxis, yRightAxis))
+                                // 使用统一的转换函数（包含边界裁剪）以保证 dataX/dataY 在 axis.min..axis.max 之内
+                                val upDataX = convertPixelToDataX(
+                                    pixelX = upPos.x,
+                                    axisPoints = axisPoints,
+                                    xAxisMin = xAxis.min,
+                                    xAxisMax = xAxis.max,
+                                    scale = scale
+                                )
+                                val upDataY = convertPixelToDataY(
+                                    pixelY = upPos.y,
+                                    axisPoints = axisPoints,
+                                    yLeftInsideAxis = yLeftInsideAxis,
+                                    yLeftAxis = yLeftAxis,
+                                    yRightAxis = yRightAxis
+                                )
 
                                 // 对于最终 nearestPoint，我们需要更准确的查找（较耗时），但只在 UP/TAP 时执行
                                 val upNearest = findNearestDataPoint(
@@ -381,9 +393,21 @@ fun LineChart(
                                 val shouldComputeNearest = distanceSq >= touchSlop * touchSlop
                                 moved = true
 
-                                val mvDataX = (mvPos.x - axisPoints.point0.x + offsetXPx) / (oneDataXPx * scale)
-                                val mvDataY = if (oneDataYPx != null) (axisPoints.point0.y - mvPos.y + offsetYPx) / oneDataYPx else
-                                    (convertPixelToDataY(mvPos.y, axisPoints, yLeftInsideAxis, yLeftAxis, yRightAxis))
+                                // 使用统一的转换函数以保持一致性并裁剪到轴范围内
+                                val mvDataX = convertPixelToDataX(
+                                    pixelX = mvPos.x,
+                                    axisPoints = axisPoints,
+                                    xAxisMin = xAxis.min,
+                                    xAxisMax = xAxis.max,
+                                    scale = scale
+                                )
+                                val mvDataY = convertPixelToDataY(
+                                    pixelY = mvPos.y,
+                                    axisPoints = axisPoints,
+                                    yLeftInsideAxis = yLeftInsideAxis,
+                                    yLeftAxis = yLeftAxis,
+                                    yRightAxis = yRightAxis
+                                )
 
                                 val mvNearest = if (shouldComputeNearest) {
                                     lastSentX = mvPos.x
@@ -1567,7 +1591,9 @@ private fun convertPixelToDataX(
 ): Float {
     val oneDataXPx = (axisPoints.point1.x - axisPoints.point0.x) / (xAxisMax - xAxisMin)
     val offsetXPx = xAxisMin * oneDataXPx
-    return (pixelX - axisPoints.point0.x + offsetXPx) / (oneDataXPx * scale)
+    val raw = (pixelX - axisPoints.point0.x + offsetXPx) / (oneDataXPx * scale)
+    // 限制在 xAxis 的范围内，避免越界触摸带来超出轴范围的 data 值
+    return raw.coerceIn(xAxisMin, xAxisMax)
 }
 
 /**
@@ -1584,7 +1610,9 @@ private fun convertPixelToDataY(
     val yAxis = yLeftInsideAxis ?: yLeftAxis ?: yRightAxis ?: return 0f
     val oneDataYPx = (axisPoints.point0.y - axisPoints.point3.y) / (yAxis.max - yAxis.min)
     val offsetYPx = yAxis.min * oneDataYPx
-    return (axisPoints.point0.y - pixelY + offsetYPx) / oneDataYPx
+    val raw = (axisPoints.point0.y - pixelY + offsetYPx) / oneDataYPx
+    // 限制在对应 y 轴范围内
+    return raw.coerceIn(yAxis.min, yAxis.max)
 }
 
 /**
@@ -1601,19 +1629,22 @@ private fun convertPixelToAllDataY(
     val dataYLeftInside = yLeftInsideAxis?.let { axis ->
         val oneDataYPx = (axisPoints.point0.y - axisPoints.point3.y) / (axis.max - axis.min)
         val offsetYPx = axis.min * oneDataYPx
-        (axisPoints.point0.y - pixelY + offsetYPx) / oneDataYPx
+        val raw = (axisPoints.point0.y - pixelY + offsetYPx) / oneDataYPx
+        raw.coerceIn(axis.min, axis.max)
     }
     
     val dataYLeft = yLeftAxis?.let { axis ->
         val oneDataYPx = (axisPoints.point0.y - axisPoints.point3.y) / (axis.max - axis.min)
         val offsetYPx = axis.min * oneDataYPx
-        (axisPoints.point0.y - pixelY + offsetYPx) / oneDataYPx
+        val raw = (axisPoints.point0.y - pixelY + offsetYPx) / oneDataYPx
+        raw.coerceIn(axis.min, axis.max)
     }
     
     val dataYRight = yRightAxis?.let { axis ->
         val oneDataYPx = (axisPoints.point0.y - axisPoints.point3.y) / (axis.max - axis.min)
         val offsetYPx = axis.min * oneDataYPx
-        (axisPoints.point0.y - pixelY + offsetYPx) / oneDataYPx
+        val raw = (axisPoints.point0.y - pixelY + offsetYPx) / oneDataYPx
+        raw.coerceIn(axis.min, axis.max)
     }
     
     return Triple(dataYLeftInside, dataYLeft, dataYRight)
