@@ -164,9 +164,11 @@ fun LineChartView(modifier: Modifier, lineChartUIState: LineChartUIState, backCl
                 )
                 ChartWithTouch(
                     modifier = Modifier
-                        .padding(bottom = 40.dp)
+                        .padding(bottom = 20.dp)
                         .height(300.dp)
                 )
+                HorizontalDivider(thickness = 8.dp)
+
 
             }
 
@@ -1000,7 +1002,7 @@ fun drawSelfDefinedTextAndShape(
             drawText(
                 "(${x},${y})",
                 offset.x - 80f,
-                offset.y - textSize.toPx() ,
+                offset.y - textSize.toPx(),
                 nativePaint
             )
         }
@@ -1171,6 +1173,7 @@ fun settingLineChartLabelValue(value: Float): String {
     }
     return "${label}T"
 }
+
 @Composable
 @Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 250)
 fun LineChartPreview() {
@@ -1506,7 +1509,6 @@ fun LineChartSelfAdaptationPreview() {
 }
 
 
-
 @Composable
 @Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 250)
 fun LineChartPadingPreview() {
@@ -1792,6 +1794,7 @@ fun LineChartPreviewSelfDefined() {
         }
     }
 }
+
 @Composable
 @Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 250)
 fun LineChartPreviewChunk() {
@@ -1831,13 +1834,18 @@ fun LineChartPreviewChunk() {
 }
 
 /**
- * 触摸交互示例
+ * 触摸交互示例 - 拖动显示限制线
  */
 @Composable
 fun ChartWithTouch(modifier: Modifier) {
-    var touchInfo by remember { mutableStateOf("点击图表查看数据") }
-    
-    val lineData = remember {
+    var selectedX by remember { mutableStateOf<Float?>(null) }
+
+    // 根据选中的X值动态创建限制线
+    val limitLines = selectedX?.let { x ->
+        mutableListOf(LimitLine(x, color = Color.Red, width = 2.dp, text = "X=%.1f".format(x)))
+    }
+
+    val lineData = remember(selectedX) {
         LineChartData(
             lineList = listOf(
                 Line(
@@ -1862,7 +1870,8 @@ fun ChartWithTouch(modifier: Modifier) {
                 min = 0f,
                 scaleInterval = 20f,
                 labelInterval = 50f,
-                name = "时间 (s)"
+                name = "时间 (s)",
+                limitLineList = limitLines  // 动态设置限制线
             ),
             yLeftAxis = Axis(
                 max = 250f,
@@ -1874,7 +1883,7 @@ fun ChartWithTouch(modifier: Modifier) {
             isTouchEnabled = true  // 启用触摸功能
         )
     }
-    
+
     Column(modifier = modifier.padding(8.dp)) {
         LineChart(
             modifier = Modifier
@@ -1882,44 +1891,11 @@ fun ChartWithTouch(modifier: Modifier) {
                 .weight(1f),
             data = lineData,
             onTouch = { touchEvent: TouchEventData ->
-                // 处理触摸事件
-                touchInfo = buildString {
-                    append("📍 触摸位置:\n")
-                    append("X轴数据: %.2f\n".format(touchEvent.dataX))
-                    
-                    // 显示所有可用的Y轴值
-                    touchEvent.dataYLeft?.let {
-                        append("左外轴 Y: %.2f\n".format(it))
-                    }
-                    
-                    append("\n像素坐标: (%.0f, %.0f)\n".format(touchEvent.pixelX, touchEvent.pixelY))
-                    
-                    // 使用便捷方法
-                    val allYValues = touchEvent.getAllYValues()
-                    if (allYValues.isNotEmpty()) {
-                        append("\n📊 所有Y轴值:\n")
-                        allYValues.forEach { (axisName, value) ->
-                            append("  • $axisName: %.2f\n".format(value))
-                        }
-                    }
-                    
-                    touchEvent.nearestPoint?.let { nearest ->
-                        append("\n🎯 最近的数据点:\n")
-                        append("点坐标: X=%.2f, Y=%.2f\n".format(nearest.point.x, nearest.point.y))
-                        append("距离: %.2f px".format(nearest.distance))
-                    }
-                }
+                // 更新选中的X值，触发限制线显示
+                selectedX = touchEvent.dataX
+
             }
         )
-        
-        Text(
-            text = touchInfo,
-            fontSize = 12.sp,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .padding(8.dp)
-        )
+
     }
 }
