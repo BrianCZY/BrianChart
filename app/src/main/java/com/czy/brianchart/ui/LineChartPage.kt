@@ -1833,6 +1833,20 @@ fun LineChartPreviewChunk() {
     }
 }
 
+@Composable
+@Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 250)
+fun ChartWithTouchPreview() {
+    BrianChartTheme {
+        Surface {
+            ChartWithTouch(
+                modifier = Modifier
+                    .padding(bottom = 20.dp)
+                    .height(300.dp)
+            )
+        }
+    }
+}
+
 /**
  * 触摸交互示例 - 拖动显示限制线
  */
@@ -1840,12 +1854,17 @@ fun LineChartPreviewChunk() {
 fun ChartWithTouch(modifier: Modifier) {
     var selectedX by remember { mutableStateOf<Float?>(null) }
 
+    val scope = rememberCoroutineScope()
+    var pendingX by remember { mutableStateOf<Float?>(null) }
+    var throttleJob by remember { mutableStateOf<Job?>(null) }
+
     // 根据选中的X值动态创建限制线
     val limitLines = selectedX?.let { x ->
         mutableListOf(LimitLine(x, color = Color.Red, width = 2.dp, text = "X=%.1f".format(x)))
     }
 
-    val lineData = remember(selectedX) {
+    // 将静态图表数据与动态限制线分离，避免在拖拽时重建整个 LineChartData 导致卡顿
+    val lineData = remember {
         LineChartData(
             lineList = listOf(
                 Line(
@@ -1865,13 +1884,13 @@ fun ChartWithTouch(modifier: Modifier) {
                     isDrawPath = true
                 )
             ),
-            xAxis = Axis(
+                xAxis = Axis(
                 max = 200f,
                 min = 0f,
                 scaleInterval = 20f,
                 labelInterval = 50f,
                 name = "时间 (s)",
-                limitLineList = limitLines  // 动态设置限制线
+                    // 注意：不要把动态 limitLines 放到这里，会导致每次 selectedX 变化时重建整个 data
             ),
             yLeftAxis = Axis(
                 max = 250f,
@@ -1890,9 +1909,56 @@ fun ChartWithTouch(modifier: Modifier) {
                 .fillMaxWidth()
                 .weight(1f),
             data = lineData,
+            // 将动态限制线单独传入，LineChart 已支持合并动态限制线以减少重组开销
+            dynamicLimitLines = limitLines,
             onTouch = { touchEvent: TouchEventData ->
-                // 更新选中的X值，触发限制线显示
-                selectedX = touchEvent.dataX
+                // 支持拖动（MOVE）和触摸结束（UP/TAP），对 MOVE 做节流以减少重组频率
+                try {
+                    when (touchEvent.eventType) {
+                        com.brian.chart.compose.view.chart.TouchEventType.MOVE -> {
+                            // 记录最新位置，启动节流任务（若未启动）
+                            pendingX = touchEvent.dataX
+                            if (throttleJob == null) {
+                                throttleJob = scope.launch {
+                                    // 以 ~60Hz（16ms）频率将 pendingX 刷新到 selectedX
+                                    while (true) {
+                                        val x = pendingX
+                                        if (x != null) {
+                                            selectedX = x
+                                            pendingX = null
+                                        } else {
+                                            // 若短时间内没有新值，退出节流任务
+                                            delay(50)
+                                            if (pendingX == null) {
+                                                throttleJob = null
+                                                break
+                                            } else {
+                                                continue
+                                            }
+                                        }
+                                        delay(16)
+                                    }
+                                }
+                            }
+                        }
+
+                        com.brian.chart.compose.view.chart.TouchEventType.UP,
+                        com.brian.chart.compose.view.chart.TouchEventType.TAP -> {
+                            // 触摸结束或点击，立即更新选中并取消节流任务
+                            throttleJob?.cancel()
+                            throttleJob = null
+                            pendingX = null
+                            selectedX = touchEvent.dataX
+                        }
+
+                        else -> {
+                            // DOWN 等事件暂不处理
+                        }
+                    }
+                } catch (e: Exception) {
+                    // 兼容老版本 TouchEventData（若无 eventType 字段）
+                    selectedX = touchEvent.dataX
+                }
 
             }
         )

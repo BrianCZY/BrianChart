@@ -3,9 +3,11 @@ package com.brian.chart.compose.view.chart
 import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
+import androidx.compose.ui.input.pointer.*
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -52,7 +54,9 @@ private val TAG = "LineChart"
 fun LineChart(
     modifier: Modifier = Modifier,
     data: LineChartData? = null,
-    onTouch: ((touchEvent: TouchEventData) -> Unit)? = null
+    onTouch: ((touchEvent: TouchEventData) -> Unit)? = null,
+    // 可选的动态限制线（例如触摸交互时传入的限制线），单独传入以避免频繁重建整个 data
+    dynamicLimitLines: List<LimitLine>? = null
 ) {
     //用来记录缩放大小
     var scale by remember { mutableStateOf(1f) }//缩放
@@ -60,7 +64,7 @@ fun LineChart(
     var offset by remember { mutableStateOf(Offset.Zero) }//移动
 // 提取字段，高效且自动跳过无效重组
     val lineList by derivedStateOf { data?.lineList }
-    val xAxis by derivedStateOf { data?.xAxis ?: Axis() }
+    val xAxisRaw by derivedStateOf { data?.xAxis ?: Axis() }
     val yLeftInsideAxis by derivedStateOf { data?.yLeftInsideAxis }
     val yLeftAxis by derivedStateOf { data?.yLeftAxis }
     val yRightAxis by derivedStateOf { data?.yRightAxis }
@@ -68,6 +72,18 @@ fun LineChart(
     val isScroll by derivedStateOf { data?.isScroll }
     val axisPadding by derivedStateOf { data?.axisPadding }
     val isTouchEnabled by derivedStateOf { data?.isTouchEnabled == true }
+
+    // 合并动态限制线到 xAxis，但保持原始 xAxisRaw 不变以减少不必要的重组
+    val xAxis by derivedStateOf {
+        if (dynamicLimitLines != null) {
+            val merged = mutableListOf<LimitLine>()
+            xAxisRaw.limitLineList?.let { merged.addAll(it) }
+            merged.addAll(dynamicLimitLines)
+            xAxisRaw.copy(limitLineList = merged)
+        } else {
+            xAxisRaw
+        }
+    }
 
     remember(lineList, xAxis, yLeftAxis, yLeftInsideAxis, yRightAxis, isSelfAdaptation) {
         if (isSelfAdaptation) {
@@ -251,54 +267,159 @@ fun LineChart(
                 yRightAxis?.max,
                 lineList
             ) {
-                detectTapGestures { tapOffset ->
-                    // 转换像素坐标为数据坐标
-                    val dataX = convertPixelToDataX(
-                        pixelX = tapOffset.x,
-                        axisPoints = axisPoints,
-                        xAxisMin = xAxis.min,
-                        xAxisMax = xAxis.max,
-                        scale = scale
-                    )
-                    
-                    // 获取所有Y轴的数据值
-                    val (dataYLeftInside, dataYLeft, dataYRight) = convertPixelToAllDataY(
-                        pixelY = tapOffset.y,
-                        axisPoints = axisPoints,
-                        yLeftInsideAxis = yLeftInsideAxis,
-                        yLeftAxis = yLeftAxis,
-                        yRightAxis = yRightAxis
-                    )
-                    
-                    // 为了向后兼容，使用第一个可用的Y轴值作为 dataY
-                    val dataY = dataYLeftInside ?: dataYLeft ?: dataYRight ?: 0f
-                    
-                    // 查找最近的数据点
-                    val nearestPoint = findNearestDataPoint(
-                        touchX = tapOffset.x,
-                        touchY = tapOffset.y,
-                        lineList = lineList ?: emptyList(),
-                        axisPoints = axisPoints,
-                        xAxisMin = xAxis.min,
-                        xAxisMax = xAxis.max,
-                        yAxisMin = yLeftInsideAxis?.min ?: yLeftAxis?.min ?: yRightAxis?.min ?: 0f,
-                        yAxisMax = yLeftInsideAxis?.max ?: yLeftAxis?.max ?: yRightAxis?.max ?: 0f,
-                        scale = scale
-                    )
-                    
-                    // 回调触摸事件
-                    onTouch.invoke(
-                        TouchEventData(
-                            dataX = dataX,
-                            dataY = dataY,
-                            pixelX = tapOffset.x,
-                            pixelY = tapOffset.y,
-                            nearestPoint = nearestPoint,
-                            dataYLeftInside = dataYLeftInside,
-                            dataYLeft = dataYLeft,
-                            dataYRight = dataYRight
+                // 支持拖动（MOVE）与按下/抬起事件（DOWN/UP/TAP）的通用处理
+                forEachGesture {
+                    awaitPointerEventScope {
+                        val down = awaitFirstDown()
+                        // 处理 DOWN 事件
+                        val downDataX = convertPixelToDataX(
+                            pixelX = down.position.x,
+                            axisPoints = axisPoints,
+                            xAxisMin = xAxis.min,
+                            xAxisMax = xAxis.max,
+                            scale = scale
                         )
-                    )
+                        val (downDataYLeftInside, downDataYLeft, downDataYRight) = convertPixelToAllDataY(
+                            pixelY = down.position.y,
+                            axisPoints = axisPoints,
+                            yLeftInsideAxis = yLeftInsideAxis,
+                            yLeftAxis = yLeftAxis,
+                            yRightAxis = yRightAxis
+                        )
+                        val downDataY = downDataYLeftInside ?: downDataYLeft ?: downDataYRight ?: 0f
+                        val downNearest = findNearestDataPoint(
+                            touchX = down.position.x,
+                            touchY = down.position.y,
+                            lineList = lineList ?: emptyList(),
+                            axisPoints = axisPoints,
+                            xAxisMin = xAxis.min,
+                            xAxisMax = xAxis.max,
+                            yAxisMin = yLeftInsideAxis?.min ?: yLeftAxis?.min ?: yRightAxis?.min ?: 0f,
+                            yAxisMax = yLeftInsideAxis?.max ?: yLeftAxis?.max ?: yRightAxis?.max ?: 0f,
+                            scale = scale
+                        )
+                        onTouch.invoke(
+                            TouchEventData(
+                                dataX = downDataX,
+                                dataY = downDataY,
+                                pixelX = down.position.x,
+                                pixelY = down.position.y,
+                                nearestPoint = downNearest,
+                                dataYLeftInside = downDataYLeftInside,
+                                dataYLeft = downDataYLeft,
+                                dataYRight = downDataYRight,
+                                eventType = TouchEventType.DOWN
+                            )
+                        )
+
+                        var moved = false
+
+                        // 缓存常用值，避免在高频 MOVE 中重复计算
+                        val oneDataXPx = (axisPoints.point1.x - axisPoints.point0.x) / (xAxis.max - xAxis.min)
+                        // 选择一个主要的 Y 轴用于快速 dataY 计算（优先左内轴）
+                        val primaryYAxis = yLeftInsideAxis ?: yLeftAxis ?: yRightAxis
+                        val oneDataYPx = primaryYAxis?.let { (axisPoints.point0.y - axisPoints.point3.y) / (it.max - it.min) }
+                        val offsetXPx = xAxis.min * oneDataXPx
+                        val offsetYPx = primaryYAxis?.let { it.min * (oneDataYPx ?: 0f) } ?: 0f
+
+                        // 最后发送的像素位置（用于节流）
+                        var lastSentX = down.position.x
+                        var lastSentY = down.position.y
+                        val touchSlop = 4f // 像素阈值，减少过多事件
+
+                        // 监听后续事件（move / up）
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val change = event.changes.firstOrNull() ?: continue
+
+                            if (change.changedToUp()) {
+                                // 抬起事件 - UP 或 TAP（如果没有移动则视为 TAP）
+                                val upPos = change.position
+                                // 最终位置的 dataX/dataY 直接用公式计算，成本小
+                                val upDataX = (upPos.x - axisPoints.point0.x + offsetXPx) / (oneDataXPx * scale)
+                                val upDataY = if (oneDataYPx != null) (axisPoints.point0.y - upPos.y + offsetYPx) / oneDataYPx else
+                                    (convertPixelToDataY(upPos.y, axisPoints, yLeftInsideAxis, yLeftAxis, yRightAxis))
+
+                                // 对于最终 nearestPoint，我们需要更准确的查找（较耗时），但只在 UP/TAP 时执行
+                                val upNearest = findNearestDataPoint(
+                                    touchX = upPos.x,
+                                    touchY = upPos.y,
+                                    lineList = lineList ?: emptyList(),
+                                    axisPoints = axisPoints,
+                                    xAxisMin = xAxis.min,
+                                    xAxisMax = xAxis.max,
+                                    yAxisMin = yLeftInsideAxis?.min ?: yLeftAxis?.min ?: yRightAxis?.min ?: 0f,
+                                    yAxisMax = yLeftInsideAxis?.max ?: yLeftAxis?.max ?: yRightAxis?.max ?: 0f,
+                                    scale = scale
+                                )
+
+                                onTouch.invoke(
+                                    TouchEventData(
+                                        dataX = upDataX,
+                                        dataY = upDataY,
+                                        pixelX = upPos.x,
+                                        pixelY = upPos.y,
+                                        nearestPoint = upNearest,
+                                        dataYLeftInside = null,
+                                        dataYLeft = null,
+                                        dataYRight = null,
+                                        eventType = if (moved) TouchEventType.UP else TouchEventType.TAP
+                                    )
+                                )
+
+                                // 标记为已消费位移变化，仅消费位置变化以便系统还能处理其他手势
+                                event.changes.forEach { it.consumePositionChange() }
+                                break
+                            }
+
+                            if (change.positionChanged()) {
+                                val mvPos = change.position
+                                val dx = mvPos.x - lastSentX
+                                val dy = mvPos.y - lastSentY
+                                // 只有超过阈值时才更新 nearestPoint（节流），但仍发送位置更新以保持流畅
+                                val distanceSq = dx * dx + dy * dy
+                                val shouldComputeNearest = distanceSq >= touchSlop * touchSlop
+                                moved = true
+
+                                val mvDataX = (mvPos.x - axisPoints.point0.x + offsetXPx) / (oneDataXPx * scale)
+                                val mvDataY = if (oneDataYPx != null) (axisPoints.point0.y - mvPos.y + offsetYPx) / oneDataYPx else
+                                    (convertPixelToDataY(mvPos.y, axisPoints, yLeftInsideAxis, yLeftAxis, yRightAxis))
+
+                                val mvNearest = if (shouldComputeNearest) {
+                                    lastSentX = mvPos.x
+                                    lastSentY = mvPos.y
+                                    findNearestDataPoint(
+                                        touchX = mvPos.x,
+                                        touchY = mvPos.y,
+                                        lineList = lineList ?: emptyList(),
+                                        axisPoints = axisPoints,
+                                        xAxisMin = xAxis.min,
+                                        xAxisMax = xAxis.max,
+                                        yAxisMin = yLeftInsideAxis?.min ?: yLeftAxis?.min ?: yRightAxis?.min ?: 0f,
+                                        yAxisMax = yLeftInsideAxis?.max ?: yLeftAxis?.max ?: yRightAxis?.max ?: 0f,
+                                        scale = scale
+                                    )
+                                } else null
+
+                                onTouch.invoke(
+                                    TouchEventData(
+                                        dataX = mvDataX,
+                                        dataY = mvDataY,
+                                        pixelX = mvPos.x,
+                                        pixelY = mvPos.y,
+                                        nearestPoint = mvNearest,
+                                        dataYLeftInside = null,
+                                        dataYLeft = null,
+                                        dataYRight = null,
+                                        eventType = TouchEventType.MOVE
+                                    )
+                                )
+
+                                // 只消费位置变化，让系统继续处理其他必要事件
+                                change.consumePositionChange()
+                            }
+                        }
+                    }
                 }
             }
         } else {

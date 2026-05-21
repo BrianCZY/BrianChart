@@ -13,6 +13,16 @@ import androidx.compose.ui.geometry.Offset
  * @param dataYLeft 左外轴对应的Y值（如果存在）
  * @param dataYRight 右轴对应的Y值（如果存在）
  */
+/**
+ * 触摸事件类型
+ */
+enum class TouchEventType {
+    DOWN,
+    MOVE,
+    UP,
+    TAP
+}
+
 data class TouchEventData(
     val dataX: Float,
     val dataY: Float,
@@ -21,7 +31,8 @@ data class TouchEventData(
     val nearestPoint: PointData? = null,
     val dataYLeftInside: Float? = null,
     val dataYLeft: Float? = null,
-    val dataYRight: Float? = null
+    val dataYRight: Float? = null,
+    val eventType: TouchEventType = TouchEventType.TAP // 新增事件类型，便于外部区分拖动/抬起等
 ) {
     /**
      * 获取所有可用的Y轴数据值
