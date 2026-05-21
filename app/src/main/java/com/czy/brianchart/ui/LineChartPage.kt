@@ -64,6 +64,7 @@ import com.brian.chart.compose.view.chart.Line
 import com.brian.chart.compose.view.chart.LineChart
 import com.brian.chart.compose.view.chart.LineChartData
 import com.brian.chart.compose.view.chart.Point
+import com.brian.chart.compose.view.chart.TouchEventData
 import com.brian.view.chart.AxisPadding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -150,6 +151,21 @@ fun LineChartView(modifier: Modifier, lineChartUIState: LineChartUIState, backCl
                     modifier = Modifier
                         .padding(bottom = 40.dp)
                         .height(220.dp)
+                )
+                HorizontalDivider(thickness = 8.dp)
+                Text(
+                    "触摸交互示例",
+                    modifier = Modifier
+                        .height(40.dp)
+                        .fillMaxWidth()
+                        .background(color = MaterialTheme.colorScheme.primaryContainer)
+                        .wrapContentSize(Alignment.Center),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                ChartWithTouch(
+                    modifier = Modifier
+                        .padding(bottom = 40.dp)
+                        .height(300.dp)
                 )
 
             }
@@ -1811,5 +1827,99 @@ fun LineChartPreviewChunk() {
                 )
             )
         }
+    }
+}
+
+/**
+ * 触摸交互示例
+ */
+@Composable
+fun ChartWithTouch(modifier: Modifier) {
+    var touchInfo by remember { mutableStateOf("点击图表查看数据") }
+    
+    val lineData = remember {
+        LineChartData(
+            lineList = listOf(
+                Line(
+                    pointList = mutableListOf(
+                        Point(0f, 10f),
+                        Point(25f, 80f),
+                        Point(50f, 40f),
+                        Point(75f, 120f),
+                        Point(100f, 90f),
+                        Point(125f, 160f),
+                        Point(150f, 130f),
+                        Point(175f, 200f),
+                        Point(200f, 170f)
+                    ),
+                    color = Color(0xff4A90E2),
+                    isDrawCubic = true,
+                    isDrawPath = true
+                )
+            ),
+            xAxis = Axis(
+                max = 200f,
+                min = 0f,
+                scaleInterval = 20f,
+                labelInterval = 50f,
+                name = "时间 (s)"
+            ),
+            yLeftAxis = Axis(
+                max = 250f,
+                min = 0f,
+                scaleInterval = 25f,
+                labelInterval = 50f,
+                name = "数值"
+            ),
+            isTouchEnabled = true  // 启用触摸功能
+        )
+    }
+    
+    Column(modifier = modifier.padding(8.dp)) {
+        LineChart(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            data = lineData,
+            onTouch = { touchEvent: TouchEventData ->
+                // 处理触摸事件
+                touchInfo = buildString {
+                    append("📍 触摸位置:\n")
+                    append("X轴数据: %.2f\n".format(touchEvent.dataX))
+                    
+                    // 显示所有可用的Y轴值
+                    touchEvent.dataYLeft?.let {
+                        append("左外轴 Y: %.2f\n".format(it))
+                    }
+                    
+                    append("\n像素坐标: (%.0f, %.0f)\n".format(touchEvent.pixelX, touchEvent.pixelY))
+                    
+                    // 使用便捷方法
+                    val allYValues = touchEvent.getAllYValues()
+                    if (allYValues.isNotEmpty()) {
+                        append("\n📊 所有Y轴值:\n")
+                        allYValues.forEach { (axisName, value) ->
+                            append("  • $axisName: %.2f\n".format(value))
+                        }
+                    }
+                    
+                    touchEvent.nearestPoint?.let { nearest ->
+                        append("\n🎯 最近的数据点:\n")
+                        append("点坐标: X=%.2f, Y=%.2f\n".format(nearest.point.x, nearest.point.y))
+                        append("距离: %.2f px".format(nearest.distance))
+                    }
+                }
+            }
+        )
+        
+        Text(
+            text = touchInfo,
+            fontSize = 12.sp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .padding(8.dp)
+        )
     }
 }

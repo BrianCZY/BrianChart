@@ -3,6 +3,7 @@ package com.brian.chart.compose.view.chart
 import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -25,6 +26,7 @@ import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
@@ -49,7 +51,8 @@ private val TAG = "LineChart"
 @Composable
 fun LineChart(
     modifier: Modifier = Modifier,
-    data: LineChartData? = null
+    data: LineChartData? = null,
+    onTouch: ((touchEvent: TouchEventData) -> Unit)? = null
 ) {
     //用来记录缩放大小
     var scale by remember { mutableStateOf(1f) }//缩放
@@ -64,6 +67,7 @@ fun LineChart(
     val isSelfAdaptation by derivedStateOf { data?.isSelfAdaptation == true }
     val isScroll by derivedStateOf { data?.isScroll }
     val axisPadding by derivedStateOf { data?.axisPadding }
+    val isTouchEnabled by derivedStateOf { data?.isTouchEnabled == true }
 
     remember(lineList, xAxis, yLeftAxis, yLeftInsideAxis, yRightAxis, isSelfAdaptation) {
         if (isSelfAdaptation) {
@@ -232,9 +236,79 @@ fun LineChart(
             Modifier
         }
 
+        // 触摸处理 Modifier
+        val touchModifier = if (isTouchEnabled && onTouch != null) {
+            Modifier.pointerInput(
+                axisPoints,
+                scale,
+                xAxis.min,
+                xAxis.max,
+                yLeftInsideAxis?.min,
+                yLeftInsideAxis?.max,
+                yLeftAxis?.min,
+                yLeftAxis?.max,
+                yRightAxis?.min,
+                yRightAxis?.max,
+                lineList
+            ) {
+                detectTapGestures { tapOffset ->
+                    // 转换像素坐标为数据坐标
+                    val dataX = convertPixelToDataX(
+                        pixelX = tapOffset.x,
+                        axisPoints = axisPoints,
+                        xAxisMin = xAxis.min,
+                        xAxisMax = xAxis.max,
+                        scale = scale
+                    )
+                    
+                    // 获取所有Y轴的数据值
+                    val (dataYLeftInside, dataYLeft, dataYRight) = convertPixelToAllDataY(
+                        pixelY = tapOffset.y,
+                        axisPoints = axisPoints,
+                        yLeftInsideAxis = yLeftInsideAxis,
+                        yLeftAxis = yLeftAxis,
+                        yRightAxis = yRightAxis
+                    )
+                    
+                    // 为了向后兼容，使用第一个可用的Y轴值作为 dataY
+                    val dataY = dataYLeftInside ?: dataYLeft ?: dataYRight ?: 0f
+                    
+                    // 查找最近的数据点
+                    val nearestPoint = findNearestDataPoint(
+                        touchX = tapOffset.x,
+                        touchY = tapOffset.y,
+                        lineList = lineList ?: emptyList(),
+                        axisPoints = axisPoints,
+                        xAxisMin = xAxis.min,
+                        xAxisMax = xAxis.max,
+                        yAxisMin = yLeftInsideAxis?.min ?: yLeftAxis?.min ?: yRightAxis?.min ?: 0f,
+                        yAxisMax = yLeftInsideAxis?.max ?: yLeftAxis?.max ?: yRightAxis?.max ?: 0f,
+                        scale = scale
+                    )
+                    
+                    // 回调触摸事件
+                    onTouch.invoke(
+                        TouchEventData(
+                            dataX = dataX,
+                            dataY = dataY,
+                            pixelX = tapOffset.x,
+                            pixelY = tapOffset.y,
+                            nearestPoint = nearestPoint,
+                            dataYLeftInside = dataYLeftInside,
+                            dataYLeft = dataYLeft,
+                            dataYRight = dataYRight
+                        )
+                    )
+                }
+            }
+        } else {
+            Modifier
+        }
+
 
         Canvas(
             modifier = transformModifier
+                .then(touchModifier)
                 .fillMaxSize()
                 .drawWithCache {
                     onDrawBehind {
@@ -1360,4 +1434,111 @@ fun getCubicPathCatmullRom(
     return path
 }
 
+/**
+ * 将像素X坐标转换为数据X坐标
+ */
+private fun convertPixelToDataX(
+    pixelX: Float,
+    axisPoints: AxisPoints,
+    xAxisMin: Float,
+    xAxisMax: Float,
+    scale: Float
+): Float {
+    val oneDataXPx = (axisPoints.point1.x - axisPoints.point0.x) / (xAxisMax - xAxisMin)
+    val offsetXPx = xAxisMin * oneDataXPx
+    return (pixelX - axisPoints.point0.x + offsetXPx) / (oneDataXPx * scale)
+}
+
+/**
+ * 将像素Y坐标转换为数据Y坐标（单个Y轴）
+ */
+private fun convertPixelToDataY(
+    pixelY: Float,
+    axisPoints: AxisPoints,
+    yLeftInsideAxis: Axis?,
+    yLeftAxis: Axis?,
+    yRightAxis: Axis?
+): Float {
+    // 优先使用左内轴，其次左外轴，最后右轴
+    val yAxis = yLeftInsideAxis ?: yLeftAxis ?: yRightAxis ?: return 0f
+    val oneDataYPx = (axisPoints.point0.y - axisPoints.point3.y) / (yAxis.max - yAxis.min)
+    val offsetYPx = yAxis.min * oneDataYPx
+    return (axisPoints.point0.y - pixelY + offsetYPx) / oneDataYPx
+}
+
+/**
+ * 将像素Y坐标转换为所有可用Y轴的数据坐标
+ * @return Triple<左内轴Y值, 左外轴Y值, 右轴Y值>，不存在的轴为 null
+ */
+private fun convertPixelToAllDataY(
+    pixelY: Float,
+    axisPoints: AxisPoints,
+    yLeftInsideAxis: Axis?,
+    yLeftAxis: Axis?,
+    yRightAxis: Axis?
+): Triple<Float?, Float?, Float?> {
+    val dataYLeftInside = yLeftInsideAxis?.let { axis ->
+        val oneDataYPx = (axisPoints.point0.y - axisPoints.point3.y) / (axis.max - axis.min)
+        val offsetYPx = axis.min * oneDataYPx
+        (axisPoints.point0.y - pixelY + offsetYPx) / oneDataYPx
+    }
+    
+    val dataYLeft = yLeftAxis?.let { axis ->
+        val oneDataYPx = (axisPoints.point0.y - axisPoints.point3.y) / (axis.max - axis.min)
+        val offsetYPx = axis.min * oneDataYPx
+        (axisPoints.point0.y - pixelY + offsetYPx) / oneDataYPx
+    }
+    
+    val dataYRight = yRightAxis?.let { axis ->
+        val oneDataYPx = (axisPoints.point0.y - axisPoints.point3.y) / (axis.max - axis.min)
+        val offsetYPx = axis.min * oneDataYPx
+        (axisPoints.point0.y - pixelY + offsetYPx) / oneDataYPx
+    }
+    
+    return Triple(dataYLeftInside, dataYLeft, dataYRight)
+}
+
+/**
+ * 查找距离触摸点最近的数据点
+ */
+private fun findNearestDataPoint(
+    touchX: Float,
+    touchY: Float,
+    lineList: List<Line>,
+    axisPoints: AxisPoints,
+    xAxisMin: Float,
+    xAxisMax: Float,
+    yAxisMin: Float,
+    yAxisMax: Float,
+    scale: Float
+): PointData? {
+    if (lineList.isEmpty()) return null
+    
+    var nearestPoint: PointData? = null
+    var minDistance = Float.MAX_VALUE
+    
+    lineList.forEach { line ->
+        line.pointList.forEach { point ->
+            // 计算数据点在屏幕上的像素位置
+            val oneDataXPx = (axisPoints.point1.x - axisPoints.point0.x) / (xAxisMax - xAxisMin)
+            val oneDataYPx = (axisPoints.point0.y - axisPoints.point3.y) / (yAxisMax - yAxisMin)
+            
+            val pixelX = axisPoints.point0.x + (point.x - xAxisMin) * oneDataXPx * scale
+            val pixelY = axisPoints.point0.y - (point.y - yAxisMin) * oneDataYPx
+            
+            // 计算欧几里得距离
+            val distance = kotlin.math.sqrt(
+                (pixelX - touchX) * (pixelX - touchX) +
+                (pixelY - touchY) * (pixelY - touchY)
+            )
+            
+            if (distance < minDistance) {
+                minDistance = distance
+                nearestPoint = PointData(point, line, distance)
+            }
+        }
+    }
+    
+    return nearestPoint
+}
 
