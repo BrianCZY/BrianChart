@@ -209,6 +209,63 @@ fun drawXYAxis(
 
 }
 
+
+fun drawTouchIndicator(
+    drawScope: DrawScope,
+    xAxis: Axis,
+    yLeftInsideAxis: Axis? = null,
+    yLeftAxis: Axis? = null,
+    yRightAxis: Axis? = null,
+    axisPoints: AxisPoints,
+    offset: Offset,
+) {
+    drawScope.run {
+        drawTouchIndicator(
+            drawScope,
+            axisPoints = axisPoints,
+            axisMin = xAxis.min,
+            axisMax = xAxis.max,
+            offset = offset
+        )
+    }
+}
+
+/**
+ * @author Brian
+ * @Description:画颜色块
+ */
+fun drawTouchIndicator(
+    drawScope: DrawScope,
+    axisPoints: AxisPoints,
+    axisMin: Float,
+    axisMax: Float,
+    offset: Offset,
+) {
+    drawScope.run {
+
+
+        val oneDataYPx =
+            (axisPoints.point1.x - axisPoints.point0.x) / (axisMax - axisMin) // X轴上 1f单位数据点对应的px数
+        offset?.let { (x, y) ->
+            val X1 = axisPoints.point0.x + offset.x
+            val X2 = axisPoints.point0.x + offset.y
+            val Y1 = axisPoints.point0.y  //
+            val Y2 = axisPoints.point3.y  //
+
+            drawRect(
+                color = Color.Red,
+//                topLeft = offset,
+                topLeft = Offset(offset.x, Y1),
+                size = Size(1.dp.toPx(), Y2 - Y1)
+            )
+        }
+
+
+    }
+
+
+}
+
 fun getScaleLengSize(drawScope: DrawScope, axis: Axis?): Float {
     drawScope.run {
         return if (axis?.scaleInterval != null) {

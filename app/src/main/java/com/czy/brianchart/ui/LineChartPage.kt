@@ -1893,7 +1893,7 @@ fun ChartWithTouch(modifier: Modifier) {
                     labelInterval = 50f,
                     name = "数值"
                 ),
-                isTouchEnabled = true  // 启用触摸功能
+
             )
         )
     }

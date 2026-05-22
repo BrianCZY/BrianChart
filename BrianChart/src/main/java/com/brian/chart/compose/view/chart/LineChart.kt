@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
@@ -70,7 +71,7 @@ fun LineChart(
     val isSelfAdaptation by derivedStateOf { data?.isSelfAdaptation == true }
     val isScroll by derivedStateOf { data?.isScroll }
     val axisPadding by derivedStateOf { data?.axisPadding }
-    val isTouchEnabled by derivedStateOf { data?.isTouchEnabled == true }
+
 
     // 使用来自 data 的 xAxis（调用方负责就地更新 xAxis.limitLineList 来避免重建）
     val xAxis by derivedStateOf { xAxisRaw }
@@ -109,23 +110,6 @@ fun LineChart(
             yLeftInsideAxis,
             yRightAxis
         ) {
-
-//            // 重点关注这些参数
-//            Log.i(TAG, "=== axisPoints Recomposition ===")
-//
-//            // 1. canvasSize 是否频繁变化
-//            val canvasSizeHash = canvasSize.hashCode()
-//            Log.i(TAG, "canvasSize: $canvasSizeHash")
-//
-//            // 2. Axis 对象是否每次都创建新实例
-//            Log.i(TAG, "xAxis identity: ${System.identityHashCode(xAxis)}")
-//            Log.i(TAG, "yLeftAxis identity: ${System.identityHashCode(yLeftAxis)}")
-//            Log.i(TAG, "yLeftInsideAxis identity: ${System.identityHashCode(yLeftInsideAxis)}")
-//            Log.i(TAG, "yRightAxis identity: ${System.identityHashCode(yRightAxis)}")
-//
-//            // 3. Axis 对象的内容是否变化
-//            Log.i(TAG, "xAxis name: ${xAxis.name}")
-//            Log.i(TAG, "xAxis min: ${xAxis.min}, max: ${xAxis.max}")
 
             // 在这里捕获 textMeasurer 和 currentDensity
             val measurer = textMeasurer
@@ -243,8 +227,11 @@ fun LineChart(
         }
 
         // 触摸处理 Modifier
-        val touchModifier = if (isTouchEnabled && onTouch != null) {
-            Modifier.pointerInput(
+        var touchOffset by remember {
+            mutableStateOf(Offset.Zero)
+        }
+        val touchModifier = if ( onTouch != null) {
+            /*Modifier.pointerInput(
                 axisPoints,
                 scale,
                 xAxis.min,
@@ -277,17 +264,7 @@ fun LineChart(
                             yRightAxis = yRightAxis
                         )
                         val downDataY = downDataYLeftInside ?: downDataYLeft ?: downDataYRight ?: 0f
-                        val downNearest = findNearestDataPoint(
-                            touchX = down.position.x,
-                            touchY = down.position.y,
-                            lineList = lineList ?: emptyList(),
-                            axisPoints = axisPoints,
-                            xAxisMin = xAxis.min,
-                            xAxisMax = xAxis.max,
-                            yAxisMin = yLeftInsideAxis?.min ?: yLeftAxis?.min ?: yRightAxis?.min ?: 0f,
-                            yAxisMax = yLeftInsideAxis?.max ?: yLeftAxis?.max ?: yRightAxis?.max ?: 0f,
-                            scale = scale
-                        )
+
                         Log.d(TAG, "onTouch DOWN dataX=$downDataX dataY=$downDataY pixel=(${down.position.x},${down.position.y})")
                         onTouch.invoke(
                             TouchEventData(
@@ -295,7 +272,6 @@ fun LineChart(
                                 dataY = downDataY,
                                 pixelX = down.position.x,
                                 pixelY = down.position.y,
-                                nearestPoint = downNearest,
                                 dataYLeftInside = downDataYLeftInside,
                                 dataYLeft = downDataYLeft,
                                 dataYRight = downDataYRight,
@@ -343,18 +319,6 @@ fun LineChart(
                                     yRightAxis = yRightAxis
                                 )
 
-                                // 对于最终 nearestPoint，我们需要更准确的查找（较耗时），但只在 UP/TAP 时执行
-                                val upNearest = findNearestDataPoint(
-                                    touchX = upPos.x,
-                                    touchY = upPos.y,
-                                    lineList = lineList ?: emptyList(),
-                                    axisPoints = axisPoints,
-                                    xAxisMin = xAxis.min,
-                                    xAxisMax = xAxis.max,
-                                    yAxisMin = yLeftInsideAxis?.min ?: yLeftAxis?.min ?: yRightAxis?.min ?: 0f,
-                                    yAxisMax = yLeftInsideAxis?.max ?: yLeftAxis?.max ?: yRightAxis?.max ?: 0f,
-                                    scale = scale
-                                )
 
                                 Log.d(TAG, "onTouch UP dataX=$upDataX dataY=$upDataY pixel=(${upPos.x},${upPos.y}) eventType=${if (moved) TouchEventType.UP else TouchEventType.TAP}")
                                 onTouch.invoke(
@@ -363,7 +327,6 @@ fun LineChart(
                                         dataY = upDataY,
                                         pixelX = upPos.x,
                                         pixelY = upPos.y,
-                                        nearestPoint = upNearest,
                                         dataYLeftInside = null,
                                         dataYLeft = null,
                                         dataYRight = null,
@@ -401,30 +364,14 @@ fun LineChart(
                                     yRightAxis = yRightAxis
                                 )
 
-                                val mvNearest = if (shouldComputeNearest) {
-                                    lastSentX = mvPos.x
-                                    lastSentY = mvPos.y
-                                    findNearestDataPoint(
-                                        touchX = mvPos.x,
-                                        touchY = mvPos.y,
-                                        lineList = lineList ?: emptyList(),
-                                        axisPoints = axisPoints,
-                                        xAxisMin = xAxis.min,
-                                        xAxisMax = xAxis.max,
-                                        yAxisMin = yLeftInsideAxis?.min ?: yLeftAxis?.min ?: yRightAxis?.min ?: 0f,
-                                        yAxisMax = yLeftInsideAxis?.max ?: yLeftAxis?.max ?: yRightAxis?.max ?: 0f,
-                                        scale = scale
-                                    )
-                                } else null
 
-                                Log.d(TAG, "onTouch MOVE dataX=$mvDataX dataY=$mvDataY pixel=(${mvPos.x},${mvPos.y}) nearest=${mvNearest != null}")
+                                Log.d(TAG, "onTouch MOVE dataX=$mvDataX dataY=$mvDataY pixel=(${mvPos.x},${mvPos.y}) ")
                                 onTouch.invoke(
                                     TouchEventData(
                                         dataX = mvDataX,
                                         dataY = mvDataY,
                                         pixelX = mvPos.x,
                                         pixelY = mvPos.y,
-                                        nearestPoint = mvNearest,
                                         dataYLeftInside = null,
                                         dataYLeft = null,
                                         dataYRight = null,
@@ -438,6 +385,23 @@ fun LineChart(
                         }
                     }
                 }
+            }*/
+            Modifier.pointerInput(Unit) {
+                detectDragGestures(
+                    onDragStart = { offset->
+                        Log.d(TAG, "onDragStart offset = $offset")
+                        touchOffset = offset
+                    }, // 拖拽开始时，停止任何正在进行的动画
+                    onDrag = { change, dragAmount ->
+                        change.consume() // 消费该事件，表示它已被处理
+                        touchOffset += dragAmount
+                        Log.d(TAG, "onDragStart touchOffset = $touchOffset")
+                    },
+                    onDragEnd = {
+                        // 此处将在第4步添加快捷滑动（fling）逻辑
+
+                    }
+                )
             }
         } else {
             Modifier
@@ -513,6 +477,17 @@ fun LineChart(
                             listCurvePathOrPoints.let {
                                 drawCurveSplashes(this, it)
                             }
+
+                            /**画触摸选择指示*/
+                            drawTouchIndicator(
+                                this,
+                                xAxis,
+                                yLeftInsideAxis,
+                                yLeftAxis,
+                                yRightAxis,
+                                axisPoints = axisPoints,
+                                offset = touchOffset,
+                            )
                         }
                     }
                 }

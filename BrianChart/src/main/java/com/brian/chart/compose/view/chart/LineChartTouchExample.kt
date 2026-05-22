@@ -55,7 +55,6 @@ fun LineChartTouchExample() {
                 labelInterval = 50f,
                 scaleInterval = 25f
             ),
-            isTouchEnabled = true  // 启用触摸功能
         )
     }
     
@@ -154,7 +153,6 @@ fun MultiAxisTouchExample() {
                 labelInterval = 50f,
                 name = "右轴"
             ),
-            isTouchEnabled = true
         )
     }
     
