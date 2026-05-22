@@ -11,11 +11,16 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -35,6 +40,13 @@ import com.brian.chart.compose.view.chart.BarChartData
 import com.brian.chart.compose.view.chart.BarData
 import com.brian.chart.compose.view.chart.BarDataSet
 import com.brian.chart.compose.view.chart.BarEntry
+import com.brian.chart.compose.view.chart.LimitLine
+import com.brian.chart.compose.view.chart.Line
+import com.brian.chart.compose.view.chart.LineChart
+import com.brian.chart.compose.view.chart.LineChartData
+import com.brian.chart.compose.view.chart.Point
+import com.brian.chart.compose.view.chart.TouchEventData
+import com.czy.brianchart.ui.theme.BrianChartTheme
 import java.text.SimpleDateFormat
 import kotlin.math.abs
 
@@ -1317,5 +1329,108 @@ fun BarChartPreviewStackedWithCustomRenderer() {
                 )
             )
         }
+    }
+}
+
+@Composable
+@Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 250)
+fun BarChartWithTouchPreview() {
+    BrianChartTheme {
+        Surface {
+            BarChartWithTouch(
+                modifier = Modifier
+                    .padding(bottom = 20.dp)
+                    .height(300.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun BarChartWithTouch(modifier: Modifier) {
+    val barEntryList: MutableList<BarEntry> =
+        mutableListOf(
+            BarEntry(x = 1f, y = 20f),
+            BarEntry(x = 2f, y = 10f),
+            BarEntry(x = 3f, y = 30f),
+            BarEntry(x = 4f, y = 20f),
+            BarEntry(x = 5f, y = 20f),
+            BarEntry(x = 6f, y = 50f),
+            BarEntry(x = 7f, y = 20f),
+            BarEntry(x = 8f, y = 20f),
+            BarEntry(x = 9f, y = 20f),
+        )
+
+    var lineData by remember {
+        mutableStateOf(
+            BarChartData(
+                barData = BarData(barDataSetList = mutableListOf(BarDataSet(barEntryList = barEntryList))),
+                xAxis = Axis(
+                    max = 10f,
+                    min = 0f,
+                    scaleInterval = 20f,
+                    labelInterval = 50f,
+                    name = "时间 (s)",
+                    // 使用原有的 limitLineList 字段，初始化为空列表以便后续就地更新
+                    limitLineList = mutableListOf()
+                ),
+                yLeftAxis = Axis(
+                    max = 50f, min = 0f, scaleInterval = 25f, labelInterval = 50f, name = "数值"
+                )
+            )
+        )
+    }
+    var selectedX by remember { mutableStateOf<Float?>(9f) }
+
+    fun limitLineValue(drawScope: DrawScope, start: Offset, end: Offset, limitLine: LimitLine) {
+        drawScope.apply {
+            drawLine(
+                start = start, end = end, brush = Brush.linearGradient(       // 使用 brush 而不是 color
+                    colors = listOf(Color.Red, Color.Green),
+                    start = start,
+                    end = end
+                ), strokeWidth = limitLine.width.toPx()
+            )
+            drawCircle(
+                color = Color.Cyan.copy(0.6f), radius = limitLine.width.toPx() * 2, center = end
+            )
+            drawCircle(color = Color.White, radius = 2.dp.toPx(), center = end)
+        }
+
+    }
+
+    fun updateLimitLine(x: Float?) {
+        val min = lineData.xAxis.min
+        val max = lineData.xAxis.max
+        val clamped = x?.coerceIn(min, max)
+        val list = if (clamped != null) mutableListOf(
+            LimitLine(
+                clamped,
+                color = Color.Red,
+                width = 2.dp,
+                text = "X=%.1f".format(clamped),
+                selfDefinedValue = ::limitLineValue
+            )
+        ) else mutableListOf()
+//        lineData.xAxis.limitLineList = list
+        lineData = lineData.copy(xAxis = lineData.xAxis.copy(limitLineList = list))
+    }
+
+    // 初始同步（若 selectedX 有初始值）
+    LaunchedEffect(Unit) {
+        updateLimitLine(selectedX)
+    }
+
+    Column(modifier = modifier.padding(8.dp)) {
+        BarChart(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f), data = lineData,
+            // 不再使用 dynamicLimitLines，改为直接更新 data.xAxis.limitLineList
+            onTouch = { touchEvent: TouchEventData ->
+                updateLimitLine(touchEvent.dataX)
+
+            })
+
     }
 }

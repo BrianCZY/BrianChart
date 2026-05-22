@@ -210,7 +210,6 @@ fun drawXYAxis(
 }
 
 
-
 fun getScaleLengSize(axis: Axis?, currentDensity: Density): Float {
 
     return if (axis?.scaleInterval != null) {
@@ -1363,4 +1362,57 @@ fun drawGrideLine(
         }
     }
 
+}
+
+
+/**
+ * 将像素X坐标转换为数据X坐标
+ */
+fun convertPixelToDataX(
+    pixelX: Float,
+    axisPoints: AxisPoints,
+    xAxisMin: Float,
+    xAxisMax: Float,
+    scale: Float
+): Float {
+    val oneDataXPx = (axisPoints.point1.x - axisPoints.point0.x) / (xAxisMax - xAxisMin)
+    val offsetXPx = xAxisMin * oneDataXPx
+    val raw = (pixelX - axisPoints.point0.x + offsetXPx) / (oneDataXPx * scale)
+    // 限制在 xAxis 的范围内，避免越界触摸带来超出轴范围的 data 值
+    return raw.coerceIn(xAxisMin, xAxisMax)
+}
+
+/**
+ * 将像素Y坐标转换为数据Y坐标（单个Y轴）
+ */
+fun convertPixelToDataY(
+    pixelY: Float,
+    axisPoints: AxisPoints,
+    yLeftInsideAxis: Axis?,
+    yLeftAxis: Axis?,
+    yRightAxis: Axis?
+): Float {
+    // 优先使用左内轴，其次左外轴，最后右轴
+    val yAxis = yLeftInsideAxis ?: yLeftAxis ?: yRightAxis ?: return 0f
+    val oneDataYPx = (axisPoints.point0.y - axisPoints.point3.y) / (yAxis.max - yAxis.min)
+    val offsetYPx = yAxis.min * oneDataYPx
+    val raw = (axisPoints.point0.y - pixelY + offsetYPx) / oneDataYPx
+    // 限制在对应 y 轴范围内
+    return raw.coerceIn(yAxis.min, yAxis.max)
+}
+/**
+ * 将像素Y坐标转换为数据Y坐标（单个Y轴）
+ */
+fun convertPixelToDataY(
+    pixelY: Float,
+    axisPoints: AxisPoints,
+    yLeftAxis: Axis?,
+): Float {
+    // 优先使用左内轴，其次左外轴，最后右轴
+    val yAxis = yLeftAxis ?: return 0f
+    val oneDataYPx = (axisPoints.point0.y - axisPoints.point3.y) / (yAxis.max - yAxis.min)
+    val offsetYPx = yAxis.min * oneDataYPx
+    val raw = (axisPoints.point0.y - pixelY + offsetYPx) / oneDataYPx
+    // 限制在对应 y 轴范围内
+    return raw.coerceIn(yAxis.min, yAxis.max)
 }
