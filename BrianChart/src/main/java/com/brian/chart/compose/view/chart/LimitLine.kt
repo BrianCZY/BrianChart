@@ -1,6 +1,8 @@
 package com.brian.chart.compose.view.chart
 
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -13,5 +15,5 @@ class LimitLine(
     var width: Dp = 1.dp,
     var text: String = "",
     var textSize: TextUnit = 12.sp,
-
-    )
+    var selfDefinedValue: ((drawScope: DrawScope, start: Offset, end: Offset, limitLine: LimitLine) -> Unit)? = null,
+)

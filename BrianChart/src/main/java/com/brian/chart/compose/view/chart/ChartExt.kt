@@ -1115,30 +1115,41 @@ fun drawXLimitLine(
                 null
             }
             val lineX = (X1 - widthPx / 4) * scale
-            drawLine(
-                start = Offset(x = lineX, y = Y1),
-                end = Offset(x = lineX, y = Y2),
-                color = limitLine.color,
-                pathEffect = dashPathEffect,
-                strokeWidth = widthPx
-            )
-            //文字
-            var textSizePx = limitLine.textSize.toPx()
-            val nativePaint = Paint().let {
-                it.apply {
-                    textSize = textSizePx
-                    color = limitLine.color.toArgb()
-                    isAntiAlias = true//抗锯齿
+            if (limitLine.selfDefinedValue != null) {
+                limitLine.selfDefinedValue?.invoke(
+                    drawScope,
+                    Offset(x = lineX, y = Y1),
+                    Offset(x = lineX, y = Y2),
+                    limitLine
+                )
+            } else {
+
+                drawLine(
+                    start = Offset(x = lineX, y = Y1),
+                    end = Offset(x = lineX, y = Y2),
+                    color = limitLine.color,
+                    pathEffect = dashPathEffect,
+                    strokeWidth = widthPx
+                )
+                //文字
+                var textSizePx = limitLine.textSize.toPx()
+                val nativePaint = Paint().let {
+                    it.apply {
+                        textSize = textSizePx
+                        color = limitLine.color.toArgb()
+                        isAntiAlias = true//抗锯齿
+                    }
                 }
+
+
+                drawContext.canvas.nativeCanvas.drawText(
+                    limitLine.text,
+                    X1 - (textSizePx / 2) * limitLine.text.length - widthPx - 4f,
+                    Y1,
+                    nativePaint
+                )
             }
 
-
-            drawContext.canvas.nativeCanvas.drawText(
-                limitLine.text,
-                X1 - (textSizePx / 2) * limitLine.text.length - widthPx - 4f,
-                Y1,
-                nativePaint
-            )
         }
 
 
@@ -1174,32 +1185,43 @@ fun drawYLimitLine(
             }
             val widthPx = limitLine.width.toPx()
             val linY = Y1 - widthPx / 4
-            drawLine(
-                start = Offset(x = X1, y = linY),
-                end = Offset(x = X2, y = linY),
-                color = limitLine.color,
-                pathEffect = dashPathEffect,
-                strokeWidth = widthPx
+
+            if (limitLine.selfDefinedValue != null) {
+                limitLine.selfDefinedValue?.invoke(
+                    drawScope,
+                    Offset(x = X1, y = linY),
+                    Offset(x = X2, y = linY),
+                    limitLine
+                )
+            } else {
+
+                drawLine(
+                    start = Offset(x = X1, y = linY),
+                    end = Offset(x = X2, y = linY),
+                    color = limitLine.color,
+                    pathEffect = dashPathEffect,
+                    strokeWidth = widthPx
 
 
-            )
-            //文字
-            var textSizePx = limitLine.textSize.toPx()
-            val nativePaint = Paint().let {
-                it.apply {
-                    textSize = textSizePx
-                    color = limitLine.color.toArgb()
-                    isAntiAlias = true//抗锯齿
+                )
+                //文字
+                var textSizePx = limitLine.textSize.toPx()
+                val nativePaint = Paint().let {
+                    it.apply {
+                        textSize = textSizePx
+                        color = limitLine.color.toArgb()
+                        isAntiAlias = true//抗锯齿
+                    }
                 }
+
+
+                drawContext.canvas.nativeCanvas.drawText(
+                    limitLine.text,
+                    X2 - textSizePx * limitLine.text.length,
+                    Y1 - widthPx / 4 - textSizePx / 2,
+                    nativePaint
+                )
             }
-
-
-            drawContext.canvas.nativeCanvas.drawText(
-                limitLine.text,
-                X2 - textSizePx * limitLine.text.length,
-                Y1 - widthPx / 4 - textSizePx / 2,
-                nativePaint
-            )
         }
 
 

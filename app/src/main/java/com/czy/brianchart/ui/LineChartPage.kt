@@ -82,9 +82,7 @@ fun LineChartPage(navigationActions: ChartNavigationActions? = null) {
     val lineChartViewModel: LineChartViewModel = viewModel()
     val lineChartUIState by lineChartViewModel.lineChartUIState.collectAsStateWithLifecycle()
     LineChartView(
-        modifier = Modifier.fillMaxSize(),
-        lineChartUIState = lineChartUIState,
-        backClick = {
+        modifier = Modifier.fillMaxSize(), lineChartUIState = lineChartUIState, backClick = {
             navigationActions?.navigateBack()
         })
 
@@ -119,7 +117,8 @@ fun LineChartView(modifier: Modifier, lineChartUIState: LineChartUIState, backCl
                 LineChartWithTimer(modifier = Modifier.height(220.dp))
                 HorizontalDivider(thickness = 8.dp)
                 Text(
-                    "静态示例", modifier = Modifier
+                    "静态示例",
+                    modifier = Modifier
                         .height(40.dp)
                         .fillMaxWidth()
                         .background(color = MaterialTheme.colorScheme.primaryContainer)
@@ -307,8 +306,7 @@ fun ChartPading(modifier: Modifier) {
                 ),
 
 
-                ),
-            modifier = Modifier.weight(1f)
+                ), modifier = Modifier.weight(1f)
         )
         LineChart(
             data = LineChartData(
@@ -337,8 +335,7 @@ fun ChartPading(modifier: Modifier) {
                 ),
 
 
-                ),
-            modifier = Modifier.weight(1f)
+                ), modifier = Modifier.weight(1f)
         )
 
     }
@@ -349,10 +346,8 @@ fun ChartSelfDefine(modifier: Modifier) {
     val context = LocalContext.current
     val list = getTestLineListSelfDefined(context)
     LineChart(
-        modifier = modifier,
-        data = LineChartData(
-            lineList = list,
-            xAxis = Axis(
+        modifier = modifier, data = LineChartData(
+            lineList = list, xAxis = Axis(
                 max = 500f,
                 scaleInterval = 20f,
                 labelInterval = 100f,
@@ -366,8 +361,7 @@ fun ChartSelfDefine(modifier: Modifier) {
                 labelInterval = 50f,
                 name = "",
                 gridLine = GridLine(10f, width = 0.5.dp)
-            ),
-            isScroll = true
+            ), isScroll = true
         )
     )
 }
@@ -478,8 +472,7 @@ fun Chart7(modifier: Modifier) {
 fun Chart6(modifier: Modifier) {
     val list = getTestPointLineList()
     LineChart(
-        modifier = modifier,
-        data = LineChartData(
+        modifier = modifier, data = LineChartData(
             lineList = list, xAxis = Axis(
                 max = 800f,
                 min = -400f,
@@ -506,8 +499,7 @@ fun Chart5(modifier: Modifier) {
     val list = getTestPlusOrMinusLineList()
     val limitLineList = getTestPlusOrMinusLimitLineList()
     LineChart(
-        modifier = modifier,
-        data = LineChartData(
+        modifier = modifier, data = LineChartData(
             lineList = list,
             xAxis = Axis(
                 max = 800f,
@@ -539,8 +531,7 @@ fun Chart4(modifier: Modifier) {
     LineChart(
         modifier = modifier
             .padding(2.dp)
-            .background(Color(0xffaabbcc)),
-        data = LineChartData(
+            .background(Color(0xffaabbcc)), data = LineChartData(
             lineList = list,
             xAxis = Axis(
                 max = 500f,
@@ -567,8 +558,7 @@ fun Chart3(modifier: Modifier) {
     val limitLineList = getTestLimitLineList()
     val xLimitLineList = getTestXLimitLineList()
     LineChart(
-        modifier = modifier,
-        data = LineChartData(
+        modifier = modifier, data = LineChartData(
             lineList = list,
             xAxis = Axis(
                 max = 500f,
@@ -605,8 +595,7 @@ fun Chart2(modifier: Modifier) {
     val limitLineList = getTestLimitLineList()
     val xLimitLineList = getTestXLimitLineList()
     LineChart(
-        modifier = modifier,
-        data = LineChartData(
+        modifier = modifier, data = LineChartData(
             lineList = list,
             xAxis = Axis(
                 max = 500f,
@@ -678,8 +667,7 @@ fun Chart1(modifier: Modifier) {
                 chunkList = listChunk3,
                 limitLineList = yLimitLineList3
             )
-        ),
-        modifier = modifier
+        ), modifier = modifier
     )
 }
 
@@ -764,11 +752,7 @@ fun getTestYLimitLineList1(): MutableList<LimitLine> {
     val limitLineList: MutableList<LimitLine> = mutableListOf()
     limitLineList.add(
         LimitLine(
-            10f,
-            true,
-            width = 2.dp,
-            color = Color(0XFF18D276),
-            text = "限制线"
+            10f, true, width = 2.dp, color = Color(0XFF18D276), text = "限制线"
         )
     )
     return limitLineList
@@ -778,11 +762,7 @@ fun getTestYLimitLineList2(): MutableList<LimitLine> {
     val limitLineList: MutableList<LimitLine> = mutableListOf()
     limitLineList.add(
         LimitLine(
-            600f,
-            true,
-            width = 2.dp,
-            color = Color(0XFFFF4E87),
-            text = "限制线"
+            600f, true, width = 2.dp, color = Color(0XFFFF4E87), text = "限制线"
         )
     )
     return limitLineList
@@ -792,11 +772,7 @@ fun getTestYLimitLineList3(): MutableList<LimitLine> {
     val limitLineList: MutableList<LimitLine> = mutableListOf()
     limitLineList.add(
         LimitLine(
-            1200f,
-            true,
-            width = 2.dp,
-            color = Color(0XFF058BF6),
-            text = "限制线"
+            1200f, true, width = 2.dp, color = Color(0XFF058BF6), text = "限制线"
         )
     )
     return limitLineList
@@ -809,16 +785,30 @@ fun getTestYLimitLineList3(): MutableList<LimitLine> {
 fun getTestLineList(): MutableList<Line> {
     val linList: MutableList<Line> = mutableListOf()
     val point = mutableListOf(
-        Point(10f, 10f), Point(50f, 100f), Point(100f, 30f),
-        Point(150f, 200f), Point(200f, 120f), Point(250f, 10f),
-        Point(300f, 280f), Point(350f, 100f), Point(400f, 10f),
-        Point(450f, 100f), Point(500f, 200f)
+        Point(10f, 10f),
+        Point(50f, 100f),
+        Point(100f, 30f),
+        Point(150f, 200f),
+        Point(200f, 120f),
+        Point(250f, 10f),
+        Point(300f, 280f),
+        Point(350f, 100f),
+        Point(400f, 10f),
+        Point(450f, 100f),
+        Point(500f, 200f)
     )
     val point1 = mutableListOf(
-        Point(10f, 210f), Point(50f, 150f), Point(100f, 130f),
-        Point(150f, 200f), Point(200f, 80f), Point(250f, 240f),
-        Point(300f, 20f), Point(350f, 150f), Point(400f, 50f),
-        Point(450f, 240f), Point(500f, 140f)
+        Point(10f, 210f),
+        Point(50f, 150f),
+        Point(100f, 130f),
+        Point(150f, 200f),
+        Point(200f, 80f),
+        Point(250f, 240f),
+        Point(300f, 20f),
+        Point(350f, 150f),
+        Point(400f, 50f),
+        Point(450f, 240f),
+        Point(500f, 140f)
     )
 //    linList.add(
 //        Line(
@@ -854,35 +844,20 @@ fun getTestLineListSelfDefined(context: Context): MutableList<Line> {
     val point = mutableListOf(
         Point(100f, 50f, selfDefinedValue = { drawScope, offset ->
             drawSelfDefinedTextAndShape(
-                drawScope = drawScope,
-                offset = offset,
-                x = 100f,
-                y = 50f,
-                color = Color.Green
+                drawScope = drawScope, offset = offset, x = 100f, y = 50f, color = Color.Green
             )
 
-        }),
-        Point(200f, 120f, selfDefinedValue = { drawScope, offset ->
+        }), Point(200f, 120f, selfDefinedValue = { drawScope, offset ->
             drawSelfDefinedTextAndShape(
-                drawScope = drawScope,
-                offset = offset,
-                x = 200f,
-                y = 120f,
-                color = Color.Red
+                drawScope = drawScope, offset = offset, x = 200f, y = 120f, color = Color.Red
             )
 
-        }),
-        Point(300f, 220f, selfDefinedValue = { drawScope, offset ->
+        }), Point(300f, 220f, selfDefinedValue = { drawScope, offset ->
             drawSelfDefinedText(
-                drawScope = drawScope,
-                offset = offset,
-                x = 300f,
-                y = 220f,
-                color = Color.Black
+                drawScope = drawScope, offset = offset, x = 300f, y = 220f, color = Color.Black
             )
 
-        }),
-        Point(400f, 80f, selfDefinedValue = { drawScope, offset ->
+        }), Point(400f, 80f, selfDefinedValue = { drawScope, offset ->
             val bitmap = BitmapFactory.decodeResource(
                 context.resources,  // 需要 Context
                 android.R.drawable.ic_menu_edit
@@ -893,8 +868,7 @@ fun getTestLineListSelfDefined(context: Context): MutableList<Line> {
                 offset = offset,
             )
 
-        }),
-        Point(500f, 200f, selfDefinedValue = { drawScope, offset ->
+        }), Point(500f, 200f, selfDefinedValue = { drawScope, offset ->
             val bitmap = BitmapFactory.decodeResource(
                 context.resources,  // 需要 Context
                 android.R.drawable.ic_menu_edit
@@ -908,10 +882,17 @@ fun getTestLineListSelfDefined(context: Context): MutableList<Line> {
         })
     )
     val point1 = mutableListOf(
-        Point(10f, 210f), Point(50f, 150f), Point(100f, 130f),
-        Point(150f, 200f), Point(200f, 80f), Point(250f, 240f),
-        Point(300f, 20f), Point(350f, 150f), Point(400f, 50f),
-        Point(450f, 240f), Point(500f, 140f)
+        Point(10f, 210f),
+        Point(50f, 150f),
+        Point(100f, 130f),
+        Point(150f, 200f),
+        Point(200f, 80f),
+        Point(250f, 240f),
+        Point(300f, 20f),
+        Point(350f, 150f),
+        Point(400f, 50f),
+        Point(450f, 240f),
+        Point(500f, 140f)
     )
     linList.add(
         Line(
@@ -924,10 +905,8 @@ fun getTestLineListSelfDefined(context: Context): MutableList<Line> {
                     offsetList?.getOrNull(index)
                         ?.let { point.selfDefinedValue?.invoke(drawScope, it) }
                 }
-            }
-        )
-    )
-    /*linList.add(
+            })
+    )/*linList.add(
         Line(
             point1,
             color = Color(0xff4A90E2),
@@ -961,10 +940,8 @@ fun drawSelfDefinedBitmap(
     drawScope.run {
 
         drawImage(
-            image = bitmap,
-            topLeft = Offset(
-                offset.x - bitmap.width / 2,
-                offset.y - bitmap.height / 2
+            image = bitmap, topLeft = Offset(
+                offset.x - bitmap.width / 2, offset.y - bitmap.height / 2
             ) // Example position adjustment
         )
 
@@ -977,11 +954,7 @@ fun drawSelfDefinedBitmap(
  *@Description:自定义样式，示例
  */
 fun drawSelfDefinedTextAndShape(
-    drawScope: DrawScope,
-    offset: Offset,
-    x: Float,
-    y: Float,
-    color: Color
+    drawScope: DrawScope, offset: Offset, x: Float, y: Float, color: Color
 ) {
     drawScope.run {
         val textSize = 12.sp
@@ -1001,10 +974,7 @@ fun drawSelfDefinedTextAndShape(
                 }
             }
             drawText(
-                "(${x},${y})",
-                offset.x - 80f,
-                offset.y - textSize.toPx(),
-                nativePaint
+                "(${x},${y})", offset.x - 80f, offset.y - textSize.toPx(), nativePaint
             )
         }
     }
@@ -1015,11 +985,7 @@ fun drawSelfDefinedTextAndShape(
  *@Description:自定义样式，示例
  */
 fun drawSelfDefinedText(
-    drawScope: DrawScope,
-    offset: Offset,
-    x: Float,
-    y: Float,
-    color: Color
+    drawScope: DrawScope, offset: Offset, x: Float, y: Float, color: Color
 ) {
     drawScope.run {
         val textSize = 12.sp
@@ -1032,10 +998,7 @@ fun drawSelfDefinedText(
                 }
             }
             drawText(
-                "${y.toInt()}次",
-                offset.x - 40f,
-                offset.y - textSize.toPx() / 2,
-                nativePaint
+                "${y.toInt()}次", offset.x - 40f, offset.y - textSize.toPx() / 2, nativePaint
             )
         }
     }
@@ -1063,10 +1026,7 @@ fun getTestLineList2(): MutableList<Line> {
     linList.add(Line(point1, color = Color(0XFFFF4E87), isDrawCubic = true, isDashes = true))
     linList.add(
         Line(
-            point2,
-            color = Color(0XFF058BF6),
-            axisType = AxisType.RIGHT,
-            isDrawCubic = true
+            point2, color = Color(0XFF058BF6), axisType = AxisType.RIGHT, isDrawCubic = true
         )
     )
     return linList
@@ -1078,9 +1038,7 @@ fun drawableToBitmap(drawable: Drawable? = null): ImageBitmap? {
         return null
     }
     val bitmap = Bitmap.createBitmap(
-        drawable.intrinsicWidth,
-        drawable.intrinsicHeight,
-        Bitmap.Config.ARGB_8888
+        drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888
     )
     val canvas = Canvas(bitmap)
     drawable.setBounds(0, 0, canvas.width, canvas.height)
@@ -1111,9 +1069,7 @@ fun getTestPlusOrMinusLineList(): MutableList<Line> {
 
     linList.add(
         Line(
-            point,
-            color = Color(0xff50E3C2),
-            isDrawCubic = true
+            point, color = Color(0xff50E3C2), isDrawCubic = true
         )
     )
     linList.add(Line(point1, color = Color(0xff4A90E2), isDrawCubic = true))
@@ -1127,10 +1083,17 @@ fun getTestPlusOrMinusLineList(): MutableList<Line> {
 fun getTestPointLineList(): MutableList<Line> {
     val linList: MutableList<Line> = mutableListOf()
     val point = mutableListOf(
-        Point(10f, 210f), Point(50f, 150f), Point(100f, 130f),
-        Point(150f, 200f), Point(200f, 80f), Point(250f, 240f),
-        Point(300f, 20f), Point(350f, 150f), Point(400f, 50f),
-        Point(450f, 240f), Point(500f, 140f)
+        Point(10f, 210f),
+        Point(50f, 150f),
+        Point(100f, 130f),
+        Point(150f, 200f),
+        Point(200f, 80f),
+        Point(250f, 240f),
+        Point(300f, 20f),
+        Point(350f, 150f),
+        Point(400f, 50f),
+        Point(450f, 240f),
+        Point(500f, 140f)
     )
     linList.add(
         Line(
@@ -1391,8 +1354,7 @@ fun LineChartPreview6() {
             val list = getTestPointLineList()
             LineChart(
                 data = LineChartData(
-                    lineList = list,
-                    xAxis = Axis(
+                    lineList = list, xAxis = Axis(
                         max = 800f,
                         min = -400f,
                         position = 0f,
@@ -1421,8 +1383,7 @@ fun LineChartPreview7() {
     BrianChartTheme {
         Surface {
             LineChart(
-                modifier = Modifier.padding(2.dp),
-                data = LineChartData(
+                modifier = Modifier.padding(2.dp), data = LineChartData(
                     xAxis = Axis(
                         max = 0.83f,
                         min = -0f,
@@ -1452,8 +1413,7 @@ fun LineChartPreview8() {
     BrianChartTheme {
         Surface {
             LineChart(
-                modifier = Modifier.padding(2.dp),
-                data = LineChartData(
+                modifier = Modifier.padding(2.dp), data = LineChartData(
                     xAxis = Axis(
                         max = 8f,
                         min = -0f,
@@ -1487,8 +1447,7 @@ fun LineChartSelfAdaptationPreview() {
 
             LineChart(
                 data = LineChartData(
-                    lineList = list,
-                    xAxis = Axis(
+                    lineList = list, xAxis = Axis(
                         position = 0f,
                         scaleInterval = 100f,
                         labelInterval = 100f,
@@ -1500,8 +1459,7 @@ fun LineChartSelfAdaptationPreview() {
                         labelInterval = 50f,
                         position = 0f,
                         name = "",
-                    ),
-                    isSelfAdaptation = true
+                    ), isSelfAdaptation = true
                 ),
 
                 )
@@ -1545,8 +1503,7 @@ fun LineChartPadingPreview() {
                         ),
 
 
-                        ),
-                    modifier = Modifier.weight(1f)
+                        ), modifier = Modifier.weight(1f)
                 )
                 LineChart(
                     data = LineChartData(
@@ -1575,8 +1532,7 @@ fun LineChartPadingPreview() {
                         ),
 
 
-                        ),
-                    modifier = Modifier.weight(1f)
+                        ), modifier = Modifier.weight(1f)
                 )
 
             }
@@ -1594,8 +1550,7 @@ fun LineChartPadingSelfDefinePreview() {
 
                 LineChart(
                     data = LineChartData(
-                        lineList = null,
-                        xAxis = Axis(
+                        lineList = null, xAxis = Axis(
                             max = 6f,
                             min = 0f,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1615,11 +1570,9 @@ fun LineChartPadingSelfDefinePreview() {
                             chunkList = null,
                             limitLineList = null,
                             labelTextSize = 14.sp,
-                        ),
-                        axisPadding = AxisPadding().padding(40.dp)
+                        ), axisPadding = AxisPadding().padding(40.dp)
 
-                    ),
-                    modifier = Modifier
+                    ), modifier = Modifier
                         .weight(1f)
                         .background(Color(0x10000000))
                 )
@@ -1641,8 +1594,7 @@ fun LineChartWithTimer() {
             LineChartData(
                 lineList = listOf(
                     Line(
-                        pointList = mutableListOf(),
-                        color = Color(0xff50E3C2)
+                        pointList = mutableListOf(), color = Color(0xff50E3C2)
                     )
                 ) as MutableList<Line>?,
                 xAxis = Axis(
@@ -1692,8 +1644,7 @@ fun LineChartWithTimer() {
             // 显示当前点数
             Text(
                 "Time:${time}s",
-                modifier = Modifier
-                    .align(Alignment.CenterVertically),
+                modifier = Modifier.align(Alignment.CenterVertically),
                 color = Color.Gray
             )
             Text(
@@ -1712,11 +1663,9 @@ fun LineChartWithTimer() {
                     isRunning = !isRunning
                     if (isRunning) {
                         // 清理数据
-                        lineData = lineData.copy(
-                            lineList = lineData.lineList?.map { line ->
-                                line.copy(pointList = mutableListOf())
-                            } as MutableList?
-                        )
+                        lineData = lineData.copy(lineList = lineData.lineList?.map { line ->
+                            line.copy(pointList = mutableListOf())
+                        } as MutableList?)
                         val startTime = System.currentTimeMillis()
                         CoroutineScope(Dispatchers.Default).launch {
                             // 启动数据生成，正弦波数据
@@ -1724,8 +1673,7 @@ fun LineChartWithTimer() {
                                 val amplitude = 200.0
                                 val frequency = 0.2
 
-                                timerFlow
-                                    .take(max.toInt()) // 限制生成max次
+                                timerFlow.take(max.toInt()) // 限制生成max次
                                     .collect { i ->
                                         val newPoints = (0 until 10).map { j ->
                                             val x = (i * 1 + j).toDouble()
@@ -1734,11 +1682,10 @@ fun LineChartWithTimer() {
                                             Point(x.toFloat(), y.toFloat())
                                         }
 
-                                        lineData = lineData.copy(
-                                            lineList = lineData.lineList?.map { line ->
+                                        lineData =
+                                            lineData.copy(lineList = lineData.lineList?.map { line ->
                                                 line.copy(pointList = (line.pointList + newPoints) as MutableList<Point>)
-                                            } as MutableList<Line>?
-                                        )
+                                            } as MutableList<Line>?)
                                         val now = System.currentTimeMillis()
                                         time = (now - startTime) / 1_000
                                     }
@@ -1751,8 +1698,7 @@ fun LineChartWithTimer() {
                     } else {
                         job?.cancel() // 停止生成
                     }
-                }
-            ) {
+                }) {
                 Text(if (isRunning) "Stop" else "Start")
             }
 
@@ -1773,8 +1719,7 @@ fun LineChartPreviewSelfDefined() {
             val list = getTestLineListSelfDefined(context)
             LineChart(
                 data = LineChartData(
-                    lineList = list,
-                    xAxis = Axis(
+                    lineList = list, xAxis = Axis(
                         max = 500f,
                         scaleInterval = 20f,
                         labelInterval = 100f,
@@ -1788,8 +1733,7 @@ fun LineChartPreviewSelfDefined() {
                         labelInterval = 50f,
                         name = "",
                         gridLine = GridLine(10f, width = 0.5.dp)
-                    ),
-                    isScroll = true
+                    ), isScroll = true
                 )
             )
         }
@@ -1871,13 +1815,9 @@ fun ChartWithTouch(modifier: Modifier) {
                             Point(150f, 130f),
                             Point(175f, 200f),
                             Point(200f, 170f)
-                        ),
-                        color = Color(0xff4A90E2),
-                        isDrawCubic = true,
-                        isDrawPath = true
+                        ), color = Color(0xff4A90E2), isDrawCubic = true, isDrawPath = true
                     )
-                ),
-                xAxis = Axis(
+                ), xAxis = Axis(
                     max = 200f,
                     min = 0f,
                     scaleInterval = 20f,
@@ -1885,21 +1825,32 @@ fun ChartWithTouch(modifier: Modifier) {
                     name = "时间 (s)",
                     // 使用原有的 limitLineList 字段，初始化为空列表以便后续就地更新
                     limitLineList = mutableListOf()
-                ),
-                yLeftAxis = Axis(
-                    max = 250f,
-                    min = 0f,
-                    scaleInterval = 25f,
-                    labelInterval = 50f,
-                    name = "数值"
-                ),
-                isTouchEnabled = true  // 启用触摸功能
+                ), yLeftAxis = Axis(
+                    max = 250f, min = 0f, scaleInterval = 25f, labelInterval = 50f, name = "数值"
+                ), isTouchEnabled = true  // 启用触摸功能
             )
         )
     }
 
 
     var selectedX by remember { mutableStateOf<Float?>(200f) }
+
+    fun limitLineValue(drawScope: DrawScope, start: Offset, end: Offset, limitLine: LimitLine) {
+        drawScope.apply {
+            drawLine(
+                start = start, end = end, brush = Brush.linearGradient(       // 使用 brush 而不是 color
+                    colors = listOf(Color.Red, Color.Green),
+                    start = start,
+                    end = end
+                ), strokeWidth = limitLine.width.toPx()
+            )
+            drawCircle(
+                color = Color.Cyan.copy(0.6f), radius = limitLine.width.toPx() * 2, center = end
+            )
+            drawCircle(color = Color.White, radius = 2.dp.toPx(), center = end)
+        }
+
+    }
 
     fun updateLimitLine(x: Float?) {
         val min = lineData.xAxis.min
@@ -1910,7 +1861,8 @@ fun ChartWithTouch(modifier: Modifier) {
                 clamped,
                 color = Color.Red,
                 width = 2.dp,
-                text = "X=%.1f".format(clamped)
+                text = "X=%.1f".format(clamped),
+                selfDefinedValue = ::limitLineValue
             )
         ) else mutableListOf()
 //        lineData.xAxis.limitLineList = list
@@ -1926,14 +1878,12 @@ fun ChartWithTouch(modifier: Modifier) {
         LineChart(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f),
-            data = lineData,
+                .weight(1f), data = lineData,
             // 不再使用 dynamicLimitLines，改为直接更新 data.xAxis.limitLineList
             onTouch = { touchEvent: TouchEventData ->
                 updateLimitLine(touchEvent.dataX)
 
-            }
-        )
+            })
 
     }
 }
