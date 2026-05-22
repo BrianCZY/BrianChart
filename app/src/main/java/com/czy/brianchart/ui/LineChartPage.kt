@@ -65,6 +65,7 @@ import com.brian.chart.compose.view.chart.Line
 import com.brian.chart.compose.view.chart.LineChart
 import com.brian.chart.compose.view.chart.LineChartData
 import com.brian.chart.compose.view.chart.Point
+import com.brian.chart.compose.view.chart.Renderer
 import com.brian.chart.compose.view.chart.TouchEventData
 import com.brian.view.chart.AxisPadding
 import kotlinx.coroutines.CoroutineScope
@@ -894,18 +895,14 @@ fun getTestLineListSelfDefined(context: Context): MutableList<Line> {
         Point(450f, 240f),
         Point(500f, 140f)
     )
+
     linList.add(
         Line(
             point,
             color = Color(0xff50E3C2),
             isDashes = true,
             pathEffect = PathEffect.dashPathEffect(floatArrayOf(18f, 12f), 2f),
-            renderer = { drawScope, line, offsetList ->
-                line?.pointList?.forEachIndexed { index, point ->
-                    offsetList?.getOrNull(index)
-                        ?.let { point.selfDefinedValue?.invoke(drawScope, it) }
-                }
-            })
+            renderer = Renderer::baseRenderer)
     )/*linList.add(
         Line(
             point1,

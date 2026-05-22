@@ -23,7 +23,7 @@ data class Line(
     var isDashes: Boolean = false, // 是否启用虚线
     var isPoints: Boolean = false, // 是否启用散点
     var pathEffect: PathEffect? = null,// 虚线样式（自定义），null：则使用默认的样式
-    var renderer: ((drawScope: DrawScope, line: Line?, offsetList: List<Offset>?) -> Unit)? = null,//渲染器,自定义绘制
+    var renderer: ((drawScope: DrawScope, line: Line?, offsetList: List<Offset>?) -> Unit)? = Renderer::emptyRenderer,//渲染器,自定义绘制
     var code: String = "${AxisType.LEFT.name}_${System.nanoTime()}_${Random.nextInt(100000)}",//创建Line时，生成一个code,用于区分Line
 
 )
