@@ -1,15 +1,20 @@
 package com.brian.chart.compose.view.chart
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,14 +30,20 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.changedToUp
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.brian.view.chart.AxisPadding
 import com.brian.view.chart.AxisPoints
 import kotlin.math.abs
 
@@ -41,36 +52,83 @@ import kotlin.math.abs
  * @Description: 线性 图表
  * TODO : 优化缩放、添加滑动看数据
  */
+@SuppressLint("UnrememberedMutableState")
 @Composable
 fun BarChart(
-    modifier: Modifier = Modifier, data: BarChartData? = null
+    modifier: Modifier = Modifier, data: BarChartData? = null,
+    onTouch: ((touchEvent: TouchEventData) -> Unit)? = null,
 ) {
-    val barData: BarData? = data?.barData
-    val xAxis: Axis = data?.xAxis ?: Axis()
-    val yLeftAxis: Axis = data?.yLeftAxis ?: Axis()
-    val isScroll: Boolean = data?.isScroll ?: false
+
     //用来记录缩放大小
     var scale by remember { mutableStateOf(1f) }//缩放
     var rotation by remember { mutableStateOf(0f) } //旋转
     var offset by remember { mutableStateOf(Offset.Zero) }//移动
 
-    reSetBarXMax(xAxis, barData)
-    reSetBarYMax(yLeftAxis, barData)
+    val barData: BarData? = data?.barData
+    val xAxis: Axis = data?.xAxis ?: Axis()
+    val yLeftAxis: Axis = data?.yLeftAxis ?: Axis()
+    val isScroll: Boolean = data?.isScroll ?: false
+
+    val axisPadding by derivedStateOf { data?.axisPadding }
+    val isSelfAdaptation by derivedStateOf { data?.isSelfAdaptation == true }
+
+    remember(xAxis, yLeftAxis, barData) {
+        if (isSelfAdaptation) {
+            selfAdaptation(xAxis, yLeftAxis, barData)
+
+        }
+        ""
+    }
+
 
     val state = rememberTransformableState { zoomChange, panChange, rotationChange ->
         scale = scale * zoomChange
         Log.d("LineChart", "scale = ${scale}  zoomChange = ${zoomChange} panChange = ${panChange}")
 
     }
-    Box(modifier = modifier) {
-
+    // 使用 BoxWithConstraints 获取实际尺寸
+    BoxWithConstraints(modifier = modifier) {
         val textMeasurer: TextMeasurer = rememberTextMeasurer()
         val currentDensity = LocalDensity.current
 
-        var lablePaddingLeft = getBarYAxisPadding(this, yLeftAxis)
-        var lablePaddingRight = getBarAxisPaddingRight(this, xAxis)
-        var lablePaddingTop = getBarXAxisPaddingTop(this, yLeftAxis)
-        var lablePaddingBootom = getBarXAxisPaddingBottom(this, xAxis)
+        // 将约束转换为实际像素尺寸
+        val canvasSize by remember {
+            derivedStateOf {
+                with(currentDensity) {
+                    IntSize(
+                        width = maxWidth.roundToPx(),
+                        height = maxHeight.roundToPx()
+                    )
+                }
+            }
+        }
+
+        // 在 drawWithCache 外部计算 axisPoints
+        val axisPoints by remember(
+            canvasSize,
+            axisPadding,
+            xAxis,
+            yLeftAxis,
+        ) {
+
+
+            // 在这里捕获 textMeasurer 和 currentDensity
+            val measurer = textMeasurer
+            val density = currentDensity
+
+            derivedStateOf {
+                getAxisPoints(
+                    xAxis = xAxis,
+                    yLeftAxis = yLeftAxis,
+                    axisPadding = axisPadding,
+                    density = density,
+                    textMeasurer = measurer,
+                    size = canvasSize
+                )
+
+            }
+        }
+
 
         val modifier = if (isScroll) {
             //监听手势缩放
@@ -80,7 +138,206 @@ fun BarChart(
         } else {
             Modifier
         }
+        // 触摸处理 Modifier
+        /*        val touchModifier = if ( onTouch != null) {
+                    Modifier.pointerInput(
+                        axisPoints,
+                        scale,
+                        xAxis.min,
+                        xAxis.max,
+                        yLeftInsideAxis?.min,
+                        yLeftInsideAxis?.max,
+                        yLeftAxis?.min,
+                        yLeftAxis?.max,
+                        yRightAxis?.min,
+                        yRightAxis?.max,
+                        lineList
+                    ) {
+                        // 支持拖动（MOVE）与按下/抬起事件（DOWN/UP/TAP）的通用处理
+                        forEachGesture {
+                            awaitPointerEventScope {
+                                val down = awaitFirstDown()
+                                // 处理 DOWN 事件
+                                val downDataX = convertPixelToDataX(
+                                    pixelX = down.position.x,
+                                    axisPoints = axisPoints,
+                                    xAxisMin = xAxis.min,
+                                    xAxisMax = xAxis.max,
+                                    scale = scale
+                                )
+                                val (downDataYLeftInside, downDataYLeft, downDataYRight) = convertPixelToAllDataY(
+                                    pixelY = down.position.y,
+                                    axisPoints = axisPoints,
+                                    yLeftInsideAxis = yLeftInsideAxis,
+                                    yLeftAxis = yLeftAxis,
+                                    yRightAxis = yRightAxis
+                                )
+                                val downDataY = downDataYLeftInside ?: downDataYLeft ?: downDataYRight ?: 0f
+                                val downNearest = findNearestDataPoint(
+                                    touchX = down.position.x,
+                                    touchY = down.position.y,
+                                    lineList = lineList ?: emptyList(),
+                                    axisPoints = axisPoints,
+                                    xAxisMin = xAxis.min,
+                                    xAxisMax = xAxis.max,
+                                    yAxisMin = yLeftInsideAxis?.min ?: yLeftAxis?.min ?: yRightAxis?.min ?: 0f,
+                                    yAxisMax = yLeftInsideAxis?.max ?: yLeftAxis?.max ?: yRightAxis?.max ?: 0f,
+                                    scale = scale
+                                )
+                                Log.d(TAG, "onTouch DOWN dataX=$downDataX dataY=$downDataY pixel=(${down.position.x},${down.position.y})")
+                                onTouch.invoke(
+                                    TouchEventData(
+                                        dataX = downDataX,
+                                        dataY = downDataY,
+                                        pixelX = down.position.x,
+                                        pixelY = down.position.y,
+                                        nearestPoint = downNearest,
+                                        dataYLeftInside = downDataYLeftInside,
+                                        dataYLeft = downDataYLeft,
+                                        dataYRight = downDataYRight,
+                                        eventType = TouchEventType.DOWN
+                                    )
+                                )
 
+                                var moved = false
+
+                                // 缓存常用值，避免在高频 MOVE 中重复计算
+                                val oneDataXPx = (axisPoints.point1.x - axisPoints.point0.x) / (xAxis.max - xAxis.min)
+                                // 选择一个主要的 Y 轴用于快速 dataY 计算（优先左内轴）
+                                val primaryYAxis = yLeftInsideAxis ?: yLeftAxis ?: yRightAxis
+                                val oneDataYPx = primaryYAxis?.let { (axisPoints.point0.y - axisPoints.point3.y) / (it.max - it.min) }
+                                val offsetXPx = xAxis.min * oneDataXPx
+                                val offsetYPx = primaryYAxis?.let { it.min * (oneDataYPx ?: 0f) } ?: 0f
+
+                                // 最后发送的像素位置（用于节流）
+                                var lastSentX = down.position.x
+                                var lastSentY = down.position.y
+                                val touchSlop = 4f // 像素阈值，减少过多事件
+
+                                // 监听后续事件（move / up）
+                                while (true) {
+                                    val event = awaitPointerEvent()
+                                    val change = event.changes.firstOrNull() ?: continue
+
+                                    if (change.changedToUp()) {
+                                        // 抬起事件 - UP 或 TAP（如果没有移动则视为 TAP）
+                                        val upPos = change.position
+                                        // 最终位置的 dataX/dataY 直接用公式计算，成本小
+                                        // 使用统一的转换函数（包含边界裁剪）以保证 dataX/dataY 在 axis.min..axis.max 之内
+                                        val upDataX = convertPixelToDataX(
+                                            pixelX = upPos.x,
+                                            axisPoints = axisPoints,
+                                            xAxisMin = xAxis.min,
+                                            xAxisMax = xAxis.max,
+                                            scale = scale
+                                        )
+                                        val upDataY = convertPixelToDataY(
+                                            pixelY = upPos.y,
+                                            axisPoints = axisPoints,
+                                            yLeftInsideAxis = yLeftInsideAxis,
+                                            yLeftAxis = yLeftAxis,
+                                            yRightAxis = yRightAxis
+                                        )
+
+                                        // 对于最终 nearestPoint，我们需要更准确的查找（较耗时），但只在 UP/TAP 时执行
+                                        val upNearest = findNearestDataPoint(
+                                            touchX = upPos.x,
+                                            touchY = upPos.y,
+                                            lineList = lineList ?: emptyList(),
+                                            axisPoints = axisPoints,
+                                            xAxisMin = xAxis.min,
+                                            xAxisMax = xAxis.max,
+                                            yAxisMin = yLeftInsideAxis?.min ?: yLeftAxis?.min ?: yRightAxis?.min ?: 0f,
+                                            yAxisMax = yLeftInsideAxis?.max ?: yLeftAxis?.max ?: yRightAxis?.max ?: 0f,
+                                            scale = scale
+                                        )
+
+                                        Log.d(TAG, "onTouch UP dataX=$upDataX dataY=$upDataY pixel=(${upPos.x},${upPos.y}) eventType=${if (moved) TouchEventType.UP else TouchEventType.TAP}")
+                                        onTouch.invoke(
+                                            TouchEventData(
+                                                dataX = upDataX,
+                                                dataY = upDataY,
+                                                pixelX = upPos.x,
+                                                pixelY = upPos.y,
+                                                nearestPoint = upNearest,
+                                                dataYLeftInside = null,
+                                                dataYLeft = null,
+                                                dataYRight = null,
+                                                eventType = if (moved) TouchEventType.UP else TouchEventType.TAP
+                                            )
+                                        )
+
+                                        // 标记为已消费位移变化，仅消费位置变化以便系统还能处理其他手势
+                                        event.changes.forEach { it.consume() }
+                                        break
+                                    }
+
+                                    if (change.positionChanged()) {
+                                        val mvPos = change.position
+                                        val dx = mvPos.x - lastSentX
+                                        val dy = mvPos.y - lastSentY
+                                        // 只有超过阈值时才更新 nearestPoint（节流），但仍发送位置更新以保持流畅
+                                        val distanceSq = dx * dx + dy * dy
+                                        val shouldComputeNearest = distanceSq >= touchSlop * touchSlop
+                                        moved = true
+
+                                        // 使用统一的转换函数以保持一致性并裁剪到轴范围内
+                                        val mvDataX = convertPixelToDataX(
+                                            pixelX = mvPos.x,
+                                            axisPoints = axisPoints,
+                                            xAxisMin = xAxis.min,
+                                            xAxisMax = xAxis.max,
+                                            scale = scale
+                                        )
+                                        val mvDataY = convertPixelToDataY(
+                                            pixelY = mvPos.y,
+                                            axisPoints = axisPoints,
+                                            yLeftInsideAxis = yLeftInsideAxis,
+                                            yLeftAxis = yLeftAxis,
+                                            yRightAxis = yRightAxis
+                                        )
+
+                                        val mvNearest = if (shouldComputeNearest) {
+                                            lastSentX = mvPos.x
+                                            lastSentY = mvPos.y
+                                            findNearestDataPoint(
+                                                touchX = mvPos.x,
+                                                touchY = mvPos.y,
+                                                lineList = lineList ?: emptyList(),
+                                                axisPoints = axisPoints,
+                                                xAxisMin = xAxis.min,
+                                                xAxisMax = xAxis.max,
+                                                yAxisMin = yLeftInsideAxis?.min ?: yLeftAxis?.min ?: yRightAxis?.min ?: 0f,
+                                                yAxisMax = yLeftInsideAxis?.max ?: yLeftAxis?.max ?: yRightAxis?.max ?: 0f,
+                                                scale = scale
+                                            )
+                                        } else null
+
+                                        Log.d(TAG, "onTouch MOVE dataX=$mvDataX dataY=$mvDataY pixel=(${mvPos.x},${mvPos.y}) nearest=${mvNearest != null}")
+                                        onTouch.invoke(
+                                            TouchEventData(
+                                                dataX = mvDataX,
+                                                dataY = mvDataY,
+                                                pixelX = mvPos.x,
+                                                pixelY = mvPos.y,
+                                                nearestPoint = mvNearest,
+                                                dataYLeftInside = null,
+                                                dataYLeft = null,
+                                                dataYRight = null,
+                                                eventType = TouchEventType.MOVE
+                                            )
+                                        )
+
+                                        // 只消费位置变化，让系统继续处理其他必要事件
+                                        change.consume()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Modifier
+                }*/
         Canvas(
             modifier = modifier
                 .fillMaxWidth()
@@ -89,29 +346,6 @@ fun BarChart(
 
         ) {
 
-            val yLeftScaleLengSize = getScaleLengSize(this, yLeftAxis)//左边刻度的长度
-            val yRightScaleLengSize = getScaleLengSize(this, yLeftAxis)//右边刻度的长度
-            val xBottomScaleLengSize = getScaleLengSize(this, xAxis)//低边刻度的长度
-            //确定四个绘图点
-            val point0 = Point(
-                0f + lablePaddingLeft + yLeftScaleLengSize,
-                size.height - xBottomScaleLengSize - lablePaddingBootom
-            ) //左下角（原点）
-
-            val point1 = Point(
-                size.width - lablePaddingRight - yRightScaleLengSize,
-                size.height - xBottomScaleLengSize - lablePaddingBootom
-            )//右下角点
-
-            val point2 = Point(
-                size.width - lablePaddingRight - yRightScaleLengSize, 0f + lablePaddingTop
-            )//右上角点
-
-            val point3 = Point(
-                0f + lablePaddingLeft + yLeftScaleLengSize, 0f + lablePaddingTop
-            )//左上角点
-
-            val axisPoints = AxisPoints(point0, point1, point2, point3)
             /**画chunk 块内容*/
             drawChunk(
                 this, xAxis = xAxis, yLeftAxis = yLeftAxis, axisPoints = axisPoints
@@ -119,7 +353,7 @@ fun BarChart(
 
             /**画xy轴*/
             drawXYAxis(
-                this, xAxis = xAxis, yLeftAxis = yLeftAxis,axisPoints = axisPoints
+                this, xAxis = xAxis, yLeftAxis = yLeftAxis, axisPoints = axisPoints
             )
             /**刻度 label*/
             drawLable(
@@ -151,14 +385,91 @@ fun BarChart(
                 barData,
                 xAxis = xAxis,
                 yLeftAxis = yLeftAxis,
-                point0 = point0,
-                point1 = point1,
-                point2 = point2,
-                point3 = point3,
+                point0 = axisPoints.point0,
+                point1 = axisPoints.point1,
+                point2 = axisPoints.point2,
+                point3 = axisPoints.point3,
                 scale = scale
             )
         }
     }
+}
+
+private fun getAxisPoints(
+    xAxis: Axis,
+    yLeftAxis: Axis?,
+    density: Density,
+    axisPadding: AxisPadding? = null,
+    textMeasurer: TextMeasurer,
+    size: IntSize,
+): AxisPoints {
+    var startPx: Float? = null
+    var endPx: Float? = null
+    var topPx: Float? = null
+    var bottomPx: Float? = null
+    axisPadding?.apply {
+        with(density) {
+            startPx = start?.toPx()
+            endPx = end?.toPx()
+            topPx = top?.toPx()
+            bottomPx = bottom?.toPx()
+        }
+    }
+    var lablePaddingLeft = getBarYAxisPadding(yLeftAxis, textMeasurer = textMeasurer)
+    var lablePaddingRight = getBarAxisPaddingRight(xAxis, textMeasurer = textMeasurer)
+    var lablePaddingTop =
+        getBarXAxisPaddingTop(yLeftAxis, textMeasurer = textMeasurer)
+    var lablePaddingBootom =
+        getBarXAxisPaddingBottom(xAxis, textMeasurer = textMeasurer)
+
+    val yLeftScaleLengSize = getScaleLengSize(yLeftAxis, currentDensity = density)//左边刻度的长度
+    val yRightScaleLengSize = getScaleLengSize(yLeftAxis, currentDensity = density)//右边刻度的长度
+    val xBottomScaleLengSize = getScaleLengSize(xAxis, currentDensity = density)//低边刻度的长度
+
+    val paddingLeft = startPx ?: (lablePaddingLeft + yLeftScaleLengSize)
+    val paddingRight = endPx ?: (lablePaddingRight + yRightScaleLengSize)
+    val paddingTop = topPx ?: (lablePaddingTop)
+    val paddingBootom = bottomPx ?: (xBottomScaleLengSize + lablePaddingBootom)
+    //确定四个绘图点
+    val point0 = Point(
+        0f + paddingLeft,
+        size.height - paddingBootom
+    ) //左下角（原点）
+
+    val point1 = Point(
+        size.width - paddingRight,
+        size.height - paddingBootom
+    )//右下角点
+
+    val point2 = Point(
+        size.width - paddingRight, 0f + paddingTop
+    )//右上角点
+
+    val point3 = Point(
+        0f + paddingLeft, 0f + paddingTop
+    )//左上角点
+
+
+    return AxisPoints(point0, point1, point2, point3)
+}
+
+/**
+ *@author Brian
+ *@Description: 调整xy轴以适应实际的数据
+ */
+private fun selfAdaptation(
+    xAxis: Axis,
+    yLeftAxis: Axis?,
+    barData: BarData? = null,
+) {
+
+    reSetBarXMax(xAxis, barData)
+
+
+    if (yLeftAxis != null) {
+        reSetBarYMax(yLeftAxis, barData)
+    }
+
 }
 
 fun reSetBarXMax(
@@ -352,7 +663,8 @@ private fun DrawScope.drawStackedEntry(
         val layerColor = barDataSet.stackColors?.getOrNull(stackIndex) ?: barDataSet.color
 
         // 从 BarDataSet 获取当前层的背景绘制函数（优先使用 stackBackgrounds，否则使用 BarDataSet.background）
-        val layerBackground = barDataSet.stackBackgrounds?.getOrNull(stackIndex) ?: barDataSet.background
+        val layerBackground =
+            barDataSet.stackBackgrounds?.getOrNull(stackIndex) ?: barDataSet.background
 
         drawBarContentWithLayerStyle(
             barEntry = barEntry,
@@ -407,7 +719,16 @@ private fun DrawScope.drawBarContentWithLayerStyle(
     // 绘制柱状形状
     if (barEntry.stackRenderer != null) {
         // 使用 BarEntry 级别的堆积图自定义渲染器
-        barEntry.stackRenderer?.invoke(this, layerColor, offset, size, stackValue(barEntry, stackIndex), barDataSet.name, valueRelativeToXAxis, stackIndex)
+        barEntry.stackRenderer?.invoke(
+            this,
+            layerColor,
+            offset,
+            size,
+            stackValue(barEntry, stackIndex),
+            barDataSet.name,
+            valueRelativeToXAxis,
+            stackIndex
+        )
     } else {
         // 使用默认背景或 BarDataSet.background
         val backgroundToUse = layerBackground ?: barDataSet.background
@@ -430,7 +751,8 @@ private fun DrawScope.drawBarContentWithLayerStyle(
 
             // 确定数值文字颜色：堆积图优先使用 stackValueColors，否则使用 valueColor 或 color；非堆积图使用 valueColor 或 color
             val textColor = if (stackIndex >= 0) {
-                barDataSet.stackValueColors?.getOrNull(stackIndex) ?: barDataSet.valueColor ?: barDataSet.color
+                barDataSet.stackValueColors?.getOrNull(stackIndex) ?: barDataSet.valueColor
+                ?: barDataSet.color
             } else {
                 barDataSet.valueColor ?: barDataSet.color
             }
@@ -442,8 +764,9 @@ private fun DrawScope.drawBarContentWithLayerStyle(
                     isAntiAlias = true
                 }
             }
-            val label = barDataSet.settingValueText?.let { it(barDataSet.name, valueRelativeToXAxis) }
-                ?: "${valueRelativeToXAxis}"
+            val label =
+                barDataSet.settingValueText?.let { it(barDataSet.name, valueRelativeToXAxis) }
+                    ?: "${valueRelativeToXAxis}"
             val labelWidth = label.length * valueTextSizePx
             val offsetText = labelWidth / 2
 
@@ -498,7 +821,15 @@ private fun DrawScope.drawBarContent(
     // 绘制柱状形状
     if (barEntry.renderer != null) {
         // 使用 BarEntry 级别的非堆积图自定义渲染器
-        barEntry.renderer?.invoke(this, barDataSet.color, offset, size, stackValue(barEntry, stackIndex), barDataSet.name, valueRelativeToXAxis)
+        barEntry.renderer?.invoke(
+            this,
+            barDataSet.color,
+            offset,
+            size,
+            stackValue(barEntry, stackIndex),
+            barDataSet.name,
+            valueRelativeToXAxis
+        )
     } else {
         // 使用 BarDataSet 的背景配置或默认背景
         if (barDataSet.background == null) {
@@ -525,8 +856,9 @@ private fun DrawScope.drawBarContent(
                     isAntiAlias = true
                 }
             }
-            val label = barDataSet.settingValueText?.let { it(barDataSet.name, valueRelativeToXAxis) }
-                ?: "${valueRelativeToXAxis}"
+            val label =
+                barDataSet.settingValueText?.let { it(barDataSet.name, valueRelativeToXAxis) }
+                    ?: "${valueRelativeToXAxis}"
             val labelWidth = label.length * valueTextSizePx
             val offsetText = labelWidth / 2
 
@@ -559,101 +891,97 @@ private fun DrawScope.drawBarContent(
 }
 
 
-@Composable
-fun getBarYAxisPadding(boxScope: BoxScope, axis: Axis?): Float {
+fun getBarYAxisPadding(axis: Axis?, textMeasurer: TextMeasurer): Float {
     var padding = 0f
-    boxScope.run {
-        axis?.let {
-            val maxTextLayoutResult = rememberTextMeasurer().measure(
-                text = axis.max.toString(),
-                style = TextStyle(color = Color.Black, fontSize = axis.labelTextSize)
-            )
-            val nameTextLayoutResult = rememberTextMeasurer().measure(
-                text = axis.name.toString(),
-                style = TextStyle(color = Color.Black, fontSize = axis.labelTextSize)
-            )
-            mutableListOf(
-                maxTextLayoutResult.size.width, nameTextLayoutResult.size.width
-            ).maxOrNull()?.let {
-                padding += it
-            }
 
+    axis?.let {
+        val maxTextLayoutResult = textMeasurer.measure(
+            text = axis.max.toString(),
+            style = TextStyle(color = Color.Black, fontSize = axis.labelTextSize)
+        )
+        val nameTextLayoutResult = textMeasurer.measure(
+            text = axis.name.toString(),
+            style = TextStyle(color = Color.Black, fontSize = axis.labelTextSize)
+        )
+        mutableListOf(
+            maxTextLayoutResult.size.width, nameTextLayoutResult.size.width
+        ).maxOrNull()?.let {
+            padding += it
         }
+
     }
+
     Log.d("LinearChart2", "getYAxisPadding  padding = ${padding}")
     return padding + 8f
 }
 
-@Composable
-fun getBarAxisPaddingRight(boxScope: BoxScope, xAxis: Axis): Float {
+
+fun getBarAxisPaddingRight(xAxis: Axis, textMeasurer: TextMeasurer): Float {
     var padding = 0f
 
-    boxScope.run {
 
-        xAxis.let {
-            val maxTextLayoutResult = rememberTextMeasurer().measure(
-                text = it.max.toString(),
-                style = TextStyle(color = Color.Black, fontSize = it.labelTextSize)
-            )
-            val nameTextLayoutResult = rememberTextMeasurer().measure(
-                text = it.name.toString(),
-                style = TextStyle(color = Color.Black, fontSize = it.labelTextSize)
-            )
-            mutableListOf(
-                maxTextLayoutResult.size.width / 4, nameTextLayoutResult.size.width
-            ).maxOrNull()?.let {
-                padding += it
-            }
-
+    xAxis.let {
+        val maxTextLayoutResult = textMeasurer.measure(
+            text = it.max.toString(),
+            style = TextStyle(color = Color.Black, fontSize = it.labelTextSize)
+        )
+        val nameTextLayoutResult = textMeasurer.measure(
+            text = it.name.toString(),
+            style = TextStyle(color = Color.Black, fontSize = it.labelTextSize)
+        )
+        mutableListOf(
+            maxTextLayoutResult.size.width / 4, nameTextLayoutResult.size.width
+        ).maxOrNull()?.let {
+            padding += it
         }
+
 
     }
 
     return padding + 8f
 }
 
-@Composable
-fun getBarXAxisPaddingTop(drawScope: BoxScope, yLeftAxis: Axis?): Float {
+
+fun getBarXAxisPaddingTop(yLeftAxis: Axis?, textMeasurer: TextMeasurer): Float {
     var paddingTop = 0f
-    drawScope.run {
 
 
-        val yLeftNameTextLayoutResult = rememberTextMeasurer().measure(
-            text = yLeftAxis?.name ?: "",
-            style = TextStyle(color = Color.Black, fontSize = yLeftAxis?.labelTextSize ?: 12.sp)
-        )
+    val yLeftNameTextLayoutResult = textMeasurer.measure(
+        text = yLeftAxis?.name ?: "",
+        style = TextStyle(color = Color.Black, fontSize = yLeftAxis?.labelTextSize ?: 12.sp)
+    )
 
-        paddingTop = yLeftNameTextLayoutResult.size.height.toFloat()
+    paddingTop = yLeftNameTextLayoutResult.size.height.toFloat()
 
 
-    }
+
     Log.d("LinearChart2", "getXAxisPaddingTop  paddingTop = ${paddingTop}")
     return paddingTop + 8f
 }
 
-@Composable
-fun getBarXAxisPaddingBottom(drawScope: BoxScope, axis: Axis?): Float {
+
+fun getBarXAxisPaddingBottom(axis: Axis?, textMeasurer: TextMeasurer): Float {
     var paddingTop = 0f
-    drawScope.run {
 
-        axis?.let {
-            val nameTextLayoutResult = rememberTextMeasurer().measure(
-                text = it.name ?: "",
-                style = TextStyle(color = Color.Black, fontSize = it.labelTextSize)
-            )
-            val maxTextLayoutResult = rememberTextMeasurer().measure(
-                text = it.max.toString(),
-                style = TextStyle(color = Color.Black, fontSize = it.labelTextSize)
-            )
 
-            mutableListOf(
+    axis?.let {
+        val nameTextLayoutResult = textMeasurer.measure(
+            text = it.name ?: "",
+            style = TextStyle(color = Color.Black, fontSize = it.labelTextSize)
+        )
+        val maxTextLayoutResult = textMeasurer.measure(
+            text = it.max.toString(),
+            style = TextStyle(color = Color.Black, fontSize = it.labelTextSize)
+        )
 
-                nameTextLayoutResult.size.height, maxTextLayoutResult.size.height
-            ).maxOrNull()?.let {
-                paddingTop += it
-            }
+        mutableListOf(
+
+            nameTextLayoutResult.size.height, maxTextLayoutResult.size.height
+        ).maxOrNull()?.let {
+            paddingTop += it
         }
     }
+
     Log.d("LinearChart2", "getXAxisPaddingTop  paddingTop = ${paddingTop}")
     return paddingTop + 8f
 }

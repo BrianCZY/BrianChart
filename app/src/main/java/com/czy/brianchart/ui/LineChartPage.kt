@@ -1827,7 +1827,7 @@ fun ChartWithTouch(modifier: Modifier) {
                     limitLineList = mutableListOf()
                 ), yLeftAxis = Axis(
                     max = 250f, min = 0f, scaleInterval = 25f, labelInterval = 50f, name = "数值"
-                ), isTouchEnabled = true  // 启用触摸功能
+                )
             )
         )
     }

@@ -13,6 +13,5 @@ data class LineChartData(
     val isSelfAdaptation: Boolean = false,
     val isScroll: Boolean = false,
     val axisPadding: AxisPadding? = null,
-    /**是否启用触摸反馈，默认false*/
-    val isTouchEnabled: Boolean = false
+
 )

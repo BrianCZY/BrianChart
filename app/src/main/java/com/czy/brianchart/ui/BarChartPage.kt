@@ -692,6 +692,7 @@ fun getTestStackedBarDataWithCustomRenderer(): BarData {
                                 cornerRadius = CornerRadius(12f, 12f)
                             )
                         }
+
                         1 -> {
                             // 第2层：无圆角，绿色
                             drawRoundRect(
@@ -701,6 +702,7 @@ fun getTestStackedBarDataWithCustomRenderer(): BarData {
                                 cornerRadius = CornerRadius(0f, 0f)
                             )
                         }
+
                         2 -> {
                             // 第3层：小圆角，橙色
                             drawRoundRect(

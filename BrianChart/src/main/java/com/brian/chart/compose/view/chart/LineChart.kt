@@ -70,7 +70,7 @@ fun LineChart(
     val isSelfAdaptation by derivedStateOf { data?.isSelfAdaptation == true }
     val isScroll by derivedStateOf { data?.isScroll }
     val axisPadding by derivedStateOf { data?.axisPadding }
-    val isTouchEnabled by derivedStateOf { data?.isTouchEnabled == true }
+
 
     // 使用来自 data 的 xAxis（调用方负责就地更新 xAxis.limitLineList 来避免重建）
     val xAxis by derivedStateOf { xAxisRaw }
@@ -110,22 +110,6 @@ fun LineChart(
             yRightAxis
         ) {
 
-//            // 重点关注这些参数
-//            Log.i(TAG, "=== axisPoints Recomposition ===")
-//
-//            // 1. canvasSize 是否频繁变化
-//            val canvasSizeHash = canvasSize.hashCode()
-//            Log.i(TAG, "canvasSize: $canvasSizeHash")
-//
-//            // 2. Axis 对象是否每次都创建新实例
-//            Log.i(TAG, "xAxis identity: ${System.identityHashCode(xAxis)}")
-//            Log.i(TAG, "yLeftAxis identity: ${System.identityHashCode(yLeftAxis)}")
-//            Log.i(TAG, "yLeftInsideAxis identity: ${System.identityHashCode(yLeftInsideAxis)}")
-//            Log.i(TAG, "yRightAxis identity: ${System.identityHashCode(yRightAxis)}")
-//
-//            // 3. Axis 对象的内容是否变化
-//            Log.i(TAG, "xAxis name: ${xAxis.name}")
-//            Log.i(TAG, "xAxis min: ${xAxis.min}, max: ${xAxis.max}")
 
             // 在这里捕获 textMeasurer 和 currentDensity
             val measurer = textMeasurer
@@ -243,7 +227,7 @@ fun LineChart(
         }
 
         // 触摸处理 Modifier
-        val touchModifier = if (isTouchEnabled && onTouch != null) {
+        val touchModifier = if ( onTouch != null) {
             Modifier.pointerInput(
                 axisPoints,
                 scale,
@@ -528,7 +512,7 @@ fun LineChart(
  *@author Brian
  *@Description: 调整xy轴以适应实际的数据
  */
-fun selfAdaptation(
+private fun selfAdaptation(
     xAxis: Axis,
     yLeftAxis: Axis?,
     yLeftInsideAxis: Axis?,

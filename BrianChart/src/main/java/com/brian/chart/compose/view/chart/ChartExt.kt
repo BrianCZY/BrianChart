@@ -209,32 +209,7 @@ fun drawXYAxis(
 
 }
 
-fun getScaleLengSize(drawScope: DrawScope, axis: Axis?): Float {
-    drawScope.run {
-        return if (axis?.scaleInterval != null) {
-            axis.scaleLengSize.toPx()
-        } else {
-            0f
-        }//左边刻度的长度
-    }
 
-}
-
-@Composable
-fun getScaleLengSize(boxScope: BoxScope, axis: Axis?): Float {
-    boxScope.run {
-
-        return if (axis?.scaleInterval != null) {
-            with(LocalDensity.current) {
-                axis.scaleLengSize.toPx()
-            }
-
-        } else {
-            0f
-        }//左边刻度的长度
-    }
-
-}
 
 fun getScaleLengSize(axis: Axis?, currentDensity: Density): Float {
 
