@@ -117,7 +117,12 @@ fun BarChartView(modifier: Modifier, barChartUIState: BarChartUIState, backClick
                         .padding(bottom = 40.dp)
                         .height(200.dp)
                 )
-
+                HorizontalDivider(thickness = 8.dp)
+                BarChartWithTouch(
+                    modifier = Modifier
+                        .padding(bottom = 20.dp)
+                        .height(300.dp)
+                )
             }
         }
     }
