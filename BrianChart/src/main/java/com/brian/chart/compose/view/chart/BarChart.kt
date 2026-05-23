@@ -772,8 +772,8 @@ private fun DrawScope.drawBarContent(
                 color = barDataSet.color,
                 topLeft = offset,
                 size = size,
-                style = Stroke(width = 1.dp.toPx(), cap = StrokeCap.Butt),
-                cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
+//                style = Stroke(width = 1.dp.toPx(), cap = StrokeCap.Butt),
+//                cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
             )
         } else {
             barDataSet.background?.invoke(this, barDataSet.color, offset, size)
@@ -932,7 +932,7 @@ data class BarData(
 
 data class BarDataSet(
     var barEntryList: MutableList<BarEntry>? = null,
-    var color: Color = Color.Blue,
+    var color: Color = Color.Cyan,
     var background: ((drawScope: DrawScope, color: Color, offset: Offset, size: Size) -> Unit)? = null,//TODO 可自由定制
     var name: String = "",
     var valueTextSize: TextUnit = 8.sp,
