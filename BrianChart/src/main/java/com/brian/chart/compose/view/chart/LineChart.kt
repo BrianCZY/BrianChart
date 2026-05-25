@@ -70,6 +70,7 @@ fun LineChart(
     val isSelfAdaptation by derivedStateOf { data?.isSelfAdaptation == true }
     val isScroll by derivedStateOf { data?.isScroll }
     val axisPadding by derivedStateOf { data?.axisPadding }
+    val limitLinePosition by derivedStateOf { data?.limitLinePosition }
 
 
     // 使用来自 data 的 xAxis（调用方负责就地更新 xAxis.limitLineList 来避免重建）
@@ -227,7 +228,7 @@ fun LineChart(
         }
 
         // 触摸处理 Modifier
-        val touchModifier = if ( onTouch != null) {
+        val touchModifier = if (onTouch != null) {
             Modifier.pointerInput(
                 axisPoints,
                 scale,
@@ -268,11 +269,16 @@ fun LineChart(
                             axisPoints = axisPoints,
                             xAxisMin = xAxis.min,
                             xAxisMax = xAxis.max,
-                            yAxisMin = yLeftInsideAxis?.min ?: yLeftAxis?.min ?: yRightAxis?.min ?: 0f,
-                            yAxisMax = yLeftInsideAxis?.max ?: yLeftAxis?.max ?: yRightAxis?.max ?: 0f,
+                            yAxisMin = yLeftInsideAxis?.min ?: yLeftAxis?.min ?: yRightAxis?.min
+                            ?: 0f,
+                            yAxisMax = yLeftInsideAxis?.max ?: yLeftAxis?.max ?: yRightAxis?.max
+                            ?: 0f,
                             scale = scale
                         )
-                        Log.d(TAG, "onTouch DOWN dataX=$downDataX dataY=$downDataY pixel=(${down.position.x},${down.position.y})")
+                        Log.d(
+                            TAG,
+                            "onTouch DOWN dataX=$downDataX dataY=$downDataY pixel=(${down.position.x},${down.position.y})"
+                        )
                         onTouch.invoke(
                             TouchEventData(
                                 dataX = downDataX,
@@ -290,10 +296,12 @@ fun LineChart(
                         var moved = false
 
                         // 缓存常用值，避免在高频 MOVE 中重复计算
-                        val oneDataXPx = (axisPoints.point1.x - axisPoints.point0.x) / (xAxis.max - xAxis.min)
+                        val oneDataXPx =
+                            (axisPoints.point1.x - axisPoints.point0.x) / (xAxis.max - xAxis.min)
                         // 选择一个主要的 Y 轴用于快速 dataY 计算（优先左内轴）
                         val primaryYAxis = yLeftInsideAxis ?: yLeftAxis ?: yRightAxis
-                        val oneDataYPx = primaryYAxis?.let { (axisPoints.point0.y - axisPoints.point3.y) / (it.max - it.min) }
+                        val oneDataYPx =
+                            primaryYAxis?.let { (axisPoints.point0.y - axisPoints.point3.y) / (it.max - it.min) }
                         val offsetXPx = xAxis.min * oneDataXPx
                         val offsetYPx = primaryYAxis?.let { it.min * (oneDataYPx ?: 0f) } ?: 0f
 
@@ -335,12 +343,17 @@ fun LineChart(
                                     axisPoints = axisPoints,
                                     xAxisMin = xAxis.min,
                                     xAxisMax = xAxis.max,
-                                    yAxisMin = yLeftInsideAxis?.min ?: yLeftAxis?.min ?: yRightAxis?.min ?: 0f,
-                                    yAxisMax = yLeftInsideAxis?.max ?: yLeftAxis?.max ?: yRightAxis?.max ?: 0f,
+                                    yAxisMin = yLeftInsideAxis?.min ?: yLeftAxis?.min
+                                    ?: yRightAxis?.min ?: 0f,
+                                    yAxisMax = yLeftInsideAxis?.max ?: yLeftAxis?.max
+                                    ?: yRightAxis?.max ?: 0f,
                                     scale = scale
                                 )
 
-                                Log.d(TAG, "onTouch UP dataX=$upDataX dataY=$upDataY pixel=(${upPos.x},${upPos.y}) eventType=${if (moved) TouchEventType.UP else TouchEventType.TAP}")
+                                Log.d(
+                                    TAG,
+                                    "onTouch UP dataX=$upDataX dataY=$upDataY pixel=(${upPos.x},${upPos.y}) eventType=${if (moved) TouchEventType.UP else TouchEventType.TAP}"
+                                )
                                 onTouch.invoke(
                                     TouchEventData(
                                         dataX = upDataX,
@@ -395,13 +408,18 @@ fun LineChart(
                                         axisPoints = axisPoints,
                                         xAxisMin = xAxis.min,
                                         xAxisMax = xAxis.max,
-                                        yAxisMin = yLeftInsideAxis?.min ?: yLeftAxis?.min ?: yRightAxis?.min ?: 0f,
-                                        yAxisMax = yLeftInsideAxis?.max ?: yLeftAxis?.max ?: yRightAxis?.max ?: 0f,
+                                        yAxisMin = yLeftInsideAxis?.min ?: yLeftAxis?.min
+                                        ?: yRightAxis?.min ?: 0f,
+                                        yAxisMax = yLeftInsideAxis?.max ?: yLeftAxis?.max
+                                        ?: yRightAxis?.max ?: 0f,
                                         scale = scale
                                     )
                                 } else null
 
-                                Log.d(TAG, "onTouch MOVE dataX=$mvDataX dataY=$mvDataY pixel=(${mvPos.x},${mvPos.y}) nearest=${mvNearest != null}")
+                                Log.d(
+                                    TAG,
+                                    "onTouch MOVE dataX=$mvDataX dataY=$mvDataY pixel=(${mvPos.x},${mvPos.y}) nearest=${mvNearest != null}"
+                                )
                                 onTouch.invoke(
                                     TouchEventData(
                                         dataX = mvDataX,
@@ -473,16 +491,7 @@ fun LineChart(
                                 axisPoints = axisPoints,
                                 scale = scale
                             )
-                            /**划限制线*/
-                            drawLimitLine(
-                                this,
-                                xAxis,
-                                yLeftInsideAxis,
-                                yLeftAxis,
-                                yRightAxis,
-                                axisPoints = axisPoints,
-                                scale = scale
-                            )
+
                             /**坐标轴名称*/
                             drawAxisName(
                                 this,
@@ -493,10 +502,36 @@ fun LineChart(
                                 axisPoints = axisPoints,
                                 scale = scale
                             )
-                            /**画曲线或散点图*/
-                            listCurvePathOrPoints.let {
-                                drawCurveSplashes(this, it)
+
+                            val isLimitLineBelow = limitLinePosition == LimitLinePosition.BELOW
+
+                            /**先画限制线（如果它在下面）*/
+                            if (isLimitLineBelow) {
+                                drawLimitLine(
+                                    this,
+                                    xAxis,
+                                    yLeftInsideAxis,
+                                    yLeftAxis,
+                                    yRightAxis,
+                                    axisPoints,
+                                    scale
+                                )
                             }
+                            /**画曲线/散点*/
+                            drawCurveSplashes(this, listCurvePathOrPoints)
+                            /**后画限制线（如果它不在下面，即在上面）*/
+                            if (!isLimitLineBelow) {
+                                drawLimitLine(
+                                    this,
+                                    xAxis,
+                                    yLeftInsideAxis,
+                                    yLeftAxis,
+                                    yRightAxis,
+                                    axisPoints,
+                                    scale
+                                )
+                            }
+
                         }
                     }
                 }
@@ -1574,21 +1609,21 @@ private fun convertPixelToAllDataY(
         val raw = (axisPoints.point0.y - pixelY + offsetYPx) / oneDataYPx
         raw.coerceIn(axis.min, axis.max)
     }
-    
+
     val dataYLeft = yLeftAxis?.let { axis ->
         val oneDataYPx = (axisPoints.point0.y - axisPoints.point3.y) / (axis.max - axis.min)
         val offsetYPx = axis.min * oneDataYPx
         val raw = (axisPoints.point0.y - pixelY + offsetYPx) / oneDataYPx
         raw.coerceIn(axis.min, axis.max)
     }
-    
+
     val dataYRight = yRightAxis?.let { axis ->
         val oneDataYPx = (axisPoints.point0.y - axisPoints.point3.y) / (axis.max - axis.min)
         val offsetYPx = axis.min * oneDataYPx
         val raw = (axisPoints.point0.y - pixelY + offsetYPx) / oneDataYPx
         raw.coerceIn(axis.min, axis.max)
     }
-    
+
     return Triple(dataYLeftInside, dataYLeft, dataYRight)
 }
 
@@ -1607,32 +1642,32 @@ private fun findNearestDataPoint(
     scale: Float
 ): PointData? {
     if (lineList.isEmpty()) return null
-    
+
     var nearestPoint: PointData? = null
     var minDistance = Float.MAX_VALUE
-    
+
     lineList.forEach { line ->
         line.pointList.forEach { point ->
             // 计算数据点在屏幕上的像素位置
             val oneDataXPx = (axisPoints.point1.x - axisPoints.point0.x) / (xAxisMax - xAxisMin)
             val oneDataYPx = (axisPoints.point0.y - axisPoints.point3.y) / (yAxisMax - yAxisMin)
-            
+
             val pixelX = axisPoints.point0.x + (point.x - xAxisMin) * oneDataXPx * scale
             val pixelY = axisPoints.point0.y - (point.y - yAxisMin) * oneDataYPx
-            
+
             // 计算欧几里得距离
             val distance = kotlin.math.sqrt(
                 (pixelX - touchX) * (pixelX - touchX) +
-                (pixelY - touchY) * (pixelY - touchY)
+                        (pixelY - touchY) * (pixelY - touchY)
             )
-            
+
             if (distance < minDistance) {
                 minDistance = distance
                 nearestPoint = PointData(point, line, distance)
             }
         }
     }
-    
+
     return nearestPoint
 }
 

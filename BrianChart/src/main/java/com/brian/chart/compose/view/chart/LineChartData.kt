@@ -13,5 +13,6 @@ data class LineChartData(
     val isSelfAdaptation: Boolean = false,
     val isScroll: Boolean = false,
     val axisPadding: AxisPadding? = null,
+    val limitLinePosition: LimitLinePosition = LimitLinePosition.BELOW, //限制线位置
 
 )

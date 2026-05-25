@@ -70,6 +70,7 @@ fun BarChart(
     val isScroll: Boolean = data?.isScroll ?: false
 
     val axisPadding by derivedStateOf { data?.axisPadding }
+    val limitLinePosition by derivedStateOf { data?.limitLinePosition }
     val isSelfAdaptation by derivedStateOf { data?.isSelfAdaptation == true }
 
     remember(xAxis, yLeftAxis, barData) {
@@ -298,14 +299,7 @@ fun BarChart(
                 axisPoints = axisPoints,
                 scale = scale
             )
-            /**划限制线*/
-            drawLimitLine(
-                this,
-                xAxis = xAxis,
-                yLeftAxis = yLeftAxis,
-                axisPoints = axisPoints,
-                scale = scale
-            )
+
             /**坐标轴名称*/
             drawAxisName(
                 this,
@@ -314,6 +308,17 @@ fun BarChart(
                 axisPoints = axisPoints,
                 scale = scale
             )
+            val isLimitLineBelow = limitLinePosition == LimitLinePosition.BELOW
+            if (isLimitLineBelow) {
+                /**先画限制线（如果它在下面）*/
+                drawLimitLine(
+                    this,
+                    xAxis = xAxis,
+                    yLeftAxis = yLeftAxis,
+                    axisPoints = axisPoints,
+                    scale = scale
+                )
+            }
             /**画柱状图*/
             drawBar(
                 this,
@@ -326,6 +331,16 @@ fun BarChart(
                 point3 = axisPoints.point3,
                 scale = scale
             )
+            if (!isLimitLineBelow) {
+                /**后画限制线（如果它不在下面，即在上面）*/
+                drawLimitLine(
+                    this,
+                    xAxis = xAxis,
+                    yLeftAxis = yLeftAxis,
+                    axisPoints = axisPoints,
+                    scale = scale
+                )
+            }
         }
     }
 }

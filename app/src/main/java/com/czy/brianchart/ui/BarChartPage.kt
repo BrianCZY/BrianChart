@@ -41,6 +41,7 @@ import com.brian.chart.compose.view.chart.BarData
 import com.brian.chart.compose.view.chart.BarDataSet
 import com.brian.chart.compose.view.chart.BarEntry
 import com.brian.chart.compose.view.chart.LimitLine
+import com.brian.chart.compose.view.chart.LimitLinePosition
 import com.brian.chart.compose.view.chart.Line
 import com.brian.chart.compose.view.chart.LineChart
 import com.brian.chart.compose.view.chart.LineChartData
@@ -1381,7 +1382,8 @@ fun BarChartWithTouch(modifier: Modifier) {
                 ),
                 yLeftAxis = Axis(
                     max = 50f, min = 0f, scaleInterval = 25f, labelInterval = 50f, name = "数值"
-                )
+                ),
+                limitLinePosition = LimitLinePosition.ABOVE,
             )
         )
     }
