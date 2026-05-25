@@ -1912,9 +1912,7 @@ fun ChartWithTouch(modifier: Modifier) {
 
 fun getClosestLinePoint(lineList: List<Line>? = null, dataX: Float): Point? {
     val targetX = dataX
-
-    // 1. flatMap 把所有 barEntryList 拍平合并成一个总列表
-    // 2. minByOrNull 直接找出 abs(x - targetX) 最小的那个元素
+    
     val closestPoint = lineList
         ?.flatMap { it.pointList ?: emptyList() }
         ?.minByOrNull { abs(it.x - targetX) }

@@ -1440,7 +1440,7 @@ fun BarChartWithTouch(modifier: Modifier) {
                 .weight(1f), data = barChartData,
             // 不再使用 dynamicLimitLines，改为直接更新 data.xAxis.limitLineList
             onTouch = { touchEvent: TouchEventData ->
-                selectedBarEntry = getClosestBarEntry(barChartData, touchEvent.dataX)
+                selectedBarEntry = getClosestBarEntry(barChartData.barData?.barDataSetList, touchEvent.dataX)
                 selectedX = touchEvent.dataX
                 when (touchEvent.eventType) {
                     TouchEventType.TAP -> {
@@ -1463,12 +1463,9 @@ fun BarChartWithTouch(modifier: Modifier) {
     }
 }
 
-fun getClosestBarEntry(barChartData: BarChartData, dataX: Float): BarEntry? {
+fun getClosestBarEntry(barDataSetList: MutableList<BarDataSet>?, dataX: Float): BarEntry? {
     val targetX = dataX
-
-    // 1. flatMap 把所有 barEntryList 拍平合并成一个总列表
-    // 2. minByOrNull 直接找出 abs(x - targetX) 最小的那个元素
-    val closestBarEntry = barChartData.barData?.barDataSetList
+    val closestBarEntry = barDataSetList
         ?.flatMap { it.barEntryList ?: emptyList() }
         ?.minByOrNull { abs(it.x - targetX) }
 
