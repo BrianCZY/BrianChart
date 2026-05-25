@@ -10,12 +10,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -42,11 +44,8 @@ import com.brian.chart.compose.view.chart.BarDataSet
 import com.brian.chart.compose.view.chart.BarEntry
 import com.brian.chart.compose.view.chart.LimitLine
 import com.brian.chart.compose.view.chart.LimitLinePosition
-import com.brian.chart.compose.view.chart.Line
-import com.brian.chart.compose.view.chart.LineChart
-import com.brian.chart.compose.view.chart.LineChartData
-import com.brian.chart.compose.view.chart.Point
 import com.brian.chart.compose.view.chart.TouchEventData
+import com.brian.chart.compose.view.chart.TouchEventType
 import com.czy.brianchart.ui.theme.BrianChartTheme
 import java.text.SimpleDateFormat
 import kotlin.math.abs
@@ -1367,7 +1366,7 @@ fun BarChartWithTouch(modifier: Modifier) {
             BarEntry(x = 9f, y = 20f),
         )
 
-    var lineData by remember {
+    var barChartData by remember {
         mutableStateOf(
             BarChartData(
                 barData = BarData(barDataSetList = mutableListOf(BarDataSet(barEntryList = barEntryList))),
@@ -1388,6 +1387,7 @@ fun BarChartWithTouch(modifier: Modifier) {
         )
     }
     var selectedX by remember { mutableStateOf<Float?>(9f) }
+    var selectedBarEntry by remember { mutableStateOf<BarEntry?>(null) }
 
     fun limitLineValue(drawScope: DrawScope, start: Offset, end: Offset, limitLine: LimitLine) {
         drawScope.apply {
@@ -1407,8 +1407,8 @@ fun BarChartWithTouch(modifier: Modifier) {
     }
 
     fun updateLimitLine(x: Float?) {
-        val min = lineData.xAxis.min
-        val max = lineData.xAxis.max
+        val min = barChartData.xAxis.min
+        val max = barChartData.xAxis.max
         val clamped = x?.coerceIn(min, max)
         val list = if (clamped != null) mutableListOf(
             LimitLine(
@@ -1420,7 +1420,7 @@ fun BarChartWithTouch(modifier: Modifier) {
             )
         ) else mutableListOf()
 //        lineData.xAxis.limitLineList = list
-        lineData = lineData.copy(xAxis = lineData.xAxis.copy(limitLineList = list))
+        barChartData = barChartData.copy(xAxis = barChartData.xAxis.copy(limitLineList = list))
     }
 
     // 初始同步（若 selectedX 有初始值）
@@ -1429,15 +1429,48 @@ fun BarChartWithTouch(modifier: Modifier) {
     }
 
     Column(modifier = modifier.padding(8.dp)) {
+        Text(
+            text = "X：${selectedX} selectedBarEntry：${selectedBarEntry}",
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+        )
         BarChart(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f), data = lineData,
+                .weight(1f), data = barChartData,
             // 不再使用 dynamicLimitLines，改为直接更新 data.xAxis.limitLineList
             onTouch = { touchEvent: TouchEventData ->
-                updateLimitLine(touchEvent.dataX)
+                selectedBarEntry = getClosestBarEntry(barChartData, touchEvent.dataX)
+                selectedX = touchEvent.dataX
+                when (touchEvent.eventType) {
+                    TouchEventType.TAP -> {
+                        updateLimitLine(selectedBarEntry?. x?:touchEvent.dataX)
+                    }
+                    TouchEventType.MOVE -> {
+                        updateLimitLine(touchEvent.dataX)
+                    }
+                    TouchEventType.UP -> {
+                        updateLimitLine(selectedBarEntry?. x?:touchEvent.dataX)
+                    }
+                    TouchEventType.DOWN -> {}
+                }
+
+
+
 
             })
 
     }
+}
+
+fun getClosestBarEntry(barChartData: BarChartData, dataX: Float): BarEntry? {
+    val targetX = dataX
+
+    // 1. flatMap 把所有 barEntryList 拍平合并成一个总列表
+    // 2. minByOrNull 直接找出 abs(x - targetX) 最小的那个元素
+    val closestBarEntry = barChartData.barData?.barDataSetList
+        ?.flatMap { it.barEntryList ?: emptyList() }
+        ?.minByOrNull { abs(it.x - targetX) }
+
+    return closestBarEntry
 }
