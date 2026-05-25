@@ -58,6 +58,7 @@ import com.czy.brianchart.ui.navigation.ChartNavigationActions
 import com.czy.brianchart.ui.theme.BrianChartTheme
 import com.brian.chart.compose.view.chart.Axis
 import com.brian.chart.compose.view.chart.AxisType
+import com.brian.chart.compose.view.chart.BarEntry
 import com.brian.chart.compose.view.chart.Chunk
 import com.brian.chart.compose.view.chart.GridLine
 import com.brian.chart.compose.view.chart.LimitLine
@@ -67,6 +68,7 @@ import com.brian.chart.compose.view.chart.LineChartData
 import com.brian.chart.compose.view.chart.Point
 import com.brian.chart.compose.view.chart.Renderer
 import com.brian.chart.compose.view.chart.TouchEventData
+import com.brian.chart.compose.view.chart.TouchEventType
 import com.brian.view.chart.AxisPadding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -75,6 +77,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 import kotlin.math.sin
 import kotlin.random.Random
 
@@ -902,7 +905,8 @@ fun getTestLineListSelfDefined(context: Context): MutableList<Line> {
             color = Color(0xff50E3C2),
             isDashes = true,
             pathEffect = PathEffect.dashPathEffect(floatArrayOf(18f, 12f), 2f),
-            renderer = Renderer::baseRenderer)
+            renderer = Renderer::baseRenderer
+        )
     )/*linList.add(
         Line(
             point1,
@@ -1870,8 +1874,13 @@ fun ChartWithTouch(modifier: Modifier) {
     LaunchedEffect(Unit) {
         updateLimitLine(selectedX)
     }
-
+    var selectedPoint by remember { mutableStateOf<Point?>(null) }
     Column(modifier = modifier.padding(8.dp)) {
+        Text(
+            text = "X：${selectedX} selectedBarEntry：${selectedPoint}",
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+        )
         LineChart(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1879,8 +1888,36 @@ fun ChartWithTouch(modifier: Modifier) {
             // 不再使用 dynamicLimitLines，改为直接更新 data.xAxis.limitLineList
             onTouch = { touchEvent: TouchEventData ->
                 updateLimitLine(touchEvent.dataX)
+                selectedPoint = getClosestLinePoint(lineData.lineList, touchEvent.dataX)
+                selectedX = touchEvent.dataX
+                when (touchEvent.eventType) {
+                    TouchEventType.TAP -> {
+                        updateLimitLine(selectedPoint?.x ?: touchEvent.dataX)
+                    }
 
+                    TouchEventType.MOVE -> {
+                        updateLimitLine(touchEvent.dataX)
+                    }
+
+                    TouchEventType.UP -> {
+                        updateLimitLine(selectedPoint?.x ?: touchEvent.dataX)
+                    }
+
+                    TouchEventType.DOWN -> {}
+                }
             })
 
     }
+}
+
+fun getClosestLinePoint(lineList: List<Line>? = null, dataX: Float): Point? {
+    val targetX = dataX
+
+    // 1. flatMap 把所有 barEntryList 拍平合并成一个总列表
+    // 2. minByOrNull 直接找出 abs(x - targetX) 最小的那个元素
+    val closestPoint = lineList
+        ?.flatMap { it.pointList ?: emptyList() }
+        ?.minByOrNull { abs(it.x - targetX) }
+
+    return closestPoint
 }
