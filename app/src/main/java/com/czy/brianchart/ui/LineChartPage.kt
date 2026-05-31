@@ -1884,28 +1884,29 @@ fun ChartWithTouch(modifier: Modifier) {
         LineChart(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f), data = lineData,
-            // 不再使用 dynamicLimitLines，改为直接更新 data.xAxis.limitLineList
-            onTouch = { touchEvent: TouchEventData ->
-                updateLimitLine(touchEvent.dataX)
-                selectedPoint = getClosestLinePoint(lineData.lineList, touchEvent.dataX)
-                selectedX = touchEvent.dataX
-                when (touchEvent.eventType) {
-                    TouchEventType.TAP -> {
-                        updateLimitLine(selectedPoint?.x ?: touchEvent.dataX)
-                    }
+                .weight(1f),
+            data = lineData.copy(
+                onTouch = { touchEvent: TouchEventData ->
+                    updateLimitLine(touchEvent.dataX)
+                    selectedPoint = getClosestLinePoint(lineData.lineList, touchEvent.dataX)
+                    selectedX = touchEvent.dataX
+                    when (touchEvent.eventType) {
+                        TouchEventType.TAP -> {
+                            updateLimitLine(selectedPoint?.x ?: touchEvent.dataX)
+                        }
 
-                    TouchEventType.MOVE -> {
-                        updateLimitLine(touchEvent.dataX)
-                    }
+                        TouchEventType.MOVE -> {
+                            updateLimitLine(touchEvent.dataX)
+                        }
 
-                    TouchEventType.UP -> {
-                        updateLimitLine(selectedPoint?.x ?: touchEvent.dataX)
-                    }
+                        TouchEventType.UP -> {
+                            updateLimitLine(selectedPoint?.x ?: touchEvent.dataX)
+                        }
 
-                    TouchEventType.DOWN -> {}
+                        TouchEventType.DOWN -> {}
+                    }
                 }
-            })
+            ))
 
     }
 }

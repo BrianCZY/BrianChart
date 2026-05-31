@@ -54,7 +54,6 @@ private val TAG = "LineChart"
 fun LineChart(
     modifier: Modifier = Modifier,
     data: LineChartData? = null,
-    onTouch: ((touchEvent: TouchEventData) -> Unit)? = null,
     // 注意: 不再通过 dynamicLimitLines 合并限制线，调用方应直接更新 data.xAxis.limitLineList
 ) {
     //用来记录缩放大小
@@ -71,6 +70,7 @@ fun LineChart(
     val isScroll by derivedStateOf { data?.isScroll }
     val axisPadding by derivedStateOf { data?.axisPadding }
     val limitLinePosition by derivedStateOf { data?.limitLinePosition }
+    val onTouch = data?.onTouch
 
 
     // 使用来自 data 的 xAxis（调用方负责就地更新 xAxis.limitLineList 来避免重建）

@@ -14,5 +14,5 @@ data class LineChartData(
     val isScroll: Boolean = false,
     val axisPadding: AxisPadding? = null,
     val limitLinePosition: LimitLinePosition = LimitLinePosition.BELOW, //限制线位置
-
+    val onTouch: ((touchEvent: TouchEventData) -> Unit)? = null,
 )
