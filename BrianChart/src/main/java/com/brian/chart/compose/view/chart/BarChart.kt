@@ -56,7 +56,6 @@ import kotlin.math.abs
 @Composable
 fun BarChart(
     modifier: Modifier = Modifier, data: BarChartData? = null,
-    onTouch: ((touchEvent: TouchEventData) -> Unit)? = null,
 ) {
 
     //用来记录缩放大小
@@ -72,6 +71,7 @@ fun BarChart(
     val axisPadding by derivedStateOf { data?.axisPadding }
     val limitLinePosition by derivedStateOf { data?.limitLinePosition }
     val isSelfAdaptation by derivedStateOf { data?.isSelfAdaptation == true }
+    val onTouch = data?.onTouch
 
     remember(xAxis, yLeftAxis, barData) {
         if (isSelfAdaptation) {

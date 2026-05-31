@@ -12,4 +12,5 @@ data class BarChartData(
     val isSelfAdaptation: Boolean = false,
     val axisPadding: AxisPadding? = null,
     val limitLinePosition: LimitLinePosition = LimitLinePosition.BELOW, //限制线位置
+    val onTouch: ((touchEvent: TouchEventData) -> Unit)? = null,
 )

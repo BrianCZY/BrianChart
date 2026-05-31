@@ -1437,29 +1437,25 @@ fun BarChartWithTouch(modifier: Modifier) {
         BarChart(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f), data = barChartData,
-            // 不再使用 dynamicLimitLines，改为直接更新 data.xAxis.limitLineList
-            onTouch = { touchEvent: TouchEventData ->
-                selectedBarEntry = getClosestBarEntry(barChartData.barData?.barDataSetList, touchEvent.dataX)
-                selectedX = touchEvent.dataX
-                when (touchEvent.eventType) {
-                    TouchEventType.TAP -> {
-                        updateLimitLine(selectedBarEntry?. x?:touchEvent.dataX)
+                .weight(1f),
+            data = barChartData.copy(
+                onTouch = { touchEvent: TouchEventData ->
+                    selectedBarEntry = getClosestBarEntry(barChartData.barData?.barDataSetList, touchEvent.dataX)
+                    selectedX = touchEvent.dataX
+                    when (touchEvent.eventType) {
+                        TouchEventType.TAP -> {
+                            updateLimitLine(selectedBarEntry?. x?:touchEvent.dataX)
+                        }
+                        TouchEventType.MOVE -> {
+                            updateLimitLine(touchEvent.dataX)
+                        }
+                        TouchEventType.UP -> {
+                            updateLimitLine(selectedBarEntry?. x?:touchEvent.dataX)
+                        }
+                        TouchEventType.DOWN -> {}
                     }
-                    TouchEventType.MOVE -> {
-                        updateLimitLine(touchEvent.dataX)
-                    }
-                    TouchEventType.UP -> {
-                        updateLimitLine(selectedBarEntry?. x?:touchEvent.dataX)
-                    }
-                    TouchEventType.DOWN -> {}
                 }
-
-
-
-
-            })
-
+            ))
     }
 }
 
