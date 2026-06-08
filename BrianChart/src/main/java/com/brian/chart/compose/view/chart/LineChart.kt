@@ -702,18 +702,19 @@ fun drawCurveSplashes(
                 if (line.isDrawPath) {
 
                     //绘制path
+
                     if (line.isDrawArea || line.isFill) {
                         //绘制面
 
                         it.path?.let { path ->
-                            //绘制path
-                            drawPathWithDashEffect(
-                                path = path,
-                                color = color,
-                                lineWidth = line.width,
-                                isDashes = line.isDashes,
-                                pathEffect = line.pathEffect
-                            )
+//                            //绘制path
+//                            drawPathWithDashEffect(
+//                                path = path,
+//                                color = color,
+//                                lineWidth = line.width,
+//                                isDashes = line.isDashes,
+//                                pathEffect = line.pathEffect
+//                            )
                             //绘制填充
                             line.drawAreaBrush?.let { brush ->
                                 drawPath(
