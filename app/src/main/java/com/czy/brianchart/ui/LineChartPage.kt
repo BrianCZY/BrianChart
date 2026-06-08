@@ -835,6 +835,12 @@ fun getTestLineList(): MutableList<Line> {
             )
         )
     )
+    linList.add(
+        Line(
+            point1,
+            color = Color(0xffFF90E2),
+        )
+    )
     return linList
 }
 

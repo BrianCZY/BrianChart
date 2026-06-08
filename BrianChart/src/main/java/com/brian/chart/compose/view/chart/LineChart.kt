@@ -1516,13 +1516,21 @@ fun getCubicPathCatmullRom(
                 val x3 = baseX + p3.x * scaledOneDataXPx
                 val y3 = baseY - p3.y * oneDataYPx
 
-                // Catmull-Rom控制点计算
+                // 计算p1和p2的Y范围，用于限制控制点不超出数据范围
+                val minY = minOf(y1, y2)
+                val maxY = maxOf(y1, y2)
+
+                // Catmull-Rom控制点计算，并限制Y值不超出数据点范围
                 val ctrl1X = x1 + (x2 - x0) * tension * 0.5f
                 val ctrl1Y = y1 + (y2 - y0) * tension * 0.5f
                 val ctrl2X = x2 - (x3 - x1) * tension * 0.5f
                 val ctrl2Y = y2 - (y3 - y1) * tension * 0.5f
 
-                path.cubicTo(ctrl1X, ctrl1Y, ctrl2X, ctrl2Y, x2, y2)
+                // 限制控制点Y值在p1和p2的范围内，防止曲线超出数据范围
+                val clampedCtrl1Y = ctrl1Y.coerceIn(minY, maxY)
+                val clampedCtrl2Y = ctrl2Y.coerceIn(minY, maxY)
+
+                path.cubicTo(ctrl1X, clampedCtrl1Y, ctrl2X, clampedCtrl2Y, x2, y2)
                 lastX = x2
                 lastY = y2
             }
@@ -1542,13 +1550,21 @@ fun getCubicPathCatmullRom(
                 val x3 = baseX + p3.x * scaledOneDataXPx
                 val y3 = baseY - p3.y * oneDataYPx
 
-                // Catmull-Rom控制点计算
+                // 计算p1和p2的Y范围，用于限制控制点不超出数据范围
+                val minY = minOf(y1, y2)
+                val maxY = maxOf(y1, y2)
+
+                // Catmull-Rom控制点计算，并限制Y值不超出数据点范围
                 val ctrl1X = x1 + (x2 - x0) * tension * 0.5f
                 val ctrl1Y = y1 + (y2 - y0) * tension * 0.5f
                 val ctrl2X = x2 - (x3 - x1) * tension * 0.5f
                 val ctrl2Y = y2 - (y3 - y1) * tension * 0.5f
 
-                path.cubicTo(ctrl1X, ctrl1Y, ctrl2X, ctrl2Y, x2, y2)
+                // 限制控制点Y值在p1和p2的范围内，防止曲线超出数据范围
+                val clampedCtrl1Y = ctrl1Y.coerceIn(minY, maxY)
+                val clampedCtrl2Y = ctrl2Y.coerceIn(minY, maxY)
+
+                path.cubicTo(ctrl1X, clampedCtrl1Y, ctrl2X, clampedCtrl2Y, x2, y2)
                 lastX = x2
                 lastY = y2
             }
@@ -1568,13 +1584,21 @@ fun getCubicPathCatmullRom(
                 val x3 = baseX + p3.x * scaledOneDataXPx
                 val y3 = baseY - p3.y * oneDataYPx
 
-                // Catmull-Rom控制点计算
+                // 计算p1和p2的Y范围，用于限制控制点不超出数据范围
+                val minY = minOf(y1, y2)
+                val maxY = maxOf(y1, y2)
+
+                // Catmull-Rom控制点计算，并限制Y值不超出数据点范围
                 val ctrl1X = x1 + (x2 - x0) * tension * 0.5f
                 val ctrl1Y = y1 + (y2 - y0) * tension * 0.5f
                 val ctrl2X = x2 - (x3 - x1) * tension * 0.5f
                 val ctrl2Y = y2 - (y3 - y1) * tension * 0.5f
 
-                path.cubicTo(ctrl1X, ctrl1Y, ctrl2X, ctrl2Y, x2, y2)
+                // 限制控制点Y值在p1和p2的范围内，防止曲线超出数据范围
+                val clampedCtrl1Y = ctrl1Y.coerceIn(minY, maxY)
+                val clampedCtrl2Y = ctrl2Y.coerceIn(minY, maxY)
+
+                path.cubicTo(ctrl1X, clampedCtrl1Y, ctrl2X, clampedCtrl2Y, x2, y2)
                 lastX = x2
                 lastY = y2
             }
