@@ -701,49 +701,60 @@ fun drawCurveSplashes(
 
                 if (line.isDrawPath) {
 
-                    //绘制path
+                    it.path?.let { path ->
+                        drawPathWithDashEffect(
+                            path = path,
+                            color = color,
+                            lineWidth = line.width,
+                            isDashes = line.isDashes,
+                            pathEffect = line.pathEffect
+                        )
 
-                    if (line.isDrawArea || line.isFill) {
-                        //绘制面
-
-                        it.path?.let { path ->
-//                            //绘制path
-//                            drawPathWithDashEffect(
-//                                path = path,
-//                                color = color,
-//                                lineWidth = line.width,
-//                                isDashes = line.isDashes,
-//                                pathEffect = line.pathEffect
-//                            )
-                            //绘制填充
-                            line.drawAreaBrush?.let { brush ->
-                                drawPath(
-                                    path = path,
-                                    brush = brush,
-                                    style = Fill,
-                                )
-
-                            } ?: drawPath(
-                                path = path,
-                                color = color,
-                                style = Fill,
-                            )
-                        }
-                    } else {
-                        it.path?.let { path ->
-                            drawPathWithDashEffect(
-                                path = path,
-                                color = color,
-                                lineWidth = line.width,
-                                isDashes = line.isDashes,
-                                pathEffect = line.pathEffect
-                            )
-
-                        }
                     }
 
 
                 }
+
+                if (line.isFill) {
+                    //绘制面
+                    it.path?.let { path ->
+                        //绘制填充
+                        line.drawAreaBrush?.let { brush ->
+                            drawPath(
+                                path = path,
+                                brush = brush,
+                                style = Fill,
+                            )
+
+                        } ?: drawPath(
+                            path = path,
+                            color = color,
+                            style = Fill,
+                        )
+
+                    }
+
+                }
+
+                if (line.isDrawArea) {
+                    it.areaPath?.let { path ->
+                        //绘制填充
+                        line.drawAreaBrush?.let { brush ->
+                            drawPath(
+                                path = path,
+                                brush = brush,
+                                style = Fill,
+                            )
+
+                        } ?: drawPath(
+                            path = path,
+                            color = color,
+                            style = Fill,
+                        )
+                    }
+
+                }
+
 
 
                 line.renderer?.invoke(drawScope, it.line, it.offsetList)
@@ -821,20 +832,20 @@ fun createCurvePathOrPoints(
 
 //        val pathAndPoints = PathAndPoints(line = line)
 //        pathAndPointsList.add(pathAndPoints)
-        val pointList = if (line.isDrawArea) {
-            buildList {
-                line.pointList.firstOrNull()?.let { add(Point(it.x, xAxisPosition)) }
-                addAll(line.pointList)
-                line.pointList.lastOrNull()?.let { add(Point(it.x, xAxisPosition)) }
-            }
-        } else {
-            line.pointList
-        }
+//        val pointList = if (line.isDrawArea) {
+//            buildList {
+//                line.pointList.firstOrNull()?.let { add(Point(it.x, xAxisPosition)) }
+//                addAll(line.pointList)
+//                line.pointList.lastOrNull()?.let { add(Point(it.x, xAxisPosition)) }
+//            }
+//        } else {
+//            line.pointList
+//        }
 
         if (line.isPoints || line.renderer != null) { //散点
             pathAndPoints.offsetList =
                 getPoints(
-                    pointList,
+                    line.pointList,
                     axisPoints.point0.x,
                     axisPoints.point0.y,
                     oneDataXPx,
@@ -846,9 +857,28 @@ fun createCurvePathOrPoints(
         }
 
         if (line.isDrawPath) {//曲线
-            pathAndPoints.path = if (line.isDrawCubic) {
-                //平滑
-                getCubicPathCatmullRom(
+
+            pathAndPoints.path =   createPath(
+                line.pointList,
+                axisPoints.point0.x,
+                axisPoints.point0.y,
+                oneDataXPx,
+                oneDataYPx,
+                offsetXPx,
+                offsetYPx,
+                scale,
+                pathCache = pathAndPoints.path,
+                isDrawCubic = line.isDrawCubic,
+                isDrawArea = line.isDrawArea
+            )
+
+            if (line.isDrawArea) {
+                val pointList = buildList {
+                    line.pointList.firstOrNull()?.let { add(Point(it.x, xAxisPosition)) }
+                    addAll(line.pointList)
+                    line.pointList.lastOrNull()?.let { add(Point(it.x, xAxisPosition)) }
+                }
+                pathAndPoints.areaPath =   createPath(
                     pointList,
                     axisPoints.point0.x,
                     axisPoints.point0.y,
@@ -857,21 +887,9 @@ fun createCurvePathOrPoints(
                     offsetXPx,
                     offsetYPx,
                     scale,
-                    pathCache = pathAndPoints.path,
-                    excludeHeadAndTrail = if (line.isDrawArea == true) 2 else 1
-                )
-            } else {
-                //折线
-                getPath(
-                    pointList,
-                    axisPoints.point0.x,
-                    axisPoints.point0.y,
-                    oneDataXPx,
-                    oneDataYPx,
-                    offsetXPx,
-                    offsetYPx,
-                    scale,
-                    pathCache = pathAndPoints.path
+                    pathCache = pathAndPoints.areaPath,
+                    isDrawCubic = line.isDrawCubic,
+                    isDrawArea = line.isDrawArea
                 )
             }
         }
@@ -893,6 +911,51 @@ fun createCurvePathOrPoints(
         tmpPathAndPointsList
     }
     return currentPathAndPointsList
+
+}
+
+fun createPath(
+    pointList: List<Point>,
+    x: Float,
+    y: Float,
+    oneDataXPx: Float,
+    oneDataYPx: Float,
+    offsetXPx: Float,
+    offsetYPx: Float,
+    scale: Float,
+    pathCache: Path?,
+    isDrawCubic: Boolean,
+    isDrawArea: Boolean
+): Path {
+    return if (isDrawCubic) {
+
+        //平滑
+        getCubicPathCatmullRom(
+            pointList,
+            x,
+            y,
+            oneDataXPx,
+            oneDataYPx,
+            offsetXPx,
+            offsetYPx,
+            scale,
+            pathCache = pathCache,
+            excludeHeadAndTrail = if (isDrawArea == true) 2 else 1
+        )
+    } else {
+        //折线
+        getPath(
+            pointList,
+            x,
+            y,
+            oneDataXPx,
+            oneDataYPx,
+            offsetXPx,
+            offsetYPx,
+            scale,
+            pathCache = pathCache
+        )
+    }
 
 }
 
