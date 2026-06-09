@@ -869,7 +869,6 @@ fun createCurvePathOrPoints(
                 scale,
                 pathCache = pathAndPoints.path,
                 isDrawCubic = line.isDrawCubic,
-                isDrawArea = line.isDrawArea
             )
 
             if (line.isDrawArea) {
@@ -924,8 +923,8 @@ fun createPath(
     offsetYPx: Float,
     scale: Float,
     pathCache: Path?,
-    isDrawCubic: Boolean,
-    isDrawArea: Boolean
+    isDrawCubic: Boolean = false,
+    isDrawArea: Boolean = false
 ): Path {
     return if (isDrawCubic) {
 
