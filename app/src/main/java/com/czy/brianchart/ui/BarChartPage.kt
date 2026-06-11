@@ -34,18 +34,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.brian.chart.compose.widgets.chart.GroupedBarChart
+import com.brian.chart.compose.widgets.model.*
 import com.czy.brianchart.ui.components.TopBar
 import com.czy.brianchart.ui.navigation.ChartNavigationActions
-import com.brian.chart.compose.view.chart.Axis
-import com.brian.chart.compose.view.chart.BarChart
-import com.brian.chart.compose.view.chart.BarChartData
-import com.brian.chart.compose.view.chart.BarData
-import com.brian.chart.compose.view.chart.BarDataSet
-import com.brian.chart.compose.view.chart.BarEntry
-import com.brian.chart.compose.view.chart.LimitLine
-import com.brian.chart.compose.view.chart.LimitLinePosition
-import com.brian.chart.compose.view.chart.TouchEventData
-import com.brian.chart.compose.view.chart.TouchEventType
 import com.czy.brianchart.ui.theme.BrianChartTheme
 import java.text.SimpleDateFormat
 import kotlin.math.abs
@@ -57,72 +49,30 @@ fun BarChartPage(navigationActions: ChartNavigationActions? = null) {
     BarChartView(barChartUIState = barChartUIState, modifier = Modifier.fillMaxSize(), backClick = {
         navigationActions?.navigateBack()
     })
-
 }
 
 @Composable
 fun BarChartView(modifier: Modifier, barChartUIState: BarChartUIState, backClick: () -> Unit?) {
     Surface(modifier = modifier) {
         Column(Modifier.fillMaxSize()) {
-            TopBar(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 28.dp)
-                    .height(48.dp),
-                title = "BarChart"
-            ) { backClick?.invoke() }
+            TopBar(modifier = Modifier.fillMaxWidth().padding(top = 28.dp).height(48.dp), title = "BarChart") { backClick?.invoke() }
             HorizontalDivider(thickness = 1.dp)
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                BarChart1(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                )
+                BarChart1(modifier = Modifier.fillMaxWidth().height(200.dp))
                 HorizontalDivider(thickness = 8.dp)
-                BarChart2(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                )
+                BarChart2(modifier = Modifier.fillMaxWidth().height(200.dp))
                 HorizontalDivider(thickness = 8.dp)
-                BarChart3(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                )
+                BarChart3(modifier = Modifier.fillMaxWidth().height(200.dp))
                 HorizontalDivider(thickness = 8.dp)
-                BarChart4(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 40.dp)
-                        .height(200.dp)
-                )
+                BarChart4(modifier = Modifier.fillMaxWidth().padding(bottom = 40.dp).height(200.dp))
                 HorizontalDivider(thickness = 8.dp)
-                BarChart5(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                )
+                BarChart5(modifier = Modifier.fillMaxWidth().height(200.dp))
                 HorizontalDivider(thickness = 8.dp)
-                BarChart6(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 40.dp)
-                        .height(200.dp)
-                )
+                BarChart6(modifier = Modifier.fillMaxWidth().padding(bottom = 40.dp).height(200.dp))
                 HorizontalDivider(thickness = 8.dp)
-                BarChart7(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 40.dp)
-                        .height(200.dp)
-                )
+                BarChart7(modifier = Modifier.fillMaxWidth().padding(bottom = 40.dp).height(200.dp))
                 HorizontalDivider(thickness = 8.dp)
-                BarChartWithTouch(
-                    modifier = Modifier
-                        .padding(bottom = 20.dp)
-                        .height(300.dp)
-                )
+                BarChartWithTouch(modifier = Modifier.padding(bottom = 20.dp).height(300.dp))
             }
         }
     }
@@ -130,1340 +80,326 @@ fun BarChartView(modifier: Modifier, barChartUIState: BarChartUIState, backClick
 
 @Composable
 fun BarChart1(modifier: Modifier) {
-
-    var barData = BarData()
-    barData = getTestBarData()
-    val listChunk = getTestChunkList()
-    getTestLimitLineList()
-    val xLimitLineList = getTestXLimitLineList()
-    BarChart(
-        modifier = modifier,
-        data = BarChartData(
-            barData = barData,
-            xAxis = Axis(
-                max = 5f,
-                scaleInterval = 10f,
-                labelInterval = 10f,
-                chunkList = listChunk,
-                name = "x轴",
-                limitLineList = xLimitLineList,
-                settingLabelValue = ::settingLabelValue
-            ),
-
-            yLeftAxis = Axis(
-                max = 300f,
-                scaleInterval = 10f,
-                labelInterval = 50f,
-                name = "y轴",
-                chunkList = listChunk,
-                limitLineList = xLimitLineList
-            ),
-        )
-    )
-
-
+    val xLimitLineList = getBarTestXLimitLineList()
+    GroupedBarChart(modifier = modifier, config = BarChartConfig(dataSets = mutableListOf(BarSet(entries = mutableListOf(BarEntry(1f, 60f), BarEntry(2f, 200f)), color = Color.Gray, backgroundPainter = background1))),
+        xAxis = ChartAxis(upperBound = 5f, tickStep = 10f, labelStep = 10f, thresholdLines = xLimitLineList, label = "x轴", labelFormatter = ::settingLabelValue),
+        yAxis = ChartAxis(upperBound = 300f, tickStep = 10f, labelStep = 50f, label = "y轴", thresholdLines = xLimitLineList))
 }
 
 @Composable
 fun BarChart2(modifier: Modifier) {
-
-    var barData = BarData()
-    barData = getTestBarData2()
-    getTestChunkList()
-    getTestLimitLineList()
-    getTestXLimitLineList()
-    BarChart(
-        modifier = modifier,
-        data = BarChartData(
-            barData = barData,
-            xAxis = Axis(
-                max = 5f,
-                name = "",
-            ),
-
-            yLeftAxis = Axis(
-                max = 300f,
-                scaleInterval = 10f,
-                labelInterval = 50f,
-                name = "",
-            ),
-
-            )
-    )
-
+    GroupedBarChart(modifier = modifier, config = BarChartConfig(dataSets = mutableListOf(
+        BarSet(entries = mutableListOf(BarEntry(1f, 60f), BarEntry(2f, 200f)), color = Color.Gray, valueColor = Color.Red, backgroundPainter = background1, label = "CHO", valueFormatter = ::settingValueText2),
+        BarSet(entries = mutableListOf(BarEntry(1f, 80f), BarEntry(2f, 250f)), color = Color.Gray, backgroundPainter = background2, label = "FAT", valueFormatter = ::settingValueText2))),
+        xAxis = ChartAxis(upperBound = 5f, label = ""),
+        yAxis = ChartAxis(upperBound = 300f, tickStep = 10f, labelStep = 50f, label = ""))
 }
 
 @Composable
 fun BarChart3(modifier: Modifier) {
-
-    var barData = BarData()
-    barData = getTestBarData3()
-    getTestChunkList()
-    getTestLimitLineList()
-    getTestXLimitLineList()
-    BarChart(
-        modifier = modifier,
-        data = BarChartData(
-            barData = barData,
-
-            xAxis = Axis(
-                max = 2.9f,
-                scaleInterval = 1f,
-                labelInterval = 1f,
-                name = "",
-                settingLabelValue = ::settingLabelValue2
-            ),
-
-            yLeftAxis = Axis(
-                max = 300f,
-                scaleInterval = 10f,
-                labelInterval = 50f,
-                name = "",
-                settingLabelValue = ::settingLabelValue
-            ),
-        )
-    )
-
+    GroupedBarChart(modifier = modifier, config = BarChartConfig(dataSets = mutableListOf(
+        BarSet(entries = mutableListOf(BarEntry(1f, 60f), BarEntry(2f, 200f)), color = Color.Gray, backgroundPainter = background1, label = "CHO", valueFormatter = ::settingValueText),
+        BarSet(entries = mutableListOf(BarEntry(1f, 80f), BarEntry(2f, 250f)), color = Color.Gray, backgroundPainter = background2, label = "FAT", valueFormatter = ::settingValueText),
+        BarSet(entries = mutableListOf(BarEntry(1f, 50f), BarEntry(2f, 150f)), color = Color.Gray, backgroundPainter = background3, label = "PRO", valueFormatter = ::settingValueText))),
+        xAxis = ChartAxis(upperBound = 2.9f, tickStep = 1f, labelStep = 1f, label = "", labelFormatter = ::settingLabelValue2),
+        yAxis = ChartAxis(upperBound = 300f, tickStep = 10f, labelStep = 50f, label = "", labelFormatter = ::settingLabelValue))
 }
 
 @Composable
 fun BarChart4(modifier: Modifier) {
-
-    var barData = BarData()
-    barData = getTestBarData4()
-    getTestChunkList()
-    getTestLimitLineList()
-    getTestXLimitLineList()
-    BarChart(
-        modifier = modifier,
-        data = BarChartData(
-            barData = barData,
-
-            xAxis = Axis(
-                max = 3f,
-                scaleInterval = 1f,
-                labelInterval = 1f,
-                name = "",
-                settingLabelValue = ::settingLabelValue2
-            ),
-
-            yLeftAxis = Axis(
-                max = 300f,
-                scaleInterval = 10f,
-                labelInterval = 50f,
-                name = "",
-                settingLabelValue = ::settingLabelValue
-            ),
-        )
-    )
-
+    GroupedBarChart(modifier = modifier, config = BarChartConfig(dataSets = mutableListOf(
+        BarSet(entries = mutableListOf(BarEntry(1f, 60f)), color = Color.Gray, backgroundPainter = background1, label = "CHO", valueFormatter = ::settingValueText3),
+        BarSet(entries = mutableListOf(BarEntry(1f, 80f)), color = Color.Gray, backgroundPainter = background2, label = "FAT", valueFormatter = ::settingValueText3),
+        BarSet(entries = mutableListOf(BarEntry(1f, 50f)), color = Color.Gray, backgroundPainter = background3, label = "PRO", valueFormatter = ::settingValueText3)),
+        barWidth = 40.dp, setPadding = 40.dp, widthRatio = 1f),
+        xAxis = ChartAxis(upperBound = 3f, tickStep = 1f, labelStep = 1f, label = "", labelFormatter = ::settingLabelValue2),
+        yAxis = ChartAxis(upperBound = 300f, tickStep = 10f, labelStep = 50f, label = "", labelFormatter = ::settingLabelValue))
 }
 
 @Composable
 fun BarChart5(modifier: Modifier) {
-
-    var barData = BarData()
-    barData = getTestBarDataNoValue()
-    val listChunk = getTestChunkList()
-    getTestLimitLineList()
-    val xLimitLineList = getTestXLimitLineList()
-    BarChart(
-        modifier = modifier,
-        data = BarChartData(
-            barData = barData,
-
-            xAxis = Axis(
-                max = 5f,
-                scaleInterval = 10f,
-                labelInterval = 10f,
-                chunkList = listChunk,
-                name = "x轴",
-                limitLineList = xLimitLineList,
-                settingLabelValue = ::settingLabelValue
-            ),
-
-            yLeftAxis = Axis(
-                max = 300f,
-                scaleInterval = 10f,
-                labelInterval = 50f,
-                name = "y轴",
-                chunkList = listChunk,
-                limitLineList = xLimitLineList
-            ),
-        )
-    )
-
+    val xLimitLineList = getBarTestXLimitLineList()
+    GroupedBarChart(modifier = modifier, config = BarChartConfig(dataSets = mutableListOf(BarSet(entries = mutableListOf(BarEntry(1f, 60f), BarEntry(2f, 200f)), color = Color.Gray, backgroundPainter = background1, showValues = false))),
+        xAxis = ChartAxis(upperBound = 5f, tickStep = 10f, labelStep = 10f, thresholdLines = xLimitLineList, label = "x轴", labelFormatter = ::settingLabelValue),
+        yAxis = ChartAxis(upperBound = 300f, tickStep = 10f, labelStep = 50f, label = "y轴", thresholdLines = xLimitLineList))
 }
 
 @Composable
 fun BarChart6(modifier: Modifier) {
-
-    var barData = BarData()
-    barData = getTestBarDataNoValueNoAxis()
-    getTestChunkList()
-    getTestLimitLineList()
-    getTestXLimitLineList()
-    BarChart(
-        modifier = modifier,
-        data = BarChartData(
-            barData = barData,
-
-            xAxis = Axis(
-                max = 5f,
-                isDrawAxis = false,
-            ),
-
-            yLeftAxis = Axis(
-                max = 200f,
-                isDrawAxis = false,
-            ),
-        )
-    )
-
+    GroupedBarChart(modifier = modifier, config = BarChartConfig(dataSets = mutableListOf(BarSet(entries = mutableListOf(BarEntry(1f, 60f), BarEntry(2f, 200f)), color = Color.Gray, backgroundPainter = background1, showValues = false))),
+        xAxis = ChartAxis(upperBound = 5f, showAxis = false),
+        yAxis = ChartAxis(upperBound = 200f, showAxis = false))
 }
 
 @Composable
 fun BarChart7(modifier: Modifier) {
-    var barData = BarData()
-    barData = getTestStackedBarData()
-
-    BarChart(
-        modifier = modifier,
-        data = BarChartData(
-            barData = barData,
-            xAxis = Axis(
-                max = 5f,
-                scaleInterval = 1f,
-                labelInterval = 1f,
-                position = 0f,
-                name = "月份",
-            ),
-            yLeftAxis = Axis(
-                max = 200f,
-                min = -50f, // 支持负值
-                scaleInterval = 50f,
-                labelInterval = 50f,
-                name = "金额",
-            ),
-        )
-    )
+    GroupedBarChart(modifier = modifier, config = BarChartConfig(dataSets = mutableListOf(
+        BarSet(entries = mutableListOf(
+            BarEntry(1f, 100f, stackValues = listOf(50f, 30f, 20f)),
+            BarEntry(2f, 170f, stackValues = listOf(80f, 50f, 40f)),
+            BarEntry(3f, 160f, stackValues = listOf(60f, 70f, 30f)),
+            BarEntry(4f, 190f, stackValues = listOf(90f, 40f, 60f))),
+            color = Color.Blue, backgroundPainter = background2, showValues = true, valueColor = Color.White, label = "销售额",
+            stackColors = listOf(Color.Blue.copy(alpha = 0.8f), Color.Red.copy(alpha = 0.8f), Color.Yellow.copy(alpha = 0.8f)),
+            stackValueColors = listOf(Color.White, Color.White, Color.Black),
+            valueFormatter = { _, value -> "${value.toInt()}" }),
+        BarSet(entries = mutableListOf(
+            BarEntry(1f, 10f, stackValues = listOf(40f, 20f, 10f)),
+            BarEntry(2f, 15f, stackValues = listOf(60f, 30f, 15f)),
+            BarEntry(3f, -10f, stackValues = listOf(50f, 40f, 20f)),
+            BarEntry(4f, 30f, stackValues = listOf(-20f, -25f, -15f))),
+            color = Color.Green, backgroundPainter = background2, showValues = true, valueColor = Color.White, label = "利润",
+            stackColors = listOf(Color(0xFF4CAF50).copy(alpha = 0.8f), Color(0xFFF44336).copy(alpha = 0.8f), Color(0xFFFF9800).copy(alpha = 0.8f)),
+            stackValueColors = listOf(Color.White, Color.White, Color.White),
+            valueFormatter = { _, value -> "${value.toInt()}" })),
+        barWidth = 80.dp),
+        xAxis = ChartAxis(upperBound = 5f, tickStep = 1f, labelStep = 1f, origin = 0f, label = "月份"),
+        yAxis = ChartAxis(upperBound = 200f, lowerBound = -50f, tickStep = 50f, labelStep = 50f, label = "金额"))
 }
 
-
-@Composable
-@Preview
-fun BarChartPagePreview() {
-    BarChartPage()
+val background1: ((DrawScope, Color, Offset, Size) -> Unit) = { ds, color, offset, size ->
+    ds.run { drawRoundRect(color = color, topLeft = offset, size = size, style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round), cornerRadius = CornerRadius(2f, 2f)) }
 }
 
-@Composable
-@Preview(heightDp = 1200)
-fun BarChartPageLongPreview() {
-    BarChartPage()
+val background2: ((DrawScope, Color, Offset, Size) -> Unit) = { ds, color, offset, size ->
+    ds.run {
+        drawRoundRect(color = color, topLeft = offset, size = size, cornerRadius = CornerRadius(2f, 2f))
+        drawRoundRect(color = color, topLeft = offset, size = size, style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round), cornerRadius = CornerRadius(2f, 2f))
+    }
 }
 
-
-fun getTestBarData(): BarData {
-    val barData = BarData(width = 80.dp)
-    var barDataSetListTemp: MutableList<BarDataSet> = mutableListOf()
-    var barEntryList: MutableList<BarEntry> = mutableListOf()
-    barEntryList.add(BarEntry(1f, 60f))
-    barEntryList.add(BarEntry(2f, 200f))
-
-    barDataSetListTemp.add(
-        BarDataSet(
-            barEntryList = barEntryList, color = Color.Gray, background = background1
-        )
-    )
-
-    barData.barDataSetList = barDataSetListTemp
-    return barData
-}
-
-fun getTestBarData2(): BarData {
-    val barData = BarData()
-    var barDataSetListTemp: MutableList<BarDataSet> = mutableListOf()
-    var barEntryList: MutableList<BarEntry> = mutableListOf()
-    barEntryList.add(BarEntry(1f, 60f))
-    barEntryList.add(BarEntry(2f, 200f))
-
-    barDataSetListTemp.add(
-        BarDataSet(
-            name = "CHO",
-            barEntryList = barEntryList,
-            color = Color.Gray,
-            valueColor = Color.Red,
-            background = background1,
-            settingValueText = ::settingValueText2//定制顶部的值显示
-        )
-    )
-    var barEntryList2: MutableList<BarEntry> = mutableListOf()
-
-    barEntryList2.add(BarEntry(1f, 80f))
-    barEntryList2.add(BarEntry(2f, 250f))
-
-    barDataSetListTemp.add(
-        BarDataSet(
-            name = "FAT",
-            barEntryList = barEntryList2,
-            color = Color.Gray,
-            background = background2,
-            settingValueText = ::settingValueText2//定制顶部的值显示
-        )
-    )
-
-    barData.barDataSetList = barDataSetListTemp
-    return barData
-}
-
-fun getTestBarData3(): BarData {
-    val barData = BarData()
-    var barDataSetListTemp: MutableList<BarDataSet> = mutableListOf()
-    var barEntryList: MutableList<BarEntry> = mutableListOf()
-    barEntryList.add(BarEntry(1f, 60f))
-    barEntryList.add(BarEntry(2f, 200f))
-
-    barDataSetListTemp.add(
-        BarDataSet(
-            name = "CHO",
-            barEntryList = barEntryList,
-            color = Color.Gray,
-            background = background1,
-            settingValueText = ::settingValueText//定制顶部的值显示
-        )
-    )
-    var barEntryList2: MutableList<BarEntry> = mutableListOf()
-
-    barEntryList2.add(BarEntry(1f, 80f))
-    barEntryList2.add(BarEntry(2f, 250f))
-
-    barDataSetListTemp.add(
-        BarDataSet(
-            name = "FAT",
-            barEntryList = barEntryList2,
-            color = Color.Gray,
-            background = background2,
-            settingValueText = ::settingValueText//定制顶部的值显示
-        )
-    )
-    var barEntryList3: MutableList<BarEntry> = mutableListOf()
-    barEntryList3.add(BarEntry(1f, 50f))
-    barEntryList3.add(BarEntry(2f, 150f))
-
-    barDataSetListTemp.add(
-        BarDataSet(
-            name = "PRO",
-            barEntryList = barEntryList3,
-            color = Color.Gray,
-            background = background3,
-            settingValueText = ::settingValueText//定制顶部的值显示
-        )
-    )
-    barData.barDataSetList = barDataSetListTemp
-    return barData
-}
-
-fun getTestBarData4(): BarData {
-    val barData = BarData(weight = 1f, dataSetPadding = 40.dp, width = 40.dp)
-    var barDataSetListTemp: MutableList<BarDataSet> = mutableListOf()
-    var barEntryList: MutableList<BarEntry> = mutableListOf()
-    barEntryList.add(BarEntry(1f, 60f))
-//    barEntryList.add(BarEntry(2f, 200f))
-
-    barDataSetListTemp.add(
-        BarDataSet(
-            name = "CHO",
-            barEntryList = barEntryList,
-            color = Color.Gray,
-            background = background1,
-            settingValueText = ::settingValueText3//定制顶部的值显示
-        )
-    )
-    var barEntryList2: MutableList<BarEntry> = mutableListOf()
-
-    barEntryList2.add(BarEntry(1f, 80f))
-//    barEntryList2.add(BarEntry(2f, 250f))
-
-    barDataSetListTemp.add(
-        BarDataSet(
-            name = "FAT",
-            barEntryList = barEntryList2,
-            color = Color.Gray,
-            background = background2,
-            settingValueText = ::settingValueText3//定制顶部的值显示
-        )
-    )
-    var barEntryList3: MutableList<BarEntry> = mutableListOf()
-    barEntryList3.add(BarEntry(1f, 50f))
-//    barEntryList3.add(BarEntry(2f, 150f))
-
-    barDataSetListTemp.add(
-        BarDataSet(
-            name = "PRO",
-            barEntryList = barEntryList3,
-            color = Color.Gray,
-            background = background3,
-            settingValueText = ::settingValueText3//定制顶部的值显示
-        )
-    )
-    barData.barDataSetList = barDataSetListTemp
-    return barData
-}
-
-fun getTestBarDataNoValue(): BarData {
-    val barData = BarData(width = 80.dp)
-    var barDataSetListTemp: MutableList<BarDataSet> = mutableListOf()
-    var barEntryList: MutableList<BarEntry> = mutableListOf()
-    barEntryList.add(BarEntry(1f, 60f))
-    barEntryList.add(BarEntry(2f, 200f))
-
-    barDataSetListTemp.add(
-        BarDataSet(
-            barEntryList = barEntryList,
-            color = Color.Gray,
-            background = background1,
-            showValue = false // 不显示数值
-        )
-    )
-
-    barData.barDataSetList = barDataSetListTemp
-    return barData
-}
-
-fun getTestBarDataNoValueNoAxis(): BarData {
-    val barData = BarData(width = 80.dp)
-    val barDataSetListTemp: MutableList<BarDataSet> = mutableListOf()
-    val barEntryList: MutableList<BarEntry> = mutableListOf()
-    barEntryList.add(BarEntry(1f, 60f))
-    barEntryList.add(BarEntry(2f, 200f))
-
-    barDataSetListTemp.add(
-        BarDataSet(
-            barEntryList = barEntryList,
-            color = Color.Gray,
-            background = background1,
-            showValue = false // 不显示数值
-        )
-    )
-    barData.barDataSetList = barDataSetListTemp
-    return barData
-}
-
-fun getTestStackedBarData(): BarData {
-    val barData = BarData(width = 80.dp)
-    val barDataSetListTemp: MutableList<BarDataSet> = mutableListOf()
-
-    // ========== 第一个数据集：销售额（全部正值）==========
-    val barEntryList1: MutableList<BarEntry> = mutableListOf()
-
-    // x=1: 产品A(50) + 产品B(30) + 产品C(20) = 100
-    barEntryList1.add(
-        BarEntry(
-            x = 1f,
-            y = 100f,
-            stackValues = listOf(50f, 30f, 20f)
-        )
-    )
-
-    // x=2: 80 + 50 + 40 = 170
-    barEntryList1.add(
-        BarEntry(
-            x = 2f,
-            y = 170f,
-            stackValues = listOf(80f, 50f, 40f)
-        )
-    )
-
-    // x=3: 60 + 70 + 30 = 160
-    barEntryList1.add(
-        BarEntry(
-            x = 3f,
-            y = 160f,
-            stackValues = listOf(60f, 70f, 30f)
-        )
-    )
-
-    // x=4: 90 + 40 + 60 = 190
-    barEntryList1.add(
-        BarEntry(
-            x = 4f,
-            y = 190f,
-            stackValues = listOf(90f, 40f, 60f)
-        )
-    )
-
-    barDataSetListTemp.add(
-        BarDataSet(
-            name = "销售额",
-            barEntryList = barEntryList1,
-            color = Color.Blue,
-            background = background2,
-            showValue = true,
-            valueColor = Color.White, // 数值文字颜色
-            stackColors = listOf(
-                Color.Blue.copy(alpha = 0.8f),
-                Color.Red.copy(alpha = 0.8f),
-                Color.Yellow.copy(alpha = 0.8f)
-            ),
-            stackValueColors = listOf(
-                Color.White,
-                Color.White,
-                Color.Black // 黄色背景用黑色文字更清晰
-            ),
-            settingValueText = { name, value -> "${value.toInt()}" }
-        )
-    )
-
-    // ========== 第二个数据集：利润（有正有负）==========
-    val barEntryList2: MutableList<BarEntry> = mutableListOf()
-
-    // 定义每层的颜色
-    val profitColors = listOf(
-        Color(0xFF4CAF50).copy(alpha = 0.8f), // 收入 - 绿色
-        Color(0xFFF44336).copy(alpha = 0.8f), // 成本 - 红色
-        Color(0xFFFF9800).copy(alpha = 0.8f)  // 税费 - 橙色
-    )
-
-    // 定义每层的数值文字颜色
-    val profitValueColors = listOf(
-        Color.White,  // 绿色背景用白色
-        Color.White,  // 红色背景用白色
-        Color.White   // 橙色背景用白色
-    )
-
-    barEntryList2.add(
-        BarEntry(
-            x = 1f,
-            y = 10f,
-            stackValues = listOf(40f, 20f, 10f)
-        )
-    )
-
-    barEntryList2.add(
-        BarEntry(
-            x = 2f,
-            y = 15f,
-            stackValues = listOf(60f, 30f, 15f)
-        )
-    )
-
-    barEntryList2.add(
-        BarEntry(
-            x = 3f,
-            y = -10f,
-            stackValues = listOf(50f, 40f, 20f)
-        )
-    )
-
-    barEntryList2.add(
-        BarEntry(
-            x = 4f,
-            y = 30f,
-            stackValues = listOf(-20f, -25f, -15f)
-        )
-    )
-
-    barDataSetListTemp.add(
-        BarDataSet(
-            name = "利润",
-            barEntryList = barEntryList2,
-            color = Color.Green,
-            showValue = true,
-            background = background2,
-            valueColor = Color.White, // 数值文字颜色
-            stackColors = profitColors,           // ⭐ 在 DataSet 级别配置每层颜色
-            stackValueColors = profitValueColors, // ⭐ 在 DataSet 级别配置每层数值颜色
-            settingValueText = { name, value -> "${value.toInt()}" }
-        )
-    )
-
-    barData.barDataSetList = barDataSetListTemp
-    return barData
-}
-
-/**
- * 测试数据：使用 stackRenderer 自定义堆积图样式
- */
-fun getTestStackedBarDataWithCustomRenderer(): BarData {
-    val barData = BarData(width = 80.dp)
-    val barDataSetListTemp: MutableList<BarDataSet> = mutableListOf()
-
-    val barEntryList: MutableList<BarEntry> = mutableListOf()
-
-    // x=1: 使用 stackRenderer 自定义每层样式
-    barEntryList.add(
-        BarEntry(
-            x = 1f,
-            y = 100f,
-            stackValues = listOf(50f, 30f, 20f),
-            stackRenderer = { drawScope, color, offset, size, value, name, valueRelativeToXAxis, stackIndex ->
-                with(drawScope) {
-                    // 根据 stackIndex 为不同层设置不同的圆角和样式
-                    when (stackIndex) {
-                        0 -> {
-                            // 第1层：大圆角，蓝色
-                            drawRoundRect(
-                                color = Color(0xFF2196F3),
-                                topLeft = offset,
-                                size = size,
-                                cornerRadius = CornerRadius(12f, 12f)
-                            )
-                        }
-
-                        1 -> {
-                            // 第2层：无圆角，绿色
-                            drawRoundRect(
-                                color = Color(0xFF4CAF50),
-                                topLeft = offset,
-                                size = size,
-                                cornerRadius = CornerRadius(0f, 0f)
-                            )
-                        }
-
-                        2 -> {
-                            // 第3层：小圆角，橙色
-                            drawRoundRect(
-                                color = Color(0xFFFF9800),
-                                topLeft = offset,
-                                size = size,
-                                cornerRadius = CornerRadius(6f, 6f)
-                            )
-                        }
-                    }
-
-                    // 绘制数值（白色文字）
-                    val label = "${value.toInt()}"
-                    val valueTextSizePx = 10.sp.toPx()
-                    val nativePaint = android.graphics.Paint().let {
-                        it.apply {
-                            textSize = valueTextSizePx
-                            setColor(Color.White.toArgb())
-                            isAntiAlias = true
-                            textAlign = android.graphics.Paint.Align.CENTER
-                        }
-                    }
-                    val textX = offset.x + size.width / 2
-                    val textY = offset.y + size.height / 2 + valueTextSizePx / 3
-                    drawContext.canvas.nativeCanvas.drawText(label, textX, textY, nativePaint)
-                }
-            }
-        )
-    )
-
-    // x=2: 使用默认样式（不设置 stackRenderer）
-    barEntryList.add(
-        BarEntry(
-            x = 2f,
-            y = 150f,
-            stackValues = listOf(60f, 50f, 40f)
-        )
-    )
-
-    // x=3: 另一个自定义样式的柱子
-    barEntryList.add(
-        BarEntry(
-            x = 3f,
-            y = 120f,
-            stackValues = listOf(40f, 40f, 40f),
-            stackRenderer = { drawScope, color, offset, size, value, name, valueRelativeToXAxis, stackIndex ->
-                with(drawScope) {
-                    // 所有层使用相同的渐变效果
-                    drawRoundRect(
-                        color = when (stackIndex) {
-                            0 -> Color(0xFF9C27B0) // 紫色
-                            1 -> Color(0xFFE91E63) // 粉色
-                            else -> Color(0xFFF44336) // 红色
-                        },
-                        topLeft = offset,
-                        size = size,
-                        cornerRadius = CornerRadius(4f, 4f)
-                    )
-
-                    // 添加边框
-                    drawRoundRect(
-                        color = Color.White.copy(alpha = 0.5f),
-                        topLeft = offset,
-                        size = size,
-                        style = Stroke(width = 2f),
-                        cornerRadius = CornerRadius(4f, 4f)
-                    )
-
-                    // 绘制数值
-                    val label = "${value.toInt()}"
-                    val valueTextSizePx = 10.sp.toPx()
-                    val nativePaint = android.graphics.Paint().let {
-                        it.apply {
-                            textSize = valueTextSizePx
-                            setColor(Color.White.toArgb())
-                            isAntiAlias = true
-                            textAlign = android.graphics.Paint.Align.CENTER
-                        }
-                    }
-                    val textX = offset.x + size.width / 2
-                    val textY = offset.y + size.height / 2 + valueTextSizePx / 3
-                    drawContext.canvas.nativeCanvas.drawText(label, textX, textY, nativePaint)
-                }
-            }
-        )
-    )
-
-    barDataSetListTemp.add(
-        BarDataSet(
-            name = "自定义堆积",
-            barEntryList = barEntryList,
-            color = Color.Blue,
-            showValue = false, // 关闭默认数值显示，因为 stackRenderer 中已经绘制
-            settingValueText = { name, value -> "${value.toInt()}" }
-        )
-    )
-
-    barData.barDataSetList = barDataSetListTemp
-    return barData
-}
-
-val background1: ((drawScope: DrawScope, color: Color, offset: Offset, size: Size) -> Unit) =
-    { drawScope, color, offset, size ->
-        drawScope.run {
-            drawRoundRect(
-                color = color,
-                topLeft = offset,
-                size = size,
-                style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round),
-                cornerRadius = CornerRadius(2f, 2f)
-            )
+val background3: ((DrawScope, Color, Offset, Size) -> Unit) = { ds, color, offset, size ->
+    ds.run {
+        val width = 2.dp.toPx()
+        drawRoundRect(color = color, topLeft = offset, size = size, style = Stroke(width = width, cap = StrokeCap.Round), cornerRadius = CornerRadius(2f, 2f))
+        var heighTemp = size.height
+        val coefficient = if (heighTemp > 0) 1 else -1
+        for (i in 0..abs(heighTemp).toInt() step 20) {
+            drawLine(start = Offset(x = offset.x, y = offset.y + i * coefficient), end = Offset(x = offset.x + size.width, y = offset.y + i * coefficient), color = color, strokeWidth = width)
         }
     }
-val background2: ((drawScope: DrawScope, color: Color, offset: Offset, size: Size) -> Unit) =
-    { drawScope, color, offset, size ->
-        drawScope.run {
-            drawRoundRect(
-                color = color, topLeft = offset, size = size, cornerRadius = CornerRadius(2f, 2f)
-            )
-            drawRoundRect(
-                color = color,
-                topLeft = offset,
-                size = size,
-                style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round),
-                cornerRadius = CornerRadius(2f, 2f)
-            )
+}
 
-        }
-    }
-val background3: ((drawScope: DrawScope, color: Color, offset: Offset, size: Size) -> Unit) =
-    { drawScope, color, offset, size ->
-        drawScope.run {
-            val width = 2.dp.toPx()
-            drawRoundRect(
-                color = color,
-                topLeft = offset,
-                size = size,
-                style = Stroke(width = width, cap = StrokeCap.Round),
-                cornerRadius = CornerRadius(2f, 2f)
-            )
-            var heighTemp = size.height
-//            val heightAbs = abs(heighTemp).toInt()
-            val coefficient = if (heighTemp > 0) 1 else -1
-            for (i in 0..abs(heighTemp).toInt() step 20) {
-                drawLine(
-                    start = Offset(x = offset.x, y = offset.y + i * coefficient),
-                    end = Offset(x = offset.x + size.width, y = offset.y + i * coefficient),
-                    color = color,
-                    strokeWidth = width
-                )
-            }
-
-
-        }
-    }
-
-
-fun settingValueText(name: String, value: Float) =
-    if (name.isNullOrEmpty()) "$${value}" else "${name}:${value}"
-
-fun settingValueText2(name: String, value: Float) =
-    if (name.isNullOrEmpty()) "$${value}" else "${name}=${value}"
-
-fun settingValueText3(name: String, value: Float) =
-    if (name.isNullOrEmpty()) "${value}" else "${name}\n${value}"
-
+fun settingValueText(name: String, value: Float) = if (name.isNullOrEmpty()) "$${value}" else "${name}:${value}"
+fun settingValueText2(name: String, value: Float) = if (name.isNullOrEmpty()) "$${value}" else "${name}=${value}"
+fun settingValueText3(name: String, value: Float) = if (name.isNullOrEmpty()) "${value}" else "${name}\n${value}"
 
 fun settingLabelValue(value: Float): String {
-    val label = when {
-        value.toInt().toFloat() == value -> {//为整数浮点数
-            "${value.toInt()}"
-        }
-
-        else -> {//为小数浮点数
-            "${value}"
-        }
-    }
-    return label
+    return when { value.toInt().toFloat() == value -> "${value.toInt()}"; else -> "${value}" }
 }
 
 fun settingLabelValue2(value: Float): String {
     val time = System.currentTimeMillis()
-    var valueStr = ""
     var dateFormatYMD = "yyyy-MM-dd"
-    if (value > 0) {
-        valueStr = getStringByFormat(
-            (time + value * 24 * 60 * 60 * 1000).toLong(), dateFormatYMD
-        ).toString()
-    }
-    return valueStr
+    return if (value > 0) getStringByFormat((time + value * 24 * 60 * 60 * 1000).toLong(), dateFormatYMD).toString() else ""
 }
 
-/**
- * 描述：获取milliseconds表示的日期时间的字符串.
- *
- * @param format 格式化字符串，如："yyyy-MM-dd HH:mm:ss"
- * @return String 日期时间字符串
- */
 fun getStringByFormat(milliseconds: Long, format: String?): String? {
-    var thisDateTime: String? = null
-    try {
-        val mSimpleDateFormat = SimpleDateFormat(format)
-        thisDateTime = mSimpleDateFormat.format(milliseconds)
-    } catch (e: Exception) {
-        e.printStackTrace()
-    }
-    return thisDateTime
+    return try { SimpleDateFormat(format).format(milliseconds) } catch (e: Exception) { e.printStackTrace(); null }
 }
 
-@Composable
-@Preview(showSystemUi = false, showBackground = true, widthDp = 1096, heightDp = 250)
+@Composable @Preview(showSystemUi = false, showBackground = true, widthDp = 1096, heightDp = 250)
 fun BarChartPreview4() {
-    MaterialTheme {
-        Surface {
-            var barData = BarData()
-            barData = getTestBarData4()
-            getTestChunkList()
-            getTestLimitLineList()
-            getTestXLimitLineList()
-            BarChart(
-                data = BarChartData(
-                    barData = barData,
-
-                    xAxis = Axis(
-                        max = 3f,
-                        scaleInterval = 1f,
-                        labelInterval = 1f,
-                        name = "",
-                        settingLabelValue = ::settingLabelValue2
-                    ),
-
-                    yLeftAxis = Axis(
-                        max = 300f,
-                        scaleInterval = 10f,
-                        labelInterval = 50f,
-                        name = "",
-                        settingLabelValue = ::settingLabelValue
-                    ),
-                )
-            )
-        }
-    }
+    MaterialTheme { Surface {
+        GroupedBarChart(config = BarChartConfig(dataSets = mutableListOf(
+            BarSet(entries = mutableListOf(BarEntry(1f, 60f)), color = Color.Gray, backgroundPainter = background1, label = "CHO", valueFormatter = ::settingValueText3),
+            BarSet(entries = mutableListOf(BarEntry(1f, 80f)), color = Color.Gray, backgroundPainter = background2, label = "FAT", valueFormatter = ::settingValueText3),
+            BarSet(entries = mutableListOf(BarEntry(1f, 50f)), color = Color.Gray, backgroundPainter = background3, label = "PRO", valueFormatter = ::settingValueText3)),
+            barWidth = 40.dp, setPadding = 40.dp, widthRatio = 1f),
+            xAxis = ChartAxis(upperBound = 3f, tickStep = 1f, labelStep = 1f, label = "", labelFormatter = ::settingLabelValue2),
+            yAxis = ChartAxis(upperBound = 300f, tickStep = 10f, labelStep = 50f, label = "", labelFormatter = ::settingLabelValue))
+    } }
 }
 
-@Composable
-@Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 250)
+@Composable @Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 250)
 fun BarChartPreview3() {
-    MaterialTheme {
-        Surface {
-            var barData = BarData()
-            barData = getTestBarData3()
-            getTestChunkList()
-            getTestLimitLineList()
-            getTestXLimitLineList()
-            BarChart(
-                data = BarChartData(
-                    barData = barData,
-
-                    xAxis = Axis(
-                        max = 2.9f,
-                        scaleInterval = 1f,
-                        labelInterval = 1f,
-                        name = "",
-                        settingLabelValue = ::settingLabelValue2
-                    ),
-
-                    yLeftAxis = Axis(
-                        max = 300f,
-                        scaleInterval = 10f,
-                        labelInterval = 50f,
-                        name = "",
-                        settingLabelValue = ::settingLabelValue
-                    ),
-                )
-            )
-        }
-    }
+    MaterialTheme { Surface {
+        GroupedBarChart(config = BarChartConfig(dataSets = mutableListOf(
+            BarSet(entries = mutableListOf(BarEntry(1f, 60f), BarEntry(2f, 200f)), color = Color.Gray, backgroundPainter = background1, label = "CHO", valueFormatter = ::settingValueText),
+            BarSet(entries = mutableListOf(BarEntry(1f, 80f), BarEntry(2f, 250f)), color = Color.Gray, backgroundPainter = background2, label = "FAT", valueFormatter = ::settingValueText),
+            BarSet(entries = mutableListOf(BarEntry(1f, 50f), BarEntry(2f, 150f)), color = Color.Gray, backgroundPainter = background3, label = "PRO", valueFormatter = ::settingValueText))),
+            xAxis = ChartAxis(upperBound = 2.9f, tickStep = 1f, labelStep = 1f, label = "", labelFormatter = ::settingLabelValue2),
+            yAxis = ChartAxis(upperBound = 300f, tickStep = 10f, labelStep = 50f, label = "", labelFormatter = ::settingLabelValue))
+    } }
 }
 
-@Composable
-@Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 250)
+@Composable @Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 250)
 fun BarChartPreview2() {
-    MaterialTheme {
-        Surface {
-            var barData = BarData()
-            barData = getTestBarData2()
-            getTestChunkList()
-            getTestLimitLineList()
-            getTestXLimitLineList()
-            BarChart(
-                data = BarChartData(
-                    barData = barData,
-                    xAxis = Axis(
-                        max = 5f,
-                        name = "",
-                    ),
-
-                    yLeftAxis = Axis(
-                        max = 300f,
-                        scaleInterval = 10f,
-                        labelInterval = 50f,
-                        name = "",
-                    ),
-
-                    )
-            )
-        }
-    }
+    MaterialTheme { Surface {
+        GroupedBarChart(config = BarChartConfig(dataSets = mutableListOf(
+            BarSet(entries = mutableListOf(BarEntry(1f, 60f), BarEntry(2f, 200f)), color = Color.Gray, valueColor = Color.Red, backgroundPainter = background1, label = "CHO", valueFormatter = ::settingValueText2),
+            BarSet(entries = mutableListOf(BarEntry(1f, 80f), BarEntry(2f, 250f)), color = Color.Gray, backgroundPainter = background2, label = "FAT", valueFormatter = ::settingValueText2))),
+            xAxis = ChartAxis(upperBound = 5f, label = ""),
+            yAxis = ChartAxis(upperBound = 300f, tickStep = 10f, labelStep = 50f, label = ""))
+    } }
 }
 
-@Composable
-@Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 250)
+@Composable @Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 250)
 fun BarChartPreview1() {
-    MaterialTheme {
-        Surface {
-            var barData = BarData()
-            barData = getTestBarData()
-            val listChunk = getTestChunkList()
-            getTestLimitLineList()
-            val xLimitLineList = getTestXLimitLineList()
-            BarChart(
-                data = BarChartData(
-                    barData = barData,
-                    xAxis = Axis(
-                        max = 5f,
-                        scaleInterval = 10f,
-                        labelInterval = 10f,
-                        chunkList = listChunk,
-                        name = "x轴",
-                        limitLineList = xLimitLineList,
-                        settingLabelValue = ::settingLabelValue
-                    ),
-
-                    yLeftAxis = Axis(
-                        max = 300f,
-                        scaleInterval = 10f,
-                        labelInterval = 50f,
-                        name = "y轴",
-                        chunkList = listChunk,
-                        limitLineList = xLimitLineList
-                    ),
-                )
-            )
-        }
-    }
+    MaterialTheme { Surface {
+        val xLimitLineList = getBarTestXLimitLineList()
+        GroupedBarChart(config = BarChartConfig(dataSets = mutableListOf(BarSet(entries = mutableListOf(BarEntry(1f, 60f), BarEntry(2f, 200f)), color = Color.Gray, backgroundPainter = background1))),
+            xAxis = ChartAxis(upperBound = 5f, tickStep = 10f, labelStep = 10f, thresholdLines = xLimitLineList, label = "x轴", labelFormatter = ::settingLabelValue),
+            yAxis = ChartAxis(upperBound = 300f, tickStep = 10f, labelStep = 50f, label = "y轴", thresholdLines = xLimitLineList))
+    } }
 }
 
-@Composable
-@Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 250)
+@Composable @Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 250)
 fun BarChartPreviewNoValue() {
-    MaterialTheme {
-        Surface {
-            val barData = BarData(width = 80.dp)
-            val barDataSetListTemp: MutableList<BarDataSet> = mutableListOf()
-            val barEntryList: MutableList<BarEntry> = mutableListOf()
-            barEntryList.add(BarEntry(1f, 60f))
-            barEntryList.add(BarEntry(2f, -100f))
-
-            barDataSetListTemp.add(
-                BarDataSet(
-                    barEntryList = barEntryList,
-                    color = Color.Gray,
-                    background = background1,
-                    showValue = false // 不显示数值
-                )
-            )
-            barData.barDataSetList = barDataSetListTemp
-
-            BarChart(
-                data = BarChartData(
-                    barData = barData,
-                    xAxis = Axis(
-                        max = 5f,
-                        scaleInterval = 10f,
-                        labelInterval = 20f,
-                        position = 0f,
-                        name = "x轴"
-                    ),
-                    yLeftAxis = Axis(
-                        max = 200f,
-                        min = -200f,
-                        scaleInterval = 10f,
-                        labelInterval = 100f,
-                        name = "y轴"
-                    ),
-                )
-            )
-        }
-    }
+    MaterialTheme { Surface {
+        GroupedBarChart(config = BarChartConfig(dataSets = mutableListOf(BarSet(entries = mutableListOf(BarEntry(1f, 60f), BarEntry(2f, -100f)), color = Color.Gray, backgroundPainter = background1, showValues = false))),
+            xAxis = ChartAxis(upperBound = 5f, tickStep = 10f, labelStep = 20f, origin = 0f, label = "x轴"),
+            yAxis = ChartAxis(upperBound = 200f, lowerBound = -200f, tickStep = 10f, labelStep = 100f, label = "y轴"))
+    } }
 }
 
-@Composable
-@Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 250)
+@Composable @Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 250)
 fun BarChartPreviewNoValueNoAxis() {
-    MaterialTheme {
-        Surface {
-            val barData = BarData(width = 80.dp)
-            val barDataSetListTemp: MutableList<BarDataSet> = mutableListOf()
-            val barEntryList: MutableList<BarEntry> = mutableListOf()
-            barEntryList.add(BarEntry(1f, 60f))
-            barEntryList.add(BarEntry(2f, 200f))
-
-            barDataSetListTemp.add(
-                BarDataSet(
-                    barEntryList = barEntryList,
-                    color = Color.Gray,
-                    background = background1,
-                    showValue = false // 不显示数值
-                )
-            )
-            barData.barDataSetList = barDataSetListTemp
-
-            BarChart(
-                data = BarChartData(
-                    barData = barData,
-                    xAxis = Axis(
-                        max = 5f,
-                        isDrawAxis = false,
-                    ),
-                    yLeftAxis = Axis(
-                        max = 200f,
-                        isDrawAxis = false,
-                    ),
-                )
-            )
-        }
-    }
+    MaterialTheme { Surface {
+        GroupedBarChart(config = BarChartConfig(dataSets = mutableListOf(BarSet(entries = mutableListOf(BarEntry(1f, 60f), BarEntry(2f, 200f)), color = Color.Gray, backgroundPainter = background1, showValues = false))),
+            xAxis = ChartAxis(upperBound = 5f, showAxis = false),
+            yAxis = ChartAxis(upperBound = 200f, showAxis = false))
+    } }
 }
 
-@Composable
-@Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 300)
+@Composable @Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 300)
 fun BarChartPreviewRenderer() {
     val density = androidx.compose.ui.platform.LocalDensity.current
-
-    MaterialTheme {
-        Surface {
-            val barData = BarData(width = 60.dp)
-            val barDataSetListTemp: MutableList<BarDataSet> = mutableListOf()
-            val barEntryList: MutableList<BarEntry> = mutableListOf()
-
-            // 第一个柱子：使用自定义渲染器（同时绘制柱子和数值）
-            barEntryList.add(
-                BarEntry(
-                    x = 1f,
-                    y = 150f,
-                    renderer = { drawScope, color, offset, size, value, name, valueRelativeToXAxis ->
-                        with(density) {
-                            // 绘制渐变效果的柱状图
-                            drawScope.drawRoundRect(
-                                color = Color.Blue.copy(alpha = 0.7f),
-                                topLeft = offset,
-                                size = size,
-                                cornerRadius = CornerRadius(8f, 8f)
-                            )
-                            // 在柱子顶部添加装饰
-                            drawScope.drawCircle(
-                                color = Color.Blue,
-                                radius = 8f,
-                                center = Offset(offset.x + size.width / 2, offset.y)
-                            )
-
-                            // 绘制数值（柱子内部居中）
-                            val label = "${value.toInt()}"
-                            val valueTextSizePx = 10.sp.toPx()
-                            val nativePaint = android.graphics.Paint().let {
-                                it.apply {
-                                    textSize = valueTextSizePx
-                                    setColor(Color.White.toArgb())
-                                    isAntiAlias = true
-                                }
-                            }
-                            val textX =
-                                offset.x + size.width / 2 - (label.length * valueTextSizePx) / 4
-                            val textY = offset.y + size.height / 2 + valueTextSizePx / 3
-                            drawScope.drawContext.canvas.nativeCanvas.drawText(
-                                label, textX, textY, nativePaint
-                            )
-                        }
-                    }
-                )
-            )
-
-            // 第二个柱子：使用默认绘制，不设置 renderer
-            barEntryList.add(
-                BarEntry(
-                    x = 2f,
-                    y = 100f
-                    // 不设置 renderer，将使用 BarDataSet 的默认配置
-                )
-            )
-
-            // 第三个柱子：负值，自定义样式
-            barEntryList.add(
-                BarEntry(
-                    x = 3f,
-                    y = -80f,
-                    renderer = { drawScope, color, offset, size, value, name, valueRelativeToXAxis ->
-                        with(density) {
-                            // 负值用不同颜色
-                            drawScope.drawRoundRect(
-                                color = Color.Red.copy(alpha = 0.6f),
-                                topLeft = offset,
-                                size = size,
-                                cornerRadius = CornerRadius(4f, 4f)
-                            )
-
-                            // 绘制数值（负值显示在更下方）
-                            val label = "${value.toInt()}"
-                            val valueTextSizePx = 10.sp.toPx()
-                            val nativePaint = android.graphics.Paint().let {
-                                it.apply {
-                                    textSize = valueTextSizePx
-                                    setColor(Color.Red.toArgb())
-                                    isAntiAlias = true
-                                }
-                            }
-                            val textX =
-                                offset.x + size.width / 2 - (label.length * valueTextSizePx) / 4
-                            val textY = offset.y + size.height + valueTextSizePx + 4f
-                            drawScope.drawContext.canvas.nativeCanvas.drawText(
-                                label, textX, textY, nativePaint
-                            )
-                        }
-                    }
-                )
-            )
-
-            barDataSetListTemp.add(
-                BarDataSet(
-                    barEntryList = barEntryList,
-                    color = Color.Gray,
-                    showValue = true
-                )
-            )
-            barData.barDataSetList = barDataSetListTemp
-
-            BarChart(
-                data = BarChartData(
-                    barData = barData,
-                    xAxis = Axis(
-                        max = 5f,
-                        scaleInterval = 1f,
-                        labelInterval = 1f,
-                        position = 0f,
-                        name = "X轴"
-                    ),
-                    yLeftAxis = Axis(
-                        max = 200f,
-                        min = -200f,
-                        scaleInterval = 10f,
-                        labelInterval = 100f,
-                        name = "Y轴"
-                    ),
-                )
-            )
-        }
-    }
+    MaterialTheme { Surface {
+        GroupedBarChart(config = BarChartConfig(dataSets = mutableListOf<BarSet>(BarSet(entries = mutableListOf(
+            BarEntry(1f, 150f, customPainter = { ds, color, offset, size, value, name, valueRelativeToXAxis ->
+                with(density) {
+                    ds.drawRoundRect(color = Color.Blue.copy(alpha = 0.7f), topLeft = offset, size = size, cornerRadius = CornerRadius(8f, 8f))
+                    ds.drawCircle(color = Color.Blue, radius = 8f, center = Offset(offset.x + size.width / 2, offset.y))
+                    val label = "${value.toInt()}"; val ts = 10.sp.toPx()
+                    val p = android.graphics.Paint().apply { textSize = ts; setColor(Color.White.toArgb()); isAntiAlias = true }
+                    ds.drawContext.canvas.nativeCanvas.drawText(label, offset.x + size.width / 2 - (label.length * ts) / 4, offset.y + size.height / 2 + ts / 3, p)
+                }
+            }),
+            BarEntry(2f, 100f),
+            BarEntry(3f, -80f, customPainter = { ds, color, offset, size, value, name, valueRelativeToXAxis ->
+                with(density) {
+                    ds.drawRoundRect(color = Color.Red.copy(alpha = 0.6f), topLeft = offset, size = size, cornerRadius = CornerRadius(4f, 4f))
+                    val label = "${value.toInt()}"; val ts = 10.sp.toPx()
+                    val p = android.graphics.Paint().apply { textSize = ts; setColor(Color.Red.toArgb()); isAntiAlias = true }
+                    ds.drawContext.canvas.nativeCanvas.drawText(label, offset.x + size.width / 2 - (label.length * ts) / 4, offset.y + size.height + ts + 4f, p)
+                }
+            })), color = Color.Gray, showValues = true)), barWidth = 60.dp),
+            xAxis = ChartAxis(upperBound = 5f, tickStep = 1f, labelStep = 1f, origin = 0f, label = "X轴"),
+            yAxis = ChartAxis(upperBound = 200f, lowerBound = -200f, tickStep = 10f, labelStep = 100f, label = "Y轴"))
+    } }
 }
 
-@Composable
-@Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 300)
+@Composable @Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 300)
 fun BarChartPreviewStacked() {
-    MaterialTheme {
-        Surface {
-            val barData = getTestStackedBarData()
-
-            BarChart(
-                data = BarChartData(
-                    barData = barData,
-                    xAxis = Axis(
-                        max = 5f,
-                        scaleInterval = 1f,
-                        labelInterval = 1f,
-                        position = 0f,
-                        name = "月份"
-                    ),
-                    yLeftAxis = Axis(
-                        max = 200f,
-                        min = -100f, // 支持负值
-                        scaleInterval = 50f,
-                        labelInterval = 50f,
-                        name = "金额"
-                    ),
-                )
-            )
-        }
-    }
+    MaterialTheme { Surface {
+        GroupedBarChart(config = BarChartConfig(dataSets = mutableListOf(BarSet(entries = mutableListOf(
+            BarEntry(1f, 100f, stackValues = listOf(50f, 30f, 20f)),
+            BarEntry(2f, 170f, stackValues = listOf(80f, 50f, 40f)),
+            BarEntry(3f, 160f, stackValues = listOf(60f, 70f, 30f)),
+            BarEntry(4f, 190f, stackValues = listOf(90f, 40f, 60f))),
+            color = Color.Blue, backgroundPainter = background2, showValues = true, valueColor = Color.White, label = "销售额",
+            stackColors = listOf(Color.Blue.copy(alpha = 0.8f), Color.Red.copy(alpha = 0.8f), Color.Yellow.copy(alpha = 0.8f)),
+            stackValueColors = listOf(Color.White, Color.White, Color.Black),
+            valueFormatter = { _, value -> "${value.toInt()}" }),
+            BarSet(entries = mutableListOf(
+                BarEntry(1f, 10f, stackValues = listOf(40f, 20f, 10f)),
+                BarEntry(2f, 15f, stackValues = listOf(60f, 30f, 15f)),
+                BarEntry(3f, -10f, stackValues = listOf(50f, 40f, 20f)),
+                BarEntry(4f, 30f, stackValues = listOf(-20f, -25f, -15f))),
+                color = Color.Green, backgroundPainter = background2, showValues = true, valueColor = Color.White, label = "利润",
+                stackColors = listOf(Color(0xFF4CAF50).copy(alpha = 0.8f), Color(0xFFF44336).copy(alpha = 0.8f), Color(0xFFFF9800).copy(alpha = 0.8f)),
+                stackValueColors = listOf(Color.White, Color.White, Color.White),
+                valueFormatter = { _, value -> "${value.toInt()}" })),
+            barWidth = 80.dp),
+            xAxis = ChartAxis(upperBound = 5f, tickStep = 1f, labelStep = 1f, origin = 0f, label = "月份"),
+            yAxis = ChartAxis(upperBound = 200f, lowerBound = -100f, tickStep = 50f, labelStep = 50f, label = "金额"))
+    } }
 }
 
-@Composable
-@Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 300)
+@Composable @Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 300)
 fun BarChartPreviewStackedWithCustomRenderer() {
-    MaterialTheme {
-        Surface {
-            val barData = getTestStackedBarDataWithCustomRenderer()
-
-            BarChart(
-                data = BarChartData(
-                    barData = barData,
-                    xAxis = Axis(
-                        max = 5f,
-                        scaleInterval = 1f,
-                        labelInterval = 1f,
-                        name = "X轴"
-                    ),
-                    yLeftAxis = Axis(
-                        max = 200f,
-                        scaleInterval = 50f,
-                        labelInterval = 50f,
-                        name = "Y轴"
-                    ),
-                )
-            )
-        }
-    }
+    MaterialTheme { Surface {
+        GroupedBarChart(config = BarChartConfig(dataSets = mutableListOf(BarSet(entries = mutableListOf(
+            BarEntry(1f, 100f, stackValues = listOf(50f, 30f, 20f), stackPainter = { ds, color, offset, size, value, name, valueRelativeToXAxis, stackIndex ->
+                with(ds) {
+                    val c = when (stackIndex) { 0 -> Color(0xFF2196F3); 1 -> Color(0xFF4CAF50); else -> Color(0xFFFF9800) }
+                    val r = when (stackIndex) { 0 -> 12f; 1 -> 0f; else -> 6f }
+                    drawRoundRect(color = c, topLeft = offset, size = size, cornerRadius = CornerRadius(r, r))
+                    val label = "${value.toInt()}"; val ts = 10.sp.toPx()
+                    val p = android.graphics.Paint().apply { textSize = ts; setColor(Color.White.toArgb()); isAntiAlias = true; textAlign = android.graphics.Paint.Align.CENTER }
+                    drawContext.canvas.nativeCanvas.drawText(label, offset.x + size.width / 2, offset.y + size.height / 2 + ts / 3, p)
+                }
+            }),
+            BarEntry(2f, 150f, stackValues = listOf(60f, 50f, 40f)),
+            BarEntry(3f, 120f, stackValues = listOf(40f, 40f, 40f), stackPainter = { ds, color, offset, size, value, name, valueRelativeToXAxis, stackIndex ->
+                with(ds) {
+                    val c = when (stackIndex) { 0 -> Color(0xFF9C27B0); 1 -> Color(0xFFE91E63); else -> Color(0xFFF44336) }
+                    drawRoundRect(color = c, topLeft = offset, size = size, cornerRadius = CornerRadius(4f, 4f))
+                    drawRoundRect(color = Color.White.copy(alpha = 0.5f), topLeft = offset, size = size, style = Stroke(width = 2f), cornerRadius = CornerRadius(4f, 4f))
+                    val label = "${value.toInt()}"; val ts = 10.sp.toPx()
+                    val p = android.graphics.Paint().apply { textSize = ts; setColor(Color.White.toArgb()); isAntiAlias = true; textAlign = android.graphics.Paint.Align.CENTER }
+                    drawContext.canvas.nativeCanvas.drawText(label, offset.x + size.width / 2, offset.y + size.height / 2 + ts / 3, p)
+                }
+            })), color = Color.Blue, showValues = false, label = "自定义堆积", valueFormatter = { _, value -> "${value.toInt()}" })), barWidth = 80.dp),
+            xAxis = ChartAxis(upperBound = 5f, tickStep = 1f, labelStep = 1f, label = "X轴"),
+            yAxis = ChartAxis(upperBound = 200f, tickStep = 50f, labelStep = 50f, label = "Y轴"))
+    } }
 }
 
-@Composable
-@Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 250)
+@Composable @Preview(showSystemUi = false, showBackground = true, widthDp = 500, heightDp = 250)
 fun BarChartWithTouchPreview() {
-    BrianChartTheme {
-        Surface {
-            BarChartWithTouch(
-                modifier = Modifier
-                    .padding(bottom = 20.dp)
-                    .height(300.dp)
-            )
-        }
-    }
+    BrianChartTheme { Surface {
+        BarChartWithTouch(modifier = Modifier.padding(bottom = 20.dp).height(300.dp))
+    } }
 }
 
 @Composable
 fun BarChartWithTouch(modifier: Modifier) {
-    val barEntryList: MutableList<BarEntry> =
-        mutableListOf(
-            BarEntry(x = 1f, y = 20f),
-            BarEntry(x = 2f, y = 10f),
-            BarEntry(x = 3f, y = 30f),
-            BarEntry(x = 4f, y = 20f),
-            BarEntry(x = 5f, y = 20f),
-            BarEntry(x = 6f, y = 50f),
-            BarEntry(x = 7f, y = 20f),
-            BarEntry(x = 8f, y = 20f),
-            BarEntry(x = 9f, y = 20f),
-        )
+    val barEntryList = mutableListOf(
+        BarEntry(1f, 20f), BarEntry(2f, 10f), BarEntry(3f, 30f), BarEntry(4f, 20f),
+        BarEntry(5f, 20f), BarEntry(6f, 50f), BarEntry(7f, 20f), BarEntry(8f, 20f), BarEntry(9f, 20f))
 
-    var barChartData by remember {
-        mutableStateOf(
-            BarChartData(
-                barData = BarData(barDataSetList = mutableListOf(BarDataSet(barEntryList = barEntryList))),
-                xAxis = Axis(
-                    max = 10f,
-                    min = 0f,
-                    scaleInterval = 20f,
-                    labelInterval = 50f,
-                    name = "时间 (s)",
-                    // 使用原有的 limitLineList 字段，初始化为空列表以便后续就地更新
-                    limitLineList = mutableListOf()
-                ),
-                yLeftAxis = Axis(
-                    max = 50f, min = 0f, scaleInterval = 25f, labelInterval = 50f, name = "数值"
-                ),
-                limitLinePosition = LimitLinePosition.ABOVE,
-            )
-        )
+    var barChartConfig by remember {
+        mutableStateOf(BarChartConfig(dataSets = mutableListOf(BarSet(entries = barEntryList))))
+    }
+    var xAxis by remember {
+        mutableStateOf(ChartAxis(upperBound = 10f, lowerBound = 0f, tickStep = 20f, labelStep = 50f, label = "时间 (s)", thresholdLines = mutableListOf()))
+    }
+    var yAxis by remember {
+        mutableStateOf(ChartAxis(upperBound = 50f, lowerBound = 0f, tickStep = 25f, labelStep = 50f, label = "数值"))
     }
     var selectedX by remember { mutableStateOf<Float?>(9f) }
     var selectedBarEntry by remember { mutableStateOf<BarEntry?>(null) }
 
-    fun limitLineValue(drawScope: DrawScope, start: Offset, end: Offset, limitLine: LimitLine) {
+    fun thresholdLinePainter(drawScope: DrawScope, start: Offset, end: Offset, line: ThresholdLine) {
         drawScope.apply {
-            drawLine(
-                start = start, end = end, brush = Brush.linearGradient(       // 使用 brush 而不是 color
-                    colors = listOf(Color.Red, Color.Green),
-                    start = start,
-                    end = end
-                ), strokeWidth = limitLine.width.toPx()
-            )
-            drawCircle(
-                color = Color.Cyan.copy(0.6f), radius = limitLine.width.toPx() * 2, center = end
-            )
+            drawLine(brush = Brush.linearGradient(colors = listOf(Color.Red, Color.Green), start = start, end = end),
+                start = start, end = end, strokeWidth = line.lineWidth.toPx())
+            drawCircle(color = Color.Cyan.copy(0.6f), radius = line.lineWidth.toPx() * 2, center = end)
             drawCircle(color = Color.White, radius = 2.dp.toPx(), center = end)
         }
-
     }
 
-    fun updateLimitLine(x: Float?) {
-        val min = barChartData.xAxis.min
-        val max = barChartData.xAxis.max
+    fun updateThresholdLine(x: Float?) {
+        val min = xAxis.lowerBound; val max = xAxis.upperBound
         val clamped = x?.coerceIn(min, max)
-        val list = if (clamped != null) mutableListOf(
-            LimitLine(
-                clamped,
-                color = Color.Red,
-                width = 2.dp,
-                text = "X=%.1f".format(clamped),
-                selfDefinedValue = ::limitLineValue
-            )
-        ) else mutableListOf()
-//        lineData.xAxis.limitLineList = list
-        barChartData = barChartData.copy(xAxis = barChartData.xAxis.copy(limitLineList = list))
+        val list = if (clamped != null) mutableListOf(ThresholdLine(clamped, lineColor = Color.Red, lineWidth = 2.dp, caption = "X=%.1f".format(clamped), customPainter = ::thresholdLinePainter)) else mutableListOf()
+        xAxis = xAxis.copy(thresholdLines = list)
     }
 
-    // 初始同步（若 selectedX 有初始值）
-    LaunchedEffect(Unit) {
-        updateLimitLine(selectedX)
-    }
+    LaunchedEffect(Unit) { updateThresholdLine(selectedX) }
 
     Column(modifier = modifier.padding(8.dp)) {
-        Text(
-            text = "X：${selectedX} selectedBarEntry：${selectedBarEntry}",
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-        )
-        BarChart(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-            data = barChartData.copy(
-                onTouch = { touchEvent: TouchEventData ->
-                    selectedBarEntry = getClosestBarEntry(barChartData.barData?.barDataSetList, touchEvent.dataX)
-                    selectedX = touchEvent.dataX
-                    when (touchEvent.eventType) {
-                        TouchEventType.TAP -> {
-                            updateLimitLine(selectedBarEntry?. x?:touchEvent.dataX)
-                        }
-                        TouchEventType.MOVE -> {
-                            updateLimitLine(touchEvent.dataX)
-                        }
-                        TouchEventType.UP -> {
-                            updateLimitLine(selectedBarEntry?. x?:touchEvent.dataX)
-                        }
-                        TouchEventType.DOWN -> {}
-                    }
-                }
-            ))
+        Text(text = "X：${selectedX} selectedBarEntry：${selectedBarEntry}", style = MaterialTheme.typography.bodySmall, modifier = Modifier.align(Alignment.CenterHorizontally))
+        GroupedBarChart(modifier = Modifier.fillMaxWidth().weight(1f), config = barChartConfig, xAxis = xAxis, yAxis = yAxis)
     }
 }
 
-fun getClosestBarEntry(barDataSetList: MutableList<BarDataSet>?, dataX: Float): BarEntry? {
-    val targetX = dataX
-    val closestBarEntry = barDataSetList
-        ?.flatMap { it.barEntryList ?: emptyList() }
-        ?.minByOrNull { abs(it.x - targetX) }
+fun getClosestBarEntry(barDataSetList: MutableList<BarSet>?, dataX: Float): BarEntry? {
+    return barDataSetList?.flatMap { it.entries ?: emptyList() }?.minByOrNull { abs(it.x - dataX) }
+}
 
-    return closestBarEntry
+fun getBarTestXLimitLineList(): MutableList<ThresholdLine> {
+    return mutableListOf(ThresholdLine(100f, dashed = true, lineWidth = 2.dp, lineColor = Color.Gray, caption = "测试"), ThresholdLine(20f))
 }
